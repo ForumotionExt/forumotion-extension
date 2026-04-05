@@ -1,4 +1,22 @@
 {
+  "version": "1.1.0",
+  "releaseDate": "2026-04-05",
+  "releaseUrl": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.1.0",
+  "changelog": [
+  {
+    "version": "1.1.0",
+    "date": "2026-04-05",
+    "notes": [
+      "Forum preview: tema se aplica pe forumul tau intr-un tab nou (15 secunde)",
+      "Fix: instalarea si preview-ul temelor din catalog functioneaza corect",
+      "Fix: butonul Reseteaza la implicit din editorul de templates functioneaza acum",
+      "Teme: catalog mutat la ForumotionExt/forumotion-themes cu structura noua",
+      "Redesign pagina teme: tabel nativ in stilul panoului de administrare Forumotion",
+      "Pagina dedicata pentru instalarea temelor cu suport variables",
+      "Dashboard standalone: extensia are acum pagina proprie, accesibila din popup"
+    ]
+},
+{
   "version": "1.0.0",
   "releaseDate": "2026-04-04",
   "releaseUrl": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.0.0",
