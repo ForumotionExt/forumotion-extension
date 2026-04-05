@@ -112,8 +112,9 @@
     }
   });
 
-  // ── Changelog ─────────────────────────────────────────────────────────────
+  // ── Changelog & Futures ───────────────────────────────────────────────────
   const changelogArea = document.getElementById('fme-changelog-area');
+  const futuresArea   = document.getElementById('fme-futures-area');
 
   chrome.storage.sync.get({
     githubOwner: 'ForumotionExt',
@@ -127,20 +128,46 @@
     fetch(url, { headers })
       .then(r => r.ok ? r.json() : Promise.reject(r.status))
       .then(data => {
-        const entry = (data.changelog || []).find(c => c.version === VERSION)
-          || (data.changelog || [])[0];
-        if (!entry) { changelogArea.innerHTML = '<div class="fme-empty">Nicio intrare gasita.</div>'; return; }
-        changelogArea.innerHTML = `
-          <p style="font-size:11px;color:var(--text-dim);margin-bottom:8px;">
-            v${escHtml(entry.version)} &mdash; ${escHtml(entry.date || '')}
-          </p>
-          <ul class="fme-changelog">
-            ${(entry.notes || []).map(n => `<li>${escHtml(n)}</li>`).join('')}
-          </ul>
-        `;
+        // ── Changelog (all versions) ──────────────────────────────────────
+        const entries = data.changelog || [];
+        if (entries.length === 0) {
+          changelogArea.innerHTML = '<div class="fme-empty">Nicio intrare gasita.</div>';
+        } else {
+          changelogArea.innerHTML = entries.map(entry => `
+            <div class="fme-changelog-block">
+              <div class="fme-changelog-block-header">
+                <span class="fme-changelog-block-version">v${escHtml(entry.version)}</span>
+                <span class="fme-changelog-block-date">${escHtml(entry.date || '')}</span>
+                ${entry.version === VERSION ? '<span class="fme-badge-current">curenta</span>' : ''}
+              </div>
+              <ul class="fme-changelog">
+                ${(entry.notes || []).map(n => `<li>${escHtml(n)}</li>`).join('')}
+              </ul>
+            </div>
+          `).join('');
+        }
+
+        // ── Futures (roadmap) ─────────────────────────────────────────────
+        const futures = data.futures || [];
+        if (futures.length === 0) {
+          futuresArea.innerHTML = '<div class="fme-empty">Nicio functionalitate viitoare listata.</div>';
+        } else {
+          futuresArea.innerHTML = `<div class="fme-futures">${
+            futures.map(f => `
+              <div class="fme-future-item">
+                <span class="fme-future-icon">🚀</span>
+                <div>
+                  <div class="fme-future-title">${escHtml(f.title)}</div>
+                  <div class="fme-future-desc">${escHtml(f.description)}</div>
+                </div>
+              </div>
+            `).join('')
+          }</div>`;
+        }
       })
       .catch(() => {
         changelogArea.innerHTML = '<div class="fme-empty">Nu s-a putut incarca changelog-ul.</div>';
+        futuresArea.innerHTML   = '<div class="fme-empty">Nu s-au putut incarca functionalitatile viitoare.</div>';
       });
   });
 

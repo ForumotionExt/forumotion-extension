@@ -202,6 +202,47 @@
     .fme-changelog li:last-child { border-bottom: none; }
     .fme-changelog li::before { content: '•'; color: var(--accent); margin-right: 7px; }
 
+    .fme-changelog-block { margin-bottom: 18px; }
+    .fme-changelog-block:last-child { margin-bottom: 0; }
+    .fme-changelog-block-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+    .fme-changelog-block-version {
+      font-weight: 700;
+      font-size: 12px;
+      color: var(--accent);
+    }
+    .fme-changelog-block-date {
+      font-size: 11px;
+      color: var(--text-dim);
+    }
+    .fme-badge-current {
+      background: #e8f0fb;
+      color: #2d7dd2;
+      font-size: 10px;
+      font-weight: 600;
+      padding: 1px 7px;
+      border-radius: 10px;
+    }
+
+    /* ── Futures ── */
+    .fme-futures { display: flex; flex-direction: column; gap: 8px; }
+    .fme-future-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+    }
+    .fme-future-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
+    .fme-future-title { font-weight: 600; font-size: 12px; }
+    .fme-future-desc { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+
     /* ── Quick links ── */
     .fme-links { display: flex; flex-direction: column; gap: 6px; }
     .fme-link-item {
@@ -347,8 +388,16 @@
 
     <!-- Changelog -->
     <div class="fme-card fme-card-wide">
-      <div class="fme-card-header">Changelog — versiunea curenta</div>
+      <div class="fme-card-header">Changelog</div>
       <div class="fme-card-body" id="fme-changelog-area">
+        <div class="fme-empty">Se incarca&hellip;</div>
+      </div>
+    </div>
+
+    <!-- Futures / Roadmap -->
+    <div class="fme-card fme-card-wide">
+      <div class="fme-card-header">Functionalitati viitoare</div>
+      <div class="fme-card-body" id="fme-futures-area">
         <div class="fme-empty">Se incarca&hellip;</div>
       </div>
     </div>
