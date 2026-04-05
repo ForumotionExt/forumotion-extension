@@ -100,6 +100,25 @@
 
   loadInstalledThemes();
 
+  // ── Available themes count ────────────────────────────────────────────────
+  const statAvailable = document.getElementById('stat-available-themes');
+  chrome.storage.sync.get({
+    themesOwner: 'ForumotionExt',
+    themesRepo: 'forumotion-themes',
+    githubToken: ''
+  }, ({ themesOwner, themesRepo, githubToken }) => {
+    const url = `https://raw.githubusercontent.com/${themesOwner}/${themesRepo}/main/index.json`;
+    const headers = { 'Accept': 'application/json' };
+    if (githubToken) headers['Authorization'] = `Bearer ${githubToken}`;
+    fetch(url, { cache: 'no-store', headers })
+      .then(r => r.ok ? r.json() : Promise.reject())
+      .then(data => {
+        const count = Array.isArray(data.themes) ? data.themes.length : '?';
+        if (statAvailable) statAvailable.textContent = count;
+      })
+      .catch(() => { if (statAvailable) statAvailable.textContent = '—'; });
+  });
+
   // ── Update check ─────────────────────────────────────────────────────────
   chrome.action.getBadgeText({}, (text) => {
     if (text && text.trim()) {

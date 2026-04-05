@@ -18,10 +18,20 @@ var FMEPanel = (() => {
   const STORAGE_KEY  = 'fme_active_section';
 
   const SECTIONS = [
-    { id: 'themes',    label: 'Teme',          icon: '<i class="fa fa-gears"></i>' },
-    { id: 'templates', label: 'Template-uri',  icon: '<i class="fa fa-file-code-o"></i>' },
-    { id: 'updates',   label: 'Actualizări',    icon: '<i class="fa fa-refresh"></i>' },
-    { id: 'settings',  label: 'Setări',         icon: '<i class="fa fa-cog"></i>' },
+    // ── Conținut ────────────────────────────────────────────────────────────────
+    { id: 'themes',    label: 'Teme',           icon: '<i class="fa fa-paint-brush"></i>',  group: 'Conținut' },
+    { id: 'templates', label: 'Template-uri',   icon: '<i class="fa fa-file-code-o"></i>',  group: 'Conținut' },
+    // ── CSS & JS ─────────────────────────────────────────────────────────────
+    { id: 'acp-css',   label: 'ACP Styles',     icon: '<i class="fa fa-magic"></i>',          group: 'CSS & JS' },
+    { id: 'forum-css', label: 'Forum CSS',       icon: '<i class="fa fa-css3"></i>',           group: 'CSS & JS' },
+    { id: 'widgets',   label: 'Widgets JS',      icon: '<i class="fa fa-code"></i>',           group: 'CSS & JS' },
+    // ── Utile ────────────────────────────────────────────────────────────────
+    { id: 'stats',     label: 'Statistici',      icon: '<i class="fa fa-bar-chart"></i>',      group: 'Utile' },
+    { id: 'notes',     label: 'Notițe',          icon: '<i class="fa fa-sticky-note-o"></i>',  group: 'Utile' },
+    { id: 'backup',    label: 'Backup',          icon: '<i class="fa fa-database"></i>',        group: 'Utile' },
+    // ── Meta ─────────────────────────────────────────────────────────────────
+    { id: 'updates',   label: 'Actualizări',     icon: '<i class="fa fa-refresh"></i>',         group: 'Meta' },
+    { id: 'settings',  label: 'Setări',          icon: '<i class="fa fa-cog"></i>',             group: 'Meta' },
   ];
 
   let _pageRoot       = null;   // #fme-page-root element
@@ -263,18 +273,27 @@ var FMEPanel = (() => {
   }
 
   function buildPageHTML() {
-    const items = SECTIONS.map(s => `
-      <li class="fme-nav-item">
-        <a href="#" class="fme-nav-cat${s.id === _activeSection ? ' fme-nav-cat--active' : ''}"
-           data-section="${s.id}">
-          <span class="fme-nav-icon">${s.icon}</span>
-          <span class="fme-nav-label">${s.label}</span>
-          ${s.id === 'updates'
-            ? `<span class="fme-update-dot" style="display:${_updateBadge ? 'inline' : 'none'}">\u25CF</span>`
-            : ''}
-        </a>
-      </li>
-    `).join('');
+    let items    = '';
+    let lastGroup = null;
+
+    for (const s of SECTIONS) {
+      if (s.group && s.group !== lastGroup) {
+        lastGroup = s.group;
+        items += `<li class="fme-nav-group-label">${s.group}</li>`;
+      }
+      items += `
+        <li class="fme-nav-item">
+          <a href="#" class="fme-nav-cat${s.id === _activeSection ? ' fme-nav-cat--active' : ''}"
+             data-section="${s.id}">
+            <span class="fme-nav-icon">${s.icon}</span>
+            <span class="fme-nav-label">${s.label}</span>
+            ${s.id === 'updates'
+              ? `<span class="fme-update-dot" style="display:${_updateBadge ? 'inline' : 'none'}">●</span>`
+              : ''}
+          </a>
+        </li>
+      `;
+    }
 
     return `
       <div id="fme-page-sidebar">
@@ -322,9 +341,10 @@ var FMEPanel = (() => {
 
     if (!doRender || !_contentArea) return;
 
-    // Always re-render updates; lazy-render everything else
+    // Always re-render dynamic tabs; lazy-render everything else
+    const ALWAYS_RERENDER = new Set(['updates', 'stats', 'notes', 'backup']);
     const alreadyRendered = _contentArea.dataset.renderedSection === sectionId;
-    if (alreadyRendered && sectionId !== 'updates') return;
+    if (alreadyRendered && !ALWAYS_RERENDER.has(sectionId)) return;
 
     renderSection(sectionId);
     _contentArea.dataset.renderedSection = sectionId;
@@ -356,12 +376,33 @@ var FMEPanel = (() => {
           showMissingModule(_contentArea, 'FMEUpdatesTab');
         }
         break;
+      case 'acp-css':
+        if (typeof FMEAcpCssTab !== 'undefined') FMEAcpCssTab.render(_contentArea);
+        else showMissingModule(_contentArea, 'FMEAcpCssTab');
+        break;
+      case 'forum-css':
+        if (typeof FMEForumCssTab !== 'undefined') FMEForumCssTab.render(_contentArea);
+        else showMissingModule(_contentArea, 'FMEForumCssTab');
+        break;
+      case 'widgets':
+        if (typeof FMEWidgetsTab !== 'undefined') FMEWidgetsTab.render(_contentArea);
+        else showMissingModule(_contentArea, 'FMEWidgetsTab');
+        break;
+      case 'stats':
+        if (typeof FMEStatsTab !== 'undefined') FMEStatsTab.render(_contentArea);
+        else showMissingModule(_contentArea, 'FMEStatsTab');
+        break;
+      case 'notes':
+        if (typeof FMENotesTab !== 'undefined') FMENotesTab.render(_contentArea);
+        else showMissingModule(_contentArea, 'FMENotesTab');
+        break;
+      case 'backup':
+        if (typeof FMEBackupTab !== 'undefined') FMEBackupTab.render(_contentArea);
+        else showMissingModule(_contentArea, 'FMEBackupTab');
+        break;
       case 'settings':
-        if (typeof FMESettingsTab !== 'undefined') {
-          FMESettingsTab.render(_contentArea);
-        } else {
-          showMissingModule(_contentArea, 'FMESettingsTab');
-        }
+        if (typeof FMESettingsTab !== 'undefined') FMESettingsTab.render(_contentArea);
+        else showMissingModule(_contentArea, 'FMESettingsTab');
         break;
       default:
         _contentArea.innerHTML = '';

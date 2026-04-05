@@ -59,6 +59,22 @@
   padding: 0;
 }
 
+.fme-nav-group-label {
+  list-style: none;
+  padding: 10px 12px 3px;
+  font-size: 10px;
+  font-weight: bold;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 4px;
+  pointer-events: none;
+}
+
+.fme-nav-group-label:first-child {
+  margin-top: 0;
+}
+
 .fme-nav-item {
   margin: 0;
   padding: 0;
@@ -111,7 +127,12 @@
 .fme-nav-cat[data-section="templates"] .fme-nav-icon { background: #3c9ebf; }
 .fme-nav-cat[data-section="updates"]   .fme-nav-icon { background: #27ae60; }
 .fme-nav-cat[data-section="settings"]  .fme-nav-icon { background: #8e44ad; }
-
+.fme-nav-cat[data-section="acp-css"]   .fme-nav-icon { background: #5557c0;}
+.fme-nav-cat[data-section="backup"]   .fme-nav-icon { background: #ff4242;}
+.fme-nav-cat[data-section="notes"]  .fme-nav-icon { background: #3c9ebf;}
+.fme-nav-cat[data-section="forum-css"]  .fme-nav-icon { background: #023531;}
+.fme-nav-cat[data-section="widgets"]   .fme-nav-icon { background: #39683b;}
+.fme-nav-cat[data-section="stats"]   .fme-nav-icon { background: #5557c0;}
 .fme-nav-label { flex: 1; }
 
 .fme-nav-cat .fme-update-dot {

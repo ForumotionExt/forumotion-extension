@@ -303,7 +303,7 @@ var FMEUpdatesTab = (() => {
       const action  = btn.dataset.action;
       const version = btn.dataset.version;
       const url     = btn.dataset.url;
-      if (action === 'update' && url)     { chrome.tabs.create({ url }); }
+      if (action === 'update' && url)     { window.open(url, '_blank'); }
       if (action === 'rollback' && url)   { handleRollback(btn, version, url); }
       if (action === 'skip')              { handleSkip(btn, version); }
       if (action === 'unskip')            { handleUnskip(btn, version); }
@@ -312,7 +312,7 @@ var FMEUpdatesTab = (() => {
 
   function handleRollback(btn, version, releaseUrl) {
     if (!confirm(`Esti sigur ca vrei sa restaurezi versiunea v${version}?\n\nVei fi redirectionat la pagina de release de pe GitHub unde poti descarca arhiva si o poti incarca manual in Chrome (Load unpacked).`)) return;
-    chrome.tabs.create({ url: releaseUrl });
+    window.open(releaseUrl, '_blank');
   }
 
   async function handleSkip(btn, version) {

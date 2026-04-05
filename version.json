@@ -1,8 +1,28 @@
 {
-  "version": "1.2.0",
+  "version": "1.3.0",
   "releaseDate": "2026-04-05",
-  "releaseUrl": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.2.0",
+  "releaseUrl": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.3.0",
   "changelog": [
+    {
+      "version": "1.3.0",
+      "date": "2026-04-05",
+      "notes": [
+        { "type": "feature", "text": "Tab Forum CSS: editor CSS pentru paginile de forum (non-admin), cu preset Forum Dark 2026 si file upload" },
+        { "type": "feature", "text": "Tab Widgets JS: manager de snippet-uri JS cu executie CSP-safe pe ACP si/sau forum via chrome.scripting" },
+        { "type": "feature", "text": "Tab Notite: notepad multi-tab cu auto-salvare dupa 1.5s si pana la 5 note" },
+        { "type": "feature", "text": "Tab Backup & Restore: export/import complet al datelor FME (teme, CSS, widgets, note) in format JSON" },
+        { "type": "feature", "text": "Tab Statistici: sumar date locale + statistici forum extrase la cerere" },
+        { "type": "feature", "text": "Forum Injector: script separat pentru paginile non-admin (aplica Forum CSS si Widgets JS)" },
+        { "type": "feature", "text": "Panel redesigned: 10 sectiuni grupate in 4 categorii (Continut, CSS & JS, Utile, Meta)" },
+        { "type": "feature", "text": "Verificare compatibilitate versiune inainte de install si preview (phpBB3 ↔ prosilver, phpBB2 ↔ subsilver/subsilver2)" },
+        { "type": "feature", "text": "Modal progres preview: preview cu template-uri afiseaza pasii in timp real cu progress bar" },
+        { "type": "feature", "text": "Parametru ?tt=1 in URL-ul tab-ului de preview cu template-uri (template-uri modificate, nepublicate)" },
+        { "type": "feature", "text": "Exemple widgets: folder widgets-examples/ cu 11 snippeturi gata de utilizat (ACP, Forum, Both)" },
+        { "type": "bugfix",  "text": "Fix: chrome.storage.session inlocuit cu chrome.storage.local (indisponibil in content scripts)" },
+        { "type": "bugfix",  "text": "Fix: chrome.tabs.create inlocuit cu window.open in toate tab-urile (indisponibil in content scripts)" },
+        { "type": "bugfix",  "text": "Fix: executia widget-urilor prin chrome.scripting.executeScript bypasses atat CSP-ul extensiei cat si CSP-ul paginii" }
+      ]
+    },
     {
       "version": "1.2.0",
       "date": "2026-04-05",
@@ -49,16 +69,12 @@
       "description": "Portarea extensiei pentru Mozilla Firefox si Microsoft Edge (Manifest V3)."
     },
     {
-      "title": "Editor CSS integrat",
-      "description": "Editor de cod cu syntax highlighting direct in panoul FME, fara a parasi ACP-ul."
-    },
-    {
-      "title": "Backup & restore setari",
-      "description": "Export/import complet al setarilor extensiei si al temelor instalate intr-un singur fisier."
+      "title": "Marketplace widget-uri",
+      "description": "Catalog online de widget-uri JS contribuite de comunitate, instalabile direct din tab-ul Widgets JS."
     },
     {
       "title": "Suport multi-forum",
-      "description": "Gestionarea mai multor forumuri din acelasi dashboard, cu profiluri separate."
+      "description": "Gestionarea mai multor forumuri din acelasi dashboard, cu profiluri separate de setari."
     },
     {
       "title": "Notificari teme noi",
@@ -71,6 +87,22 @@
     {
       "title": "Filtrare avansata teme",
       "description": "Filtrare dupa motor de forum, culoare dominanta, autor si data publicarii."
+    },
+    {
+      "title": "Export tema completa (.fmetheme)",
+      "description": "Pachetare completa tema + template-uri intr-un singur fisier .fmetheme pentru distribuire si reinstalare."
+    },
+    {
+      "title": "Live CSS preview in ACP",
+      "description": "Preview CSS in timp real direct in ACP, fara a deschide un tab nou — modificarile apar instant."
+    },
+    {
+      "title": "Scheduler widget-uri",
+      "description": "Activarea/dezactivarea automata a widget-urilor dupa un program configurabil (ex: banner eveniment activ doar in weekend)."
+    },
+    {
+      "title": "Syntax highlighting in editorii CSS/JS",
+      "description": "Editor de cod cu colorare sintactica pentru tab-urile ACP Styles, Forum CSS si Widgets JS."
     }
   ]
 }

@@ -208,6 +208,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         .catch(err => sendResponse({ ok: false, error: err.message }));
       return true;
 
+    case 'EXEC_WIDGET': {
+      // Execute user widget code via chrome.scripting which bypasses both
+      // the extension's MV3 CSP (no unsafe-eval) and the page's own CSP.
+      const tabId = sender.tab && sender.tab.id;
+      if (!tabId) { sendResponse({ ok: false, error: 'No tab ID' }); return false; }
+      const { code, name } = message.payload || {};
+      if (!code) { sendResponse({ ok: true }); return false; }
+      chrome.scripting.executeScript({
+        target: { tabId },
+        world:  'MAIN',
+        func:   (widgetCode, widgetName) => {
+          try {
+            // indirect eval — runs in global scope, not function scope
+            (0, eval)(widgetCode); // eslint-disable-line no-eval
+          } catch (e) {
+            console.warn(`[FME Widget "${widgetName}"]`, e.message);
+          }
+        },
+        args: [code, name || ''],
+      })
+        .then(() => sendResponse({ ok: true }))
+        .catch(err => sendResponse({ ok: false, error: err.message }));
+      return true;
+    }
+
     // ── Skip-version helpers ──────────────────────────────────────────────────
     case 'SKIP_VERSION': {
       const ver = message.payload && message.payload.version;

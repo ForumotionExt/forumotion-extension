@@ -77,11 +77,12 @@ var FMEGitHub = (() => {
    * Opens the forum homepage in a new tab and injects the CSS for preview.
    * @param {string} cssText - CSS to inject
    * @param {number} [durationMs=15000] - How long to keep the preview (ms)
+   * @param {string} [forumUrl] - Override URL (e.g. with ?tt=1). Defaults to origin + '/'
    */
-  function previewOnForum(cssText, durationMs = 15000) {
+  function previewOnForum(cssText, durationMs = 15000, forumUrl) {
     return sendToBackground('PREVIEW_FORUM_THEME', {
       cssText,
-      forumUrl: window.location.origin + '/',
+      forumUrl: forumUrl || (window.location.origin + '/'),
       durationMs
     });
   }

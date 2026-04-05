@@ -37,6 +37,8 @@
       runStartupChecks();
       listenForNavigation();
       listenForPopupMessages();
+      if (typeof FMEAcpCssTab !== 'undefined') FMEAcpCssTab.autoApply();
+      if (typeof FMEWidgetsTab !== 'undefined') FMEWidgetsTab.runAcpWidgets();
     } catch (err) {
       console.error('[FME] Failed to initialize:', err);
     }
@@ -71,8 +73,14 @@
   // ─── Routing (popstate / hashchange) ──────────────────────────────────────
 
   function listenForNavigation() {
-    window.addEventListener('popstate', () => FMEPanel.hide());
-    window.addEventListener('hashchange', () => FMEPanel.hide());
+    window.addEventListener('popstate', () => {
+      FMEPanel.hide();
+      if (typeof FMEAcpCssTab !== 'undefined') FMEAcpCssTab.autoApply();
+    });
+    window.addEventListener('hashchange', () => {
+      FMEPanel.hide();
+      if (typeof FMEAcpCssTab !== 'undefined') FMEAcpCssTab.autoApply();
+    });
   }
 
   // ─── Theme re-application ──────────────────────────────────────────────────
@@ -106,7 +114,9 @@
   async function checkPendingPreviewRestore() {
     try {
       const data = await new Promise(resolve =>
-        chrome.storage.session.get({ fme_preview_active: null }, d => resolve(d.fme_preview_active))
+        chrome.storage.local.get({ fme_preview_active: null }, d =>
+          resolve(d ? d.fme_preview_active : null)
+        )
       );
       if (!data || !data.backups || !data.backups.length) return;
 
@@ -157,13 +167,13 @@
         } catch (_) {}
       }
 
-      chrome.storage.session.set({ fme_preview_active: null }, () => {
+      chrome.storage.local.set({ fme_preview_active: null }, () => {
         banner.remove();
       });
     });
 
     banner.querySelector('#fme-restore-skip-btn').addEventListener('click', () => {
-      chrome.storage.session.set({ fme_preview_active: null });
+      chrome.storage.local.set({ fme_preview_active: null });
       banner.remove();
     });
 

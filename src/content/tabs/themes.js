@@ -19,11 +19,26 @@ var FMEThemesTab = (() => {
   let _previewActive   = false;       // prevents double-preview
 
   const ENGINE_LABELS = {
-    invision: 'Invision Community',
-    phpbb3:   'phpBB3',
-    phpbb2:   'phpBB2',
-    punbb:    'PunBB',
-    mybb:     'MyBB',
+    invision:   'Invision Community',
+    phpbb3:     'phpBB3',
+    phpbb2:     'phpBB2',
+    punbb:      'PunBB',
+    mybb:       'MyBB',
+    prosilver:  'phpBB3 (prosilver)',
+    subsilver:  'phpBB2 (subsilver)',
+    subsilver2: 'phpBB2 (subsilver2)',
+  };
+
+  // Maps manifest minEngine values → canonical engine keys used by the forum
+  const ENGINE_ALIASES = {
+    phpbb3:     ['phpbb3', 'prosilver'],
+    phpbb2:     ['phpbb2', 'subsilver', 'subsilver2'],
+    prosilver:  ['phpbb3', 'prosilver'],
+    subsilver:  ['phpbb2', 'subsilver', 'subsilver2'],
+    subsilver2: ['phpbb2', 'subsilver', 'subsilver2'],
+    invision:   ['invision'],
+    punbb:      ['punbb'],
+    mybb:       ['mybb'],
   };
 
   const BANNER_ID = 'fme-preview-banner';
@@ -363,6 +378,18 @@ var FMEThemesTab = (() => {
     const progressEl = content.querySelector('#fme-install-progress');
 
     content.querySelector('#fme-modal-install-btn,#fme-modal-reinstall-btn')?.addEventListener('click', async (e) => {
+      // Version compatibility check before installing
+      const requiredForInstall = manifest.minEngine || theme.minEngine || '';
+      if (requiredForInstall) {
+        const detectedForInstall = await detectForumEngine();
+        if (detectedForInstall && !engineCompatible(detectedForInstall, requiredForInstall)) {
+          const detLabel = ENGINE_LABELS[detectedForInstall] || detectedForInstall;
+          setModalStatus(statusEl, 'error',
+            `Incompatibil: forumul tau foloseste ${detLabel}, tema necesita ${escHtml(requiredForInstall)}.`);
+          return;
+        }
+      }
+
       e.target.disabled = true;
       e.target.value = 'Se instaleaza...';
       statusEl.innerHTML = '';
@@ -410,33 +437,34 @@ var FMEThemesTab = (() => {
     });
 
     content.querySelector('#fme-modal-preview-btn').addEventListener('click', async () => {
-      const btn = content.querySelector('#fme-modal-preview-btn');
-      btn.disabled = true;
-      btn.value = 'Se deschide...';
-      statusEl.innerHTML = '';
-      progressEl.style.display = 'none';
+      // Version compatibility check before preview
+      const requiredForPreview = manifest.minEngine || theme.minEngine || '';
+      if (requiredForPreview) {
+        const detectedForPreview = await detectForumEngine();
+        if (detectedForPreview && !engineCompatible(detectedForPreview, requiredForPreview)) {
+          const detLabel = ENGINE_LABELS[detectedForPreview] || detectedForPreview;
+          setModalStatus(statusEl, 'error',
+            `Preview imposibil: forumul tau foloseste ${detLabel}, tema necesita ${escHtml(requiredForPreview)}.`);
+          return;
+        }
+      }
 
       const vars = getVariableValues(content);
 
       if (hasTemplates && tid) {
-        // Full preview: CSS + templates
-        const result = await previewWithTemplates(theme, manifest, vars);
-        if (result.ok) {
-          const errInfo = result.errors && result.errors.length
-            ? ` (${result.errors.length} template-uri au esuat)`
-            : '';
-          setModalStatus(statusEl, 'success', `Preview activ: ${result.installed} template-uri instalate${errInfo}. Se restaureaza automat in 5 min.`);
-        } else {
-          setModalStatus(statusEl, 'error', result.message || 'Eroare la preview.');
-        }
+        // Full preview with templates — show progress modal
+        showPreviewProgressModal(theme, manifest, vars);
       } else {
         // Basic CSS-only preview
+        const btn = content.querySelector('#fme-modal-preview-btn');
+        btn.disabled = true;
+        btn.value = 'Se deschide...';
+        statusEl.innerHTML = '';
         await handlePreview(null, theme, manifest, vars);
         setModalStatus(statusEl, 'success', 'Preview deschis in tab nou (15s).');
+        btn.value = previewBtnLabel;
+        btn.disabled = false;
       }
-
-      btn.value = previewBtnLabel;
-      btn.disabled = false;
     });
 
     content.querySelector('#fme-modal-cancel-btn').addEventListener('click', closeModal);
@@ -510,8 +538,12 @@ var FMEThemesTab = (() => {
   function engineCompatible(detected, required) {
     if (!detected || !required) return null;
     const norm = s => s.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const d = norm(detected), r = norm(required);
-    return d === r || d.startsWith(r) || r.startsWith(d);
+    const d = norm(detected);
+    const r = norm(required);
+    if (d === r) return true;
+    // Check alias expansion: phpbb3 ↔ prosilver, phpbb2 ↔ subsilver/subsilver2
+    const aliases = ENGINE_ALIASES[r] || [r];
+    return aliases.some(alias => norm(alias) === d);
   }
 
   // ─── Component rows (collapsed if > INLINE_LIMIT) ────────────────────────────
@@ -685,6 +717,94 @@ var FMEThemesTab = (() => {
     return { installed, errors };
   }
 
+  // ─── Preview progress modal ───────────────────────────────────────────────────
+
+  /**
+   * Shows a progress modal that replaces the install modal body while
+   * running previewWithTemplates. On completion opens the forum tab with ?tt=1.
+   */
+  function showPreviewProgressModal(theme, manifest, vars) {
+    // Re-use the existing modal overlay — clear its body and replace
+    if (!_modal) return;
+
+    const modalEl = _modal.querySelector('.fme-modal');
+    if (!modalEl) return;
+
+    const header = modalEl.querySelector('.fme-modal-header .fme-modal-title');
+    if (header) header.textContent = `Preview: ${manifest.name || theme.name}`;
+
+    const body = modalEl.querySelector('.fme-modal-body');
+    body.innerHTML = `
+      <div id="fme-preview-progress-wrap" style="padding:8px 0;">
+        <div id="fme-preview-progress-steps" style="font-size:12px;line-height:1.8;color:#555;min-height:120px;max-height:260px;overflow-y:auto;margin-bottom:12px;"></div>
+        <div id="fme-preview-progress-bar-wrap"
+             style="background:#e8e8e8;border-radius:4px;height:8px;overflow:hidden;margin-bottom:12px;">
+          <div id="fme-preview-progress-bar"
+               style="background:#27ae60;height:100%;width:0%;transition:width 0.3s;"></div>
+        </div>
+        <div id="fme-preview-progress-status" style="font-size:12px;color:#27ae60;font-weight:600;min-height:20px;"></div>
+        <div style="margin-top:14px;">
+          <input type="button" id="fme-preview-progress-close" value="Inchide" disabled />
+        </div>
+      </div>
+    `;
+
+    const stepsEl  = body.querySelector('#fme-preview-progress-steps');
+    const barEl    = body.querySelector('#fme-preview-progress-bar');
+    const statusEl = body.querySelector('#fme-preview-progress-status');
+    const closeBtn = body.querySelector('#fme-preview-progress-close');
+
+    closeBtn.addEventListener('click', closeModal);
+
+    const tplCount = (manifest.files?.templates || []).length;
+    let   stepsDone = 0;
+    // Total steps: tplCount backups + tplCount installs + 1 (open tab) = 2*tplCount+1
+    const totalSteps = Math.max(tplCount * 2 + 1, 1);
+
+    function addStep(msg, isError) {
+      const line = document.createElement('div');
+      line.style.cssText = isError
+        ? 'color:#e74c3c;padding:1px 0;'
+        : 'color:#555;padding:1px 0;';
+      line.textContent = msg;
+      stepsEl.appendChild(line);
+      stepsEl.scrollTop = stepsEl.scrollHeight;
+
+      stepsDone++;
+      barEl.style.width = Math.min(100, Math.round((stepsDone / totalSteps) * 100)) + '%';
+    }
+
+    function progressCb(msg) { addStep(msg, false); }
+
+    // Run the preview async
+    (async () => {
+      addStep('Se pregateste preview-ul\u2026', false);
+
+      const result = await previewWithTemplates(theme, manifest, vars, progressCb);
+
+      if (!result.ok) {
+        addStep('Eroare: ' + (result.message || 'Necunoscuta'), true);
+        statusEl.style.color = '#e74c3c';
+        statusEl.textContent = 'Preview esuat.';
+        barEl.style.background = '#e74c3c';
+        closeBtn.disabled = false;
+        return;
+      }
+
+      barEl.style.width = '100%';
+
+      const errInfo = result.errors && result.errors.length
+        ? ` (${result.errors.length} template-uri au esuat)`
+        : '';
+      addStep(`\u2713 ${result.installed} template-uri instalate${errInfo}`, false);
+      addStep('\u2713 Se deschide tabul forum\u2026', false);
+
+      statusEl.textContent =
+        `Preview activ: ${result.installed} template-uri${errInfo}. Se restaureaza automat in 5 min.`;
+      closeBtn.disabled = false;
+    })();
+  }
+
   // ─── Preview with templates (Preview C) ──────────────────────────────────────
 
   /**
@@ -695,8 +815,9 @@ var FMEThemesTab = (() => {
    * @param {object} [vars={}]
    * @returns {Promise<{ ok: boolean, message?: string, installed?: number, errors?: Array }>}
    */
-  async function previewWithTemplates(theme, manifest, vars) {
+  async function previewWithTemplates(theme, manifest, vars, progressCb) {
     vars = vars || {};
+    progressCb = typeof progressCb === 'function' ? progressCb : () => {};
 
     if (_previewActive) return { ok: false, message: 'Preview deja activ.' };
 
@@ -712,6 +833,7 @@ var FMEThemesTab = (() => {
     let cssText = '';
     if (cssFiles.length > 0) {
       try {
+        progressCb('Se incarca fisierele CSS…');
         const cssTexts = await Promise.all(
           cssFiles.map(f => FMEGitHub.fetchRaw(
             _settings.themesOwner, _settings.themesRepo,
@@ -731,6 +853,7 @@ var FMEThemesTab = (() => {
 
     for (const tpl of tplFiles) {
       try {
+        progressCb(`Backup: ${tpl.id || tpl.label}…`);
         const editUrl = await FMEForumAPI.findTemplateEditUrl(tid, tpl.id, tpl.category || null);
         if (!editUrl) throw new Error('negasit');
 
@@ -745,6 +868,7 @@ var FMEThemesTab = (() => {
         });
 
         // Fetch new content from GitHub
+        progressCb(`Instaleaza: ${tpl.id || tpl.label}…`);
         const newContent = await FMEGitHub.fetchRaw(
           _settings.themesOwner, _settings.themesRepo,
           `${themePath}/${tpl.file}`, 'main', _settings.githubToken || null
@@ -774,9 +898,12 @@ var FMEThemesTab = (() => {
     // Step 4: show preview banner
     showPreviewBanner(manifest.name || theme.name, PREVIEW_DURATION_MS, () => restoreFromPreview());
 
-    // Step 5: open forum tab with CSS
+    // Step 5: open forum tab with ?tt=1 (templates modified, not published) + inject CSS
+    const forumPreviewUrl = window.location.origin + '/?tt=1';
     if (cssText) {
-      try { await FMEGitHub.previewOnForum(cssText, PREVIEW_DURATION_MS); } catch (_) {}
+      try { await FMEGitHub.previewOnForum(cssText, PREVIEW_DURATION_MS, forumPreviewUrl); } catch (_) {}
+    } else {
+      try { window.open(forumPreviewUrl, '_blank'); } catch (_) {}
     }
 
     // Step 6: auto-restore after duration
@@ -934,13 +1061,13 @@ var FMEThemesTab = (() => {
 
   function setSessionStorage(key, value) {
     return new Promise(resolve =>
-      chrome.storage.session.set({ [key]: value }, resolve)
+      chrome.storage.local.set({ [key]: value }, resolve)
     );
   }
 
   function getSessionStorage(key) {
     return new Promise(resolve =>
-      chrome.storage.session.get({ [key]: null }, d => resolve(d[key]))
+      chrome.storage.local.get({ [key]: null }, d => resolve(d ? d[key] : null))
     );
   }
 

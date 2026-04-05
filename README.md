@@ -2,7 +2,7 @@
 
 > A Chrome extension that enhances the Forumotion / ForumGratuit admin control panel (ACP) with professional theme management, template editing, and automatic update notifications.
 
-![Version](https://img.shields.io/badge/version-1.2.0-blue)
+![Version](https://img.shields.io/badge/version-1.3.0-blue)
 ![Manifest](https://img.shields.io/badge/manifest-v3-green)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
@@ -18,21 +18,27 @@
 - [Architecture Overview](#architecture-overview)
 - [Related Repositories](#related-repositories)
 - [Changelog](#changelog)
+- [Roadmap](#roadmap)
 - [Contributing](#contributing)
 
 ---
 
 ## Features
 
-| Tab | Description |
-|-----|-------------|
-| **Teme** | Browse and install CSS themes from the [forumotion-themes](https://github.com/ForumotionExt/forumotion-themes) catalog. Includes live forum preview (15 seconds), filtering by engine, and search. |
-| **Template-uri** | Edit native Forumotion templates directly from the ACP using a built-in code editor. Reset templates to default with one click. |
-| **Administrare teme** | Export, import, and restore Forumotion themes in `.bbtheme` format. |
-| **Actualizări** | Automatic update check every 6 hours. Displays changelog and shows a `NEW` badge on the extension icon when an update is available. |
-| **Setări** | Configure GitHub repositories, Personal Access Token (PAT), and auto-update behaviour. Settings sync across devices via Chrome Storage. |
+| Tab | Group | Description |
+|-----|-------|-------------|
+| **Teme** | Conținut | Browse and install CSS themes from the [forumotion-themes](https://github.com/ForumotionExt/forumotion-themes) catalog. Live preview, version compatibility check (phpBB3 ↔ prosilver, phpBB2 ↔ subsilver), CSS variable support, and real-time progress modal for template previews. |
+| **Template-uri** | Conținut | Edit native Forumotion templates directly from the ACP. Reset to default with one click. |
+| **ACP Styles** | CSS & JS | Inject custom CSS into the ACP. Built-in Dark 2026 preset, CSS file upload, and live style guard (auto-reinjection on SPA navigation). |
+| **Forum CSS** | CSS & JS | Inject custom CSS into forum (non-admin) pages via the Forum Injector. Forum Dark 2026 preset and file upload included. |
+| **Widgets JS** | CSS & JS | Manage named JavaScript snippets that auto-run on ACP and/or forum pages. Executed via `chrome.scripting.executeScript` — bypasses both extension and page CSP. |
+| **Statistici** | Utile | Overview of installed themes, CSS file sizes, widget and note counts, storage usage, and on-demand forum statistics. |
+| **Notițe** | Utile | Multi-tab personal notepad (up to 5 notes) with 1.5-second auto-save. |
+| **Backup & Restore** | Utile | Export all FME data (themes, CSS, widgets, notes, settings) to a dated JSON file. Restore from any previous backup. |
+| **Actualizări** | Meta | Automatic version check every 6 hours. Full changelog, rollback links, skip-version support, and `NEW` badge on the extension icon. |
+| **Setări** | Meta | Configure GitHub repositories, Personal Access Token (PAT), and update preferences. Synced across devices via `chrome.storage.sync`. |
 
-A **standalone Dashboard** page is also available from the extension popup, providing a quick overview of installed themes and extension status.
+A **standalone Dashboard** page is accessible from the extension popup. The **Forum Injector** content script automatically applies Forum CSS and forum-targeted widgets on all non-admin forum pages.
 
 ---
 
@@ -90,28 +96,40 @@ Settings are stored in `chrome.storage.sync` and synced across all devices signe
 forumotion-extension/
 ├── icons/                        # Extension icons (16px, 48px, 128px)
 ├── manifest.json                 # Chrome Extension Manifest V3
-├── version.json                  # Current version, release date, and changelog
+├── version.json                  # Current version, release date, changelog, and roadmap
+├── widgets-examples/             # Ready-to-use widget snippets (copy-paste into Widgets JS tab)
+│   ├── README.md
+│   ├── acp/                      # ACP widgets: clock, quick-search, word-counter, confirm, back-to-top
+│   ├── forum/                    # Forum widgets: banner, ticker, dark-toggle, progress-bar, word-count, etc.
+│   └── both/                     # ACP + Forum: toast notifications, keyboard shortcuts
 └── src/
     ├── background/
-    │   └── service-worker.js     # GitHub API requests, update checks, badge management
+    │   └── service-worker.js     # GitHub API, update checks, badge, chrome.scripting widget execution
     ├── content/
-    │   ├── content.js            # Entry point: initialises panel, handles navigation
-    │   ├── forum-api.js          # Reads/writes Forumotion admin templates (same-origin)
+    │   ├── content.js            # Entry point: panel init, navigation, ACP widget runner
+    │   ├── forum-api.js          # Reads/writes Forumotion admin templates (same-origin fetch)
     │   ├── github.js             # GitHub API wrapper (delegates to service worker)
-    │   ├── panel.js              # Injects FME nav tab, manages section routing
+    │   ├── panel.js              # FME nav tab, 10-section routing with 4 sidebar groups
+    │   ├── forum-injector.js     # Non-admin pages: applies Forum CSS + forum-targeted widgets
     │   └── tabs/
-    │       ├── themes.js         # Theme browser, installer, preview, filtering
+    │       ├── themes.js         # Theme browser, install, preview, version compatibility check
     │       ├── templates.js      # Template editor with category tabs
-    │       ├── updates.js        # Version check and changelog display
-    │       └── settings.js       # Settings form and Chrome Storage persistence
+    │       ├── acp-css.js        # ACP custom CSS editor with Dark 2026 preset and style guard
+    │       ├── forum-css.js      # Forum custom CSS editor with Forum Dark 2026 preset
+    │       ├── widgets.js        # JS snippets manager (CRUD, target: acp/forum/both, enable/disable)
+    │       ├── notes.js          # Multi-tab notepad with auto-save
+    │       ├── backup.js         # Export/import all FME data as JSON
+    │       ├── stats.js          # Extension + forum stats overview
+    │       ├── updates.js        # Version check, changelog, rollback, skip-version
+    │       └── settings.js       # Settings form with chrome.storage.sync
     ├── popup/
     │   ├── popup.html            # Extension popup UI
-    │   └── popup.js              # Popup logic (page detection, status, navigation)
+    │   └── popup.js              # Popup logic (page detection, navigation)
     ├── dashboard/
     │   ├── index.html            # Standalone dashboard page
     │   └── dashboard.js          # Dashboard functionality
     └── styles/
-        ├── panel.css             # Panel layout, modals, and UI components
+        ├── panel.css             # Panel layout, sidebar groups, modals, UI components
         └── themes-tab.css        # Theme-tab–specific styling
 ```
 
@@ -158,7 +176,19 @@ The extension follows a **distributed, message-passing architecture** across thr
 
 ## Changelog
 
-### v1.2.0
+### v1.3.0 — 2026-04-05
+- **5 new tabs:** Forum CSS, Widgets JS, Notițe, Backup & Restore, Statistici
+- **Forum Injector:** separate content script that applies Forum CSS and widgets on non-admin pages
+- **Panel groups:** sidebar organised into 4 sections — Conținut, CSS & JS, Utile, Meta (10 sections total)
+- **Version compatibility:** phpBB3 ↔ prosilver and phpBB2 ↔ subsilver/subsilver2 alias resolution blocks incompatible installs and previews
+- **Preview progress modal:** full template preview shows real-time step-by-step progress with progress bar
+- **`?tt=1` on preview tab:** template-based preview tab opens forum with unpublished template changes visible
+- **Widget execution:** `chrome.scripting.executeScript` (world: MAIN) bypasses both extension CSP and page CSP
+- **Widget examples:** `widgets-examples/` folder with 11 ready-to-use snippets for ACP, forum, and both
+- Fix: `chrome.storage.session` → `chrome.storage.local` (session storage unavailable in content scripts)
+- Fix: `chrome.tabs.create` → `window.open` in all tabs (tabs API unavailable in content scripts)
+
+### v1.2.0 — 2026-04-05
 - Theme install modal: 3-step guided process with variable support
 - `installTemplates`, `previewWithTemplates`, and `restoreFromPreview` APIs
 - Preview banner shown during live forum theme preview
@@ -179,6 +209,25 @@ The extension follows a **distributed, message-passing architecture** across thr
 - **Actualizări** tab: automatic version check
 - **Setări** tab: GitHub repository and PAT configuration
 - Domain support: `forumgratuit.ro`, `forumotion.com`, `forumotion.net`, `forumotion.eu`
+
+---
+
+## Roadmap
+
+Funcționalități planificate pentru versiunile viitoare:
+
+| Feature | Description |
+|---------|-------------|
+| 🦊 **Suport Firefox & Edge** | Portarea extensiei pentru Mozilla Firefox și Microsoft Edge (Manifest V3). |
+| 🏪 **Marketplace widget-uri** | Catalog online de widget-uri JS contribuite de comunitate, instalabile direct din tab-ul Widgets JS. |
+| 🌐 **Suport multi-forum** | Gestionarea mai multor forumuri din același dashboard, cu profiluri separate de setări. |
+| 🔔 **Notificări teme noi** | Alertă automată când sunt adăugate teme noi în catalogul de teme. |
+| 🌙 **Dark mode Dashboard** | Temă întunecată pentru pagina Dashboard, cu preferință salvată per browser. |
+| 🔍 **Filtrare avansată teme** | Filtrare după motor de forum, culoare dominantă, autor și dată publicare. |
+| 📦 **Export temă completă (.fmetheme)** | Pachetare temă + template-uri într-un singur fișier pentru distribuire și reinstalare simplă. |
+| ⚡ **Live CSS preview în ACP** | Preview CSS în timp real direct în ACP, fără a deschide un tab nou. |
+| ⏰ **Scheduler widget-uri** | Activarea/dezactivarea automată a widget-urilor după un program configurabil. |
+| 🎨 **Syntax highlighting** | Colorare sintactică în editorii CSS (ACP Styles, Forum CSS) și JS (Widgets). |
 
 ---
 

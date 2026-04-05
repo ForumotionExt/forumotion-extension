@@ -2,8 +2,8 @@
   "manifest_version": 3,
   "name": "Forumotion Extension",
   "short_name": "FME",
-  "version": "1.2.0",
-  "description": "Enhanced admin panel for Forumotion/ForumGratuit: themes, templates, and update management.",
+  "version": "1.3.0",
+  "description": "Enhanced admin panel for Forumotion/ForumGratuit: themes, templates, CSS editor, widgets, notes, backup, and update management.",
   "icons": {
     "16": "icons/icon16.png",
     "48": "icons/icon48.png",
@@ -39,12 +39,38 @@
         "src/content/tabs/themes.js",
         "src/content/tabs/templates.js",
         "src/content/tabs/updates.js",
+        "src/content/tabs/acp-css.js",
+        "src/content/tabs/forum-css.js",
+        "src/content/tabs/widgets.js",
+        "src/content/tabs/stats.js",
+        "src/content/tabs/notes.js",
+        "src/content/tabs/backup.js",
         "src/content/panel.js",
         "src/content/content.js"
       ],
       "css": [
         "src/styles/panel.css",
         "src/styles/themes-tab.css"
+      ],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": [
+        "*://*.forumgratuit.ro/*",
+        "*://*.forumotion.com/*",
+        "*://*.forumotion.net/*",
+        "*://*.forumotion.eu/*"
+      ],
+      "exclude_matches": [
+        "*://*.forumgratuit.ro/admin*",
+        "*://*.forumgratuit.ro/adminhd*",
+        "*://*.forumotion.com/admin*",
+        "*://*.forumotion.net/admin*",
+        "*://*.forumotion.eu/admin*",
+        "*://*.forumotion.eu/adminhd*"
+      ],
+      "js": [
+        "src/content/forum-injector.js"
       ],
       "run_at": "document_idle"
     }
