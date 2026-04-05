@@ -407,3 +407,17 @@ dt label {
   color: #888;
   font-size: 13px;
 }
+
+/* ─── Changelog type badges (Updates tab) ────────────────────────────────── */
+.fme-cl-badge-feature,
+.fme-cl-badge-bugfix,
+.fme-cl-badge-other {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: bold;
+  margin-bottom: 3px;
+}
+
+.fme-cl-badge-feature { color: #1a7a4a; margin-bottom: 3px; }
+.fme-cl-badge-bugfix  { color: #a94442; margin-bottom: 3px; }
+.fme-cl-badge-other   { color: #555555; margin-bottom: 3px; }

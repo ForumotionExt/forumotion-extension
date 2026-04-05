@@ -217,19 +217,19 @@ var FMEUpdatesTab = (() => {
     let html = '';
     if (features.length) {
       html += `<div style="margin-bottom:6px;">
-        <div style="font-size:11px;font-weight:bold;color:#555;margin-bottom:3px;">✨ FEATURES</div>
+        <div class="${TYPE_META.feature.badgeClass}">${TYPE_META.feature.icon} FEATURES</div>
         <ul style="margin:0;padding-left:18px;">${features.map(n => `<li style="font-size:11px;">${escHtml(n.text)}</li>`).join('')}</ul>
       </div>`;
     }
     if (bugfixes.length) {
       html += `<div style="margin-bottom:6px;">
-        <div style="font-size:11px;font-weight:bold;color:#555;margin-bottom:3px;">🐛 BUGFIXES</div>
+        <div class="${TYPE_META.bugfix.badgeClass}">${TYPE_META.bugfix.icon} BUGFIXES</div>
         <ul style="margin:0;padding-left:18px;">${bugfixes.map(n => `<li style="font-size:11px;">${escHtml(n.text)}</li>`).join('')}</ul>
       </div>`;
     }
     if (others.length) {
       html += `<div style="margin-bottom:6px;">
-        <div style="font-size:11px;font-weight:bold;color:#555;margin-bottom:3px;">📝 OTHER</div>
+        <div class="${TYPE_META.other.badgeClass}">${TYPE_META.other.icon} OTHER</div>
         <ul style="margin:0;padding-left:18px;">${others.map(n => `<li style="font-size:11px;">${escHtml(n.text)}</li>`).join('')}</ul>
       </div>`;
     }

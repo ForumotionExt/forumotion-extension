@@ -81,12 +81,16 @@ async function maybeSendUpdateNotification(settings, latestVersion, data) {
   const freqMs = { '6h': 6, '12h': 12, '24h': 24 }[freq] * 60 * 60 * 1000;
   if (Date.now() - lastTime < freqMs) return;
 
-  // Collect top 3 feature notes for the snippet
+  // Collect top 3 notes for the snippet, preferring feature-type entries
   const latestEntry = (data.changelog || []).find(e => e.version === latestVersion) || {};
-  const notes = (latestEntry.notes || []).slice(0, 3).map(n => {
-    const text = typeof n === 'string' ? n : (n.text || '');
-    return text;
-  }).filter(Boolean);
+  const allNotes = (latestEntry.notes || []).map(n =>
+    typeof n === 'string' ? { type: 'other', text: n } : n
+  ).filter(n => n.text);
+  const featureNotes = allNotes.filter(n => n.type === 'feature');
+  const topNotes = featureNotes.length
+    ? featureNotes.slice(0, 3)
+    : allNotes.slice(0, 3);
+  const notes = topNotes.map(n => n.text);
 
   const message = notes.length
     ? notes.map(n => `• ${n}`).join('\n')
