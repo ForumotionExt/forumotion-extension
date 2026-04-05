@@ -378,7 +378,7 @@ var FMEPluginsTab = (() => {
           </div>
           <textarea readonly
             style="width:100%;min-height:350px;font-family:Consolas,'Cascadia Code',monospace;font-size:12px;
-                   line-height:1.5;padding:10px;border:1px solid #ddd;border-radius:4px;background:#fafafa;
+                   line-height:1.5;padding:10px;border:1px solid var(--fme-border,#ddd);border-radius:4px;background:var(--fme-surface,#fafafa);
                    box-sizing:border-box;resize:vertical;"
           >${escHtml(plugin.code)}</textarea>
         </div>

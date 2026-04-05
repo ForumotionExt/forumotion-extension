@@ -592,13 +592,13 @@ var FMESeoTab = (() => {
     // Score badge
     const scoreColor = results.score >= 80 ? '#10b981' : results.score >= 50 ? '#f39c12' : '#e74c3c';
     let html = '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;padding:10px;' +
-      'background:#f9f9fb;border:1px solid #e0e0e0;border-radius:6px;">' +
+      'background:var(--fme-card,#f9f9fb);border:1px solid var(--fme-border,#e0e0e0);border-radius:6px;">' +
       '<div style="text-align:center;">' +
         '<div style="font-size:32px;font-weight:bold;color:' + scoreColor + ';">' + results.score + '</div>' +
-        '<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.05em;">Scor SEO</div>' +
+        '<div style="font-size:10px;color:var(--fme-muted,#888);text-transform:uppercase;letter-spacing:0.05em;">Scor SEO</div>' +
       '</div>' +
       '<div style="flex:1;">' +
-        '<div style="font-size:11px;color:#555;">' +
+        '<div style="font-size:11px;color:var(--fme-muted,#555);">' +
           '<strong style="color:' + scoreColor + ';">' +
             (results.score >= 80 ? 'Bine!' : results.score >= 50 ? 'Acceptabil' : 'Necesită îmbunătățiri') +
           '</strong> — ' + results.checks.filter(c => c.status === 'pass').length + ' OK, ' +
@@ -746,16 +746,16 @@ var FMESeoTab = (() => {
 
   function renderLinksAnalysis(area, links) {
     let html = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;padding:10px;' +
-      'background:#f9f9fb;border:1px solid #e0e0e0;border-radius:6px;">' +
+      'background:var(--fme-card,#f9f9fb);border:1px solid var(--fme-border,#e0e0e0);border-radius:6px;">' +
       '<div style="text-align:center;min-width:80px;">' +
         '<div style="font-size:24px;font-weight:bold;color:#3498db;">' + links.total + '</div>' +
-        '<div style="font-size:10px;color:#888;">Total</div></div>' +
+        '<div style="font-size:10px;color:var(--fme-muted,#888);">Total</div></div>' +
       '<div style="text-align:center;min-width:80px;">' +
         '<div style="font-size:24px;font-weight:bold;color:#10b981;">' + links.internal.length + '</div>' +
-        '<div style="font-size:10px;color:#888;">Interne</div></div>' +
+        '<div style="font-size:10px;color:var(--fme-muted,#888);">Interne</div></div>' +
       '<div style="text-align:center;min-width:80px;">' +
         '<div style="font-size:24px;font-weight:bold;color:#e8703a;">' + links.external.length + '</div>' +
-        '<div style="font-size:10px;color:#888;">Externe</div></div>' +
+        '<div style="font-size:10px;color:var(--fme-muted,#888);">Externe</div></div>' +
       '<div style="text-align:center;min-width:80px;">' +
         '<div style="font-size:24px;font-weight:bold;color:#e74c3c;">' + links.emptyAnchors.length + '</div>' +
         '<div style="font-size:10px;color:#888;">Fără text</div></div>' +

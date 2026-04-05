@@ -671,7 +671,7 @@ var FMEWidgetsTab = (() => {
       return `
         <tr data-builtin-id="${escHtml(bw.id)}">
           <td><strong>${escHtml(bw.name)}</strong></td>
-          <td style="color:#666;">${escHtml(bw.description)}</td>
+          <td style="color:var(--fme-muted,#666);">${escHtml(bw.description)}</td>
           <td><span class="fme-badge ${tm.badge}">${tm.text}</span></td>
           <td style="width:150px;white-space:nowrap;">
             ${installed
@@ -687,9 +687,9 @@ var FMEWidgetsTab = (() => {
     section.innerHTML = `
       <div class="panel-menu">
         <br/>
-        <fieldset style="margin:0 12px 12px 12px;border-color:#4a7ebf;">
-          <legend style="color:#4a7ebf;font-weight:600;">&#128230; Catalog widget-uri</legend>
-          <p style="margin:4px 0 8px 0;color:#666;font-size:11px;">Widget-uri predefinite gata de instalare. Instalarea adaugă widget-ul în lista ta unde îl poți activa/dezactiva sau edita.</p>
+        <fieldset style="margin:0 12px 12px 12px;border-color:var(--fme-accent,#4a7ebf);">
+          <legend style="color:var(--fme-accent,#4a7ebf);font-weight:600;">&#128230; Catalog widget-uri</legend>
+          <p style="margin:4px 0 8px 0;color:var(--fme-muted,#666);font-size:11px;">Widget-uri predefinite gata de instalare. Instalarea adaugă widget-ul în lista ta unde îl poți activa/dezactiva sau edita.</p>
           <table class="fme-table">
             <thead>
               <tr>
@@ -778,7 +778,7 @@ var FMEWidgetsTab = (() => {
                     <strong>${escHtml(w.name)}</strong>
                     ${isBuiltin ? '<span class="fme-badge fme-badge-version" style="margin-left:4px;font-size:10px;">built-in</span>' : ''}
                   </td>
-                  <td style="color:#666;">${escHtml(w.description || '—')}</td>
+                  <td style="color:var(--fme-muted,#666);">${escHtml(w.description || '—')}</td>
                   <td><span class="fme-badge ${tm.badge}">${tm.text}</span></td>
                   <td>
                     <input type="button" class="fme-widget-edit"   data-idx="${i}" value="Editează" />
@@ -833,9 +833,9 @@ var FMEWidgetsTab = (() => {
     section.innerHTML = `
       <div class="panel-menu">
         <br/>
-        <fieldset style="margin:0 12px 12px 12px;border-color:#f39c12;background:#fffdf5;">
+        <fieldset style="margin:0 12px 12px 12px;border-color:var(--fme-warn,#f39c12);background:var(--fme-card,#fffdf5);">
           <legend style="color:#e67e22;font-weight:600;">&#128155; Susține proiectul FME</legend>
-          <p style="margin:4px 0 10px 0;color:#555;font-size:11px;line-height:1.6;">
+          <p style="margin:4px 0 10px 0;color:var(--fme-muted,#555);font-size:11px;line-height:1.6;">
             FME (Forumotion Manager Extension) este un proiect open-source gratuit.<br/>
             Dacă îți este util, poți susține dezvoltarea continuă printr-o donație simbolică. Mulțumim!
           </p>
@@ -875,7 +875,7 @@ var FMEWidgetsTab = (() => {
     if (!editorArea) return;
 
     editorArea.innerHTML = `
-      <fieldset style="background:#f9f9ff;border-color:#9b8fcc;">
+      <fieldset style="background:var(--fme-card,#f9f9ff);border-color:var(--fme-accent,#9b8fcc);">
         <legend>${isNew ? 'Widget nou' : `Editează: ${escHtml(w.name)}`}</legend>
         <dl>
           <dt><label for="fme-widget-name">Nume *:</label></dt>
@@ -903,10 +903,10 @@ var FMEWidgetsTab = (() => {
           <dt><label for="fme-widget-code">Cod JavaScript *:</label></dt>
           <dd>
             <textarea id="fme-widget-code"
-              style="width:100%;height:260px;font-family:Consolas,'Cascadia Code',monospace;font-size:12px;line-height:1.6;padding:10px;border:1px solid #9b8fcc;border-radius:4px;resize:vertical;background:#0f1117;color:#e2e8f0;tab-size:2;"
+              style="width:100%;height:260px;font-family:Consolas,'Cascadia Code',monospace;font-size:12px;line-height:1.6;padding:10px;border:1px solid var(--fme-accent,#9b8fcc);border-radius:4px;resize:vertical;background:#0f1117;color:#e2e8f0;tab-size:2;"
               placeholder="// Codul rulează la fiecare încărcare de pagină (în contextul content script)&#10;// document, window, și fetch sunt disponibile&#10;document.title = '★ ' + document.title;"
             >${escHtml(w.code)}</textarea>
-            <small style="color:#888;">Rulează la fiecare încărcare a paginii vizate. Poți folosi <code>document</code>, <code>window</code>, <code>fetch</code>.</small>
+            <small style="color:var(--fme-muted,#888);">Rulează la fiecare încărcare a paginii vizate. Poți folosi <code>document</code>, <code>window</code>, <code>fetch</code>.</small>
           </dd>
         </dl>
         <div class="div_btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;">

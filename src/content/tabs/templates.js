@@ -38,8 +38,8 @@ var FMETemplatesTab = (() => {
         /* Override default table styles for better readability */ 
         .panel_menu {
             margin: 0px !important;
-            background-color: #fff !important;
-            border: 1px solid #cdcdcd !important;;
+            background-color: var(--fme-card, #fff) !important;
+            border: 1px solid var(--fme-border, #cdcdcd) !important;;
             padding: 0 0 10px 0 !important;
             border-width: 1px !important;
         }
@@ -69,7 +69,7 @@ var FMETemplatesTab = (() => {
         <strong> Înainte de orice modificare </strong>, vă recomandăm să <strong> faceți o copie de rezervă </strong> a template-ului dvs.!</p>
       </blockquote>
       <div class="fme-filter-tabs" id="fme-tpl-categories"></div>
-      <div class="panel-menu" style="margin: 0px !important; background-color: #fff !important; border: 1px solid #cdcdcd !important; padding: 0 0 10px 0 !important; border-width: 1px !important;">
+      <div class="panel-menu" style="margin: 0px !important; background-color: var(--fme-card, #fff) !important; border: 1px solid var(--fme-border, #cdcdcd) !important; padding: 0 0 10px 0 !important; border-width: 1px !important;">
         <br />
         <fieldset style="margin:0 12px 12px 12px;">
           <legend>Lista template-urilor</legend>
@@ -508,14 +508,14 @@ var FMETemplatesTab = (() => {
                 width: 100%;
                 min-height: 400px;
                 resize: vertical;
-                border: 1px solid #ddd;
+                border: 1px solid var(--fme-border, #ddd);
                 border-radius: 4px;
                 padding: 12px;
                 tab-size: 2;
                 -moz-tab-size: 2;
                 outline: none;
-                color: #333;
-                background: #fafafa;
+                color: var(--fme-text, #333);
+                background: var(--fme-surface, #fafafa);
                 box-sizing: border-box;
               "
             ></textarea>

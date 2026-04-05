@@ -188,7 +188,7 @@ var FMEUpdatesTab = (() => {
     changelog.forEach(entry => {
       const isInstalled = entry.version === currentVersion;
       const item        = document.createElement('div');
-      item.style.cssText = `padding:10px 12px;border:1px solid ${isInstalled ? '#3c9ebf' : '#ddd'};background:${isInstalled ? '#f0f8fc' : '#fafafa'};margin-bottom:8px;`;
+      item.style.cssText = `padding:10px 12px;border:1px solid ${isInstalled ? 'var(--fme-accent,#3c9ebf)' : 'var(--fme-border,#ddd)'};background:${isInstalled ? 'var(--fme-card,#f0f8fc)' : 'var(--fme-card,#fafafa)'};margin-bottom:8px;`;
 
       const notes    = (entry.notes || []).map(normalizeNote);
       const features = notes.filter(n => n.type === 'feature');
@@ -251,7 +251,7 @@ var FMEUpdatesTab = (() => {
       notes.forEach(n => { if (counts[n.type] !== undefined) counts[n.type]++; });
 
       const card = document.createElement('div');
-      card.style.cssText = `padding:10px 12px;border:1px solid ${isInstalled ? '#3c9ebf' : (isLatest ? '#f0ad4e' : '#ddd')};background:${isInstalled ? '#f0f8fc' : '#fafafa'};margin-bottom:6px;`;
+      card.style.cssText = `padding:10px 12px;border:1px solid ${isInstalled ? 'var(--fme-accent,#3c9ebf)' : (isLatest ? 'var(--fme-warn,#f0ad4e)' : 'var(--fme-border,#ddd)')};background:${isInstalled ? 'var(--fme-card,#f0f8fc)' : 'var(--fme-card,#fafafa)'};margin-bottom:6px;`;
 
       const badgeHtml = isLatest
         ? '<span class="fme-badge fme-badge-update">🆕 Noua versiune</span>'

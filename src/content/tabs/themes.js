@@ -764,13 +764,13 @@ var FMEThemesTab = (() => {
     const body = modalEl.querySelector('.fme-modal-body');
     body.innerHTML = `
       <div id="fme-preview-progress-wrap" style="padding:8px 0;">
-        <div id="fme-preview-progress-steps" style="font-size:12px;line-height:1.8;color:#555;min-height:120px;max-height:260px;overflow-y:auto;margin-bottom:12px;"></div>
+        <div id="fme-preview-progress-steps" style="font-size:12px;line-height:1.8;color:var(--fme-muted,#555);min-height:120px;max-height:260px;overflow-y:auto;margin-bottom:12px;"></div>
         <div id="fme-preview-progress-bar-wrap"
-             style="background:#e8e8e8;border-radius:4px;height:8px;overflow:hidden;margin-bottom:12px;">
+             style="background:var(--fme-surface,#e8e8e8);border-radius:4px;height:8px;overflow:hidden;margin-bottom:12px;">
           <div id="fme-preview-progress-bar"
-               style="background:#27ae60;height:100%;width:0%;transition:width 0.3s;"></div>
+               style="background:var(--fme-success,#27ae60);height:100%;width:0%;transition:width 0.3s;"></div>
         </div>
-        <div id="fme-preview-progress-status" style="font-size:12px;color:#27ae60;font-weight:600;min-height:20px;"></div>
+        <div id="fme-preview-progress-status" style="font-size:12px;color:var(--fme-success,#27ae60);font-weight:600;min-height:20px;"></div>
         <div style="margin-top:14px;">
           <input type="button" id="fme-preview-progress-close" value="Inchide" disabled />
         </div>
@@ -859,13 +859,13 @@ var FMEThemesTab = (() => {
 
     body.innerHTML = `
       <div id="fme-install-progress-wrap" style="padding:8px 0;">
-        <div id="fme-install-progress-steps" style="font-size:12px;line-height:1.8;color:#555;min-height:120px;max-height:300px;overflow-y:auto;margin-bottom:12px;"></div>
+        <div id="fme-install-progress-steps" style="font-size:12px;line-height:1.8;color:var(--fme-muted,#555);min-height:120px;max-height:300px;overflow-y:auto;margin-bottom:12px;"></div>
         <div id="fme-install-progress-bar-wrap"
-             style="background:#e8e8e8;border-radius:4px;height:8px;overflow:hidden;margin-bottom:12px;">
+             style="background:var(--fme-surface,#e8e8e8);border-radius:4px;height:8px;overflow:hidden;margin-bottom:12px;">
           <div id="fme-install-progress-bar"
-               style="background:#27ae60;height:100%;width:0%;transition:width 0.3s;"></div>
+               style="background:var(--fme-success,#27ae60);height:100%;width:0%;transition:width 0.3s;"></div>
         </div>
-        <div id="fme-install-progress-status" style="font-size:12px;color:#27ae60;font-weight:600;min-height:20px;"></div>
+        <div id="fme-install-progress-status" style="font-size:12px;color:var(--fme-success,#27ae60);font-weight:600;min-height:20px;"></div>
         <div style="margin-top:14px;">
           <input type="button" id="fme-install-progress-close" value="Inchide" disabled />
         </div>

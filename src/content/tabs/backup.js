@@ -167,7 +167,7 @@ var FMEBackupTab = (() => {
 
   async function doExport(wrapper) {
     const statusEl = wrapper.querySelector('#fme-export-status');
-    statusEl.style.color = '#666';
+    statusEl.style.color = 'var(--fme-muted, #666)';
     statusEl.textContent  = 'Se pregătește…';
 
     const [local, sync] = await Promise.all([
