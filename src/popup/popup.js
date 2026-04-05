@@ -49,8 +49,8 @@
       const count = Object.keys(data.fme_installed_themes).length;
       const el = document.getElementById('installed-count');
       const footerEl = document.getElementById('theme-count-footer');
-      if (el) el.textContent = count > 0 ? `${count} theme${count > 1 ? 's' : ''} installed` : 'None installed';
-      if (footerEl) footerEl.textContent = count > 0 ? `${count} theme${count > 1 ? 's' : ''} installed` : '';
+      if (el) el.textContent = count > 0 ? `${count} tem${count > 1 ? 'e' : 'ă'} instalat${count > 1 ? 'e' : 'ă'}` : 'Niciuna instalată';
+      if (footerEl) footerEl.textContent = count > 0 ? `${count} tem${count > 1 ? 'e' : 'ă'} instalat${count > 1 ? 'e' : 'ă'}` : '';
     });
   }
 

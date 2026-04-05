@@ -297,7 +297,7 @@ tr.row1:hover, tr.row2:hover,
         <legend>CSS personalizat forum</legend>
         <dl>
             <textarea id="fme-fcss-editor"
-              style="height:380px;font-family:Consolas,'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6;padding:12px;border:1px solid #252d3d;border-radius:6px;resize:vertical;background:#efefef;color:#2a2a2a;tab-size:2;box-sizing:border-box;"
+              style="height:380px;font-family:Consolas,'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6;padding:12px;border:1px solid var(--fme-border,#252d3d);border-radius:6px;resize:vertical;background:var(--fme-surface,#efefef);color:var(--fme-text,#2a2a2a);tab-size:2;box-sizing:border-box;"
               placeholder="/* CSS pentru paginile forumului */&#10;body { background: #0f1117 !important; }"></textarea>
         </dl>
 
@@ -312,17 +312,17 @@ tr.row1:hover, tr.row2:hover,
 
         <div style="display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;">
           <span id="fme-fcss-status" style="font-size:11px;font-weight:600;min-width:140px;"></span>
-          <span id="fme-fcss-info"   style="font-size:11px;font-family:Consolas,monospace;color:#64748b;"></span>
+          <span id="fme-fcss-info"   style="font-size:11px;font-family:Consolas,monospace;color:var(--fme-muted,#64748b);"></span>
         </div>
 
-        <div style="margin-top:8px;padding:8px 10px;background:#f0f8fc;border:1px solid #b3d9ec;border-radius:4px;font-size:11px;color:#2c6e8a;">
+        <div style="margin-top:8px;padding:8px 10px;background:var(--fme-card,#f0f8fc);border:1px solid var(--fme-border,#b3d9ec);border-radius:4px;font-size:11px;color:var(--fme-text,#2c6e8a);">
           <strong>ℹ</strong> CSS-ul este aplicat de <em>Forum Injector</em> pe toate paginile forumului (non-ACP). Nu se poate previzualiza direct din ACP — deschide forumul pentru a vedea efectele.
         </div>
       </fieldset>
 
       <fieldset class="fieldset_left" style="margin-top:14px;">
         <legend>Catalog Snippet CSS</legend>
-        <div style="padding:4px 0 8px;font-size:11px;color:#64748b;">
+        <div style="padding:4px 0 8px;font-size:11px;color:var(--fme-muted,#64748b);">
           Snippet-uri rapide pe care le poți adăuga la CSS-ul tău. Click pe <strong>Adaugă</strong> pentru a insera codul în editor.
         </div>
         <table class="forumline" width="100%" cellspacing="1" cellpadding="4">
@@ -332,7 +332,7 @@ tr.row1:hover, tr.row2:hover,
           ${CSS_SNIPPETS.map((s, i) => `
           <tr class="${i % 2 === 0 ? 'row1' : 'row2'}">
             <td style="width:160px;font-weight:600;">${s.name}</td>
-            <td style="font-size:11px;color:#555;">${s.desc}</td>
+            <td style="font-size:11px;color:var(--fme-muted,#555);">${s.desc}</td>
             <td style="width:80px;text-align:center;">
               <input type="button" class="btn fme-snippet-add" data-snippet-id="${s.id}" value="Adaug\u0103" />
             </td>

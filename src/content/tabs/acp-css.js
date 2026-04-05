@@ -579,7 +579,7 @@ div.avatar {
         <legend>CSS personalizat ACP</legend>
         <dl>
             <textarea id="fme-acp-css-editor"
-            style="height:380px;font-family:Consolas,'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6;padding:12px;border:1px solid #cdcdcd;border-radius:6px;resize:vertical;background:#efefef;color:#2a2a2a;tab-size:2;box-sizing:border-box;"
+            style="height:380px;font-family:Consolas,'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6;padding:12px;border:1px solid var(--fme-border,#cdcdcd);border-radius:6px;resize:vertical;background:var(--fme-surface,#efefef);color:var(--fme-text,#2a2a2a);tab-size:2;box-sizing:border-box;"
             placeholder="/* Scrie CSS personalizat sau foloseste butonul de mai sus */&#10;#page-header { background: #cecece !important; }"></textarea>
         </dl>
 
@@ -591,7 +591,7 @@ div.avatar {
         </div>
         <div style="display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;">
           <span id="fme-css-status" style="font-size:11px;font-weight:600;min-width:130px;"></span>
-          <span id="fme-css-info"   style="font-size:11px;font-family:Consolas,monospace;color:#64748b;"></span>
+          <span id="fme-css-info"   style="font-size:11px;font-family:Consolas,monospace;color:var(--fme-muted,#64748b);"></span>
         </div>
       </fieldset>
     `;
@@ -758,9 +758,9 @@ div.avatar {
     section.className = 'panel-menu';
     //section.style.cssText = 'margin:0 0 10px 0!important;background:#fff!important;border:1px solid #cdcdcd!important;padding:0 0 10px 0!important;';
     section.innerHTML = `
-      <br/><fieldset style="margin:0 12px 12px 12px;border-color:#4a7ebf;">
-        <legend style="color:#4a7ebf;font-weight:600;">&#127912; Teme ACP predefinite</legend>
-        <p style="margin:4px 0 12px 0;color:#666;font-size:11px;">
+      <br/><fieldset style="margin:0 12px 12px 12px;border-color:var(--fme-accent,#4a7ebf);">
+        <legend style="color:var(--fme-accent,#4a7ebf);font-weight:600;">&#127912; Teme ACP predefinite</legend>
+        <p style="margin:4px 0 12px 0;color:var(--fme-muted,#666);font-size:11px;">
           Selectează o temă ready-to-use pentru panoul de administrare. CSS-ul este aplicat live și salvat automat.<br/>
           Poți edita CSS-ul manual mai jos pentru personalizări suplimentare.
         </p>
@@ -773,7 +773,7 @@ div.avatar {
       const card = document.createElement('div');
       card.className = 'fme-theme-card';
       card.dataset.themeId = theme.id;
-      card.style.cssText = 'width:140px;padding:10px;border:2px solid #ddd;border-radius:6px;background:#f9f9f9;cursor:default;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;';
+      card.style.cssText = 'width:140px;padding:10px;border:2px solid var(--fme-border,#ddd);border-radius:6px;background:var(--fme-card,#f9f9f9);cursor:default;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;';
 
       const swatches = (theme.swatches || ['#333', '#555', '#777', '#999'])
         .map(c => `<span style="flex:1;height:18px;background:${escHtml(c)};border-radius:3px;"></span>`)
@@ -781,8 +781,8 @@ div.avatar {
 
       card.innerHTML = `
         <div style="display:flex;gap:2px;margin-bottom:8px;">${swatches}</div>
-        <div style="font-weight:600;font-size:12px;color:#333;margin-bottom:4px;">${escHtml(theme.name)}</div>
-        <div style="font-size:10px;color:#666;margin-bottom:8px;line-height:1.4;">${escHtml(theme.description)}</div>
+        <div style="font-weight:600;font-size:12px;color:var(--fme-text,#333);margin-bottom:4px;">${escHtml(theme.name)}</div>
+        <div style="font-size:10px;color:var(--fme-muted,#666);margin-bottom:8px;line-height:1.4;">${escHtml(theme.description)}</div>
         <input type="button" class="fme-apply-theme-btn icon_ok" data-theme-id="${escHtml(theme.id)}"
                value="Activează" style="width:100%;font-size:11px;padding:3px 0;" />
       `;
@@ -814,17 +814,21 @@ div.avatar {
   }
 
   function highlightActiveTheme(wrapper, activeId) {
+    const accent  = 'var(--fme-accent, #4a7ebf)';
+    const cardBg  = 'var(--fme-card, #f9f9f9)';
+    const border  = 'var(--fme-border, #ddd)';
+
     wrapper.querySelectorAll('.fme-theme-card').forEach(card => {
       const id  = card.dataset.themeId;
       const btn = card.querySelector('.fme-apply-theme-btn');
       if (id === activeId) {
-        card.style.borderColor = '#4a7ebf';
-        card.style.background  = '#f0f7ff';
+        card.style.borderColor = accent;
+        card.style.background  = cardBg;
         card.style.boxShadow   = '0 0 0 2px rgba(74,126,191,0.4)';
         if (btn) { btn.value = '\u2713 Activ'; btn.disabled = true; }
       } else {
-        card.style.borderColor = '#ddd';
-        card.style.background  = '#f9f9f9';
+        card.style.borderColor = border;
+        card.style.background  = cardBg;
         card.style.boxShadow   = '';
         if (btn) { btn.value = 'Activează'; btn.disabled = false; }
       }

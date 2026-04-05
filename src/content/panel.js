@@ -684,7 +684,7 @@ var FMEPanel = (() => {
       const tgt = lnk.target ? ' target="' + lnk.target + '"' : '';
       linksRows += '<tr>' +
         '<td class="' + rowClass + '" style="width:30px;text-align:center;">' +
-          '<i class="fa ' + lnk.icon + '" style="color:#3c9ebf;"></i></td>' +
+          '<i class="fa ' + lnk.icon + '" style="color:var(--fme-accent,#3c9ebf);"></i></td>' +
         '<td class="' + rowClass + '">' +
           '<a href="' + escAttr(lnk.href) + '"' + tgt + ' class="gen" style="font-weight:bold;">' +
           escHtml(lnk.label) + '</a></td>' +
@@ -707,7 +707,7 @@ var FMEPanel = (() => {
       <fieldset style="margin:0 12px 12px 12px;">
         <legend><i class="fa fa-list-alt"></i> Ultimul Changelog</legend>
         <div id="fme-home-changelog">
-          <p style="color:#888;font-size:11px;"><i class="fa fa-spinner fa-spin"></i> Se încarcă changelog-ul...</p>
+          <p style="color:var(--fme-muted,#888);font-size:11px;"><i class="fa fa-spinner fa-spin"></i> Se încarcă changelog-ul...</p>
         </div>
       </fieldset>
     `;
@@ -717,9 +717,9 @@ var FMEPanel = (() => {
     const supportSection = document.createElement('div');
     supportSection.style.marginTop = '4px';
     supportSection.innerHTML = `
-      <fieldset style="margin:0 12px 12px 12px;border-color:#f39c12;background:#fffdf5;">
-        <legend style="color:#e67e22;font-weight:600;">&#128155; Susține proiectul FME</legend>
-        <p style="margin:4px 0 10px 0;color:#555;font-size:11px;line-height:1.6;">
+      <fieldset style="margin:0 12px 12px 12px;border-color:var(--fme-warn,#f39c12);background:var(--fme-card,#fffdf5);">
+        <legend style="color:var(--fme-warn,#e67e22);font-weight:600;">&#128155; Susține proiectul FME</legend>
+        <p style="margin:4px 0 10px 0;color:var(--fme-muted,#555);font-size:11px;line-height:1.6;">
           FME (Forumotion Manager Extension) este un proiect open-source gratuit.<br/>
           Dacă îți este util, poți susține dezvoltarea continuă printr-o donație simbolică. Mulțumim!
         </p>
@@ -737,7 +737,7 @@ var FMEPanel = (() => {
             &#11088; GitHub
           </a>
         </div>
-        <p style="margin:10px 0 0 0;font-size:10px;color:#aaa;">
+        <p style="margin:10px 0 0 0;font-size:10px;color:var(--fme-muted,#aaa);">
           Ai o sugestie sau ai găsit un bug? Deschide un issue pe GitHub.
         </p>
       </fieldset>
@@ -759,7 +759,7 @@ var FMEPanel = (() => {
 
       const latest = (data.changelog && data.changelog[0]) || null;
       if (!latest) {
-        target.innerHTML = '<p style="color:#888;font-size:11px;">Nu s-a găsit changelog.</p>';
+        target.innerHTML = '<p style="color:var(--fme-muted,#888);font-size:11px;">Nu s-a găsit changelog.</p>';
         return;
       }
 
@@ -771,7 +771,7 @@ var FMEPanel = (() => {
 
       let html = '<div style="margin-bottom:6px;">' +
         '<strong style="font-size:13px;">v' + escHtml(latest.version) + '</strong>' +
-        '<span style="color:#888;font-size:11px;margin-left:8px;">' + escHtml(latest.date) + '</span>';
+        '<span style="color:var(--fme-muted,#888);font-size:11px;margin-left:8px;">' + escHtml(latest.date) + '</span>';
       if (data.releaseUrl) {
         html += ' <a href="' + escAttr(data.releaseUrl) + '" target="_blank" rel="noopener" ' +
           'style="font-size:11px;margin-left:6px;">Vezi pe GitHub &rarr;</a>';
@@ -801,11 +801,11 @@ var FMEPanel = (() => {
       // older versions summary
       if (data.changelog.length > 1) {
         html += '<details style="margin-top:8px;font-size:11px;cursor:pointer;">' +
-          '<summary style="color:#3c9ebf;font-weight:600;">Versiuni anterioare (' + (data.changelog.length - 1) + ')</summary>';
+          '<summary style="color:var(--fme-accent,#3c9ebf);font-weight:600;">Versiuni anterioare (' + (data.changelog.length - 1) + ')</summary>';
         for (let v = 1; v < data.changelog.length; v++) {
           const entry = data.changelog[v];
           html += '<div style="margin:6px 0 2px 0;font-weight:600;">v' + escHtml(entry.version) +
-            ' <span style="color:#888;font-weight:normal;">(' + escHtml(entry.date) + ')</span></div>' +
+            ' <span style="color:var(--fme-muted,#888);font-weight:normal;">(' + escHtml(entry.date) + ')</span></div>' +
             '<ul style="margin:0 0 0 16px;padding:0;">';
           (entry.notes || []).forEach(n => {
             const t = TYPE_ICONS[n.type] || TYPE_ICONS.other;
@@ -821,7 +821,7 @@ var FMEPanel = (() => {
       target.innerHTML = html;
     } catch (e) {
       console.warn('[FME] Failed to load changelog:', e);
-      target.innerHTML = '<p style="color:#e74c3c;font-size:11px;">Nu s-a putut încărca changelog-ul.</p>';
+      target.innerHTML = '<p style="color:var(--fme-error,#e74c3c);font-size:11px;">Nu s-a putut încărca changelog-ul.</p>';
     }
   }
 
