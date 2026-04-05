@@ -1,8 +1,21 @@
 {
-  "version": "1.1.0",
+  "version": "1.2.0",
   "releaseDate": "2026-04-05",
-  "releaseUrl": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.1.0",
+  "releaseUrl": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.2.0",
   "changelog": [
+    {
+      "version": "1.2.0",
+      "date": "2026-04-05",
+      "notes": [
+        "Modal instalare teme: proces ghidat in 3 pasi cu suport variabile CSS",
+        "API installTemplates: aplica automat template-urile implicite ale temei",
+        "API previewWithTemplates: previzualizeaza tema impreuna cu template-urile asociate",
+        "API restoreFromPreview: restaureaza starea initiala dupa o previzualizare",
+        "Banner preview: indicator vizual activ in timpul previzualizarii pe forum",
+        "Dashboard: sectiune Changelog completa cu toate versiunile",
+        "Dashboard: sectiune Functionalitati viitoare (roadmap)"
+      ]
+    },
     {
       "version": "1.1.0",
       "date": "2026-04-05",
@@ -20,14 +33,44 @@
       "version": "1.0.0",
       "date": "2026-03-01",
       "notes": [
-        "Panou nativ integrat în ACP Forumotion",
-        "Tab Teme: browse și instalare teme CSS din catalog GitHub",
-        "Tab Template-uri: editare directă a template-urilor Forumotion",
-        "Tab Administrare teme: export, import și restaurare teme (.bbtheme)",
-        "Tab Actualizări: verificare automată versiune nouă",
-        "Tab Setări: configurare repository-uri GitHub și token PAT",
+        "Panou nativ integrat in ACP Forumotion",
+        "Tab Teme: browse si instalare teme CSS din catalog GitHub",
+        "Tab Template-uri: editare directa a template-urilor Forumotion",
+        "Tab Administrare teme: export, import si restaurare teme (.bbtheme)",
+        "Tab Actualizari: verificare automata versiune noua",
+        "Tab Setari: configurare repository-uri GitHub si token PAT",
         "Suport domenii: forumgratuit.ro, forumotion.com, forumotion.net, forumotion.eu"
       ]
+    }
+  ],
+  "futures": [
+    {
+      "title": "Suport Firefox & Edge",
+      "description": "Portarea extensiei pentru Mozilla Firefox si Microsoft Edge (Manifest V3)."
+    },
+    {
+      "title": "Editor CSS integrat",
+      "description": "Editor de cod cu syntax highlighting direct in panoul FME, fara a parasi ACP-ul."
+    },
+    {
+      "title": "Backup & restore setari",
+      "description": "Export/import complet al setarilor extensiei si al temelor instalate intr-un singur fisier."
+    },
+    {
+      "title": "Suport multi-forum",
+      "description": "Gestionarea mai multor forumuri din acelasi dashboard, cu profiluri separate."
+    },
+    {
+      "title": "Notificari teme noi",
+      "description": "Alerta automata cand sunt adaugate teme noi in catalogul ForumotionExt/forumotion-themes."
+    },
+    {
+      "title": "Dark mode pentru Dashboard",
+      "description": "Tema intunecata pentru pagina Dashboard, cu salvare preferinta per browser."
+    },
+    {
+      "title": "Filtrare avansata teme",
+      "description": "Filtrare dupa motor de forum, culoare dominanta, autor si data publicarii."
     }
   ]
 }
