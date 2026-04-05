@@ -116,35 +116,41 @@
   const changelogArea = document.getElementById('fme-changelog-area');
   const futuresArea   = document.getElementById('fme-futures-area');
 
-  chrome.storage.sync.get({
-    githubOwner: 'ForumotionExt',
-    githubRepo: 'forumotion-extension',
-    githubToken: ''
-  }, ({ githubOwner, githubRepo, githubToken }) => {
-    const url = `https://raw.githubusercontent.com/${githubOwner}/${githubRepo}/main/version.json`;
-    const headers = { 'Accept': 'application/json' };
-    if (githubToken) headers['Authorization'] = `Bearer ${githubToken}`;
-
-    fetch(url, { headers })
-      .then(r => r.ok ? r.json() : Promise.reject(r.status))
-      .then(data => {
+  fetch(chrome.runtime.getURL('version.json'), { cache: 'no-store' })
+    .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+    .then(data => {
         // ── Changelog (all versions) ──────────────────────────────────────
         const entries = data.changelog || [];
         if (entries.length === 0) {
           changelogArea.innerHTML = '<div class="fme-empty">Nicio intrare gasita.</div>';
         } else {
-          changelogArea.innerHTML = entries.map(entry => `
-            <div class="fme-changelog-block">
-              <div class="fme-changelog-block-header">
-                <span class="fme-changelog-block-version">v${escHtml(entry.version)}</span>
-                <span class="fme-changelog-block-date">${escHtml(entry.date || '')}</span>
-                ${entry.version === VERSION ? '<span class="fme-badge-current">curenta</span>' : ''}
-              </div>
-              <ul class="fme-changelog">
-                ${(entry.notes || []).map(n => `<li>${escHtml(n)}</li>`).join('')}
-              </ul>
-            </div>
-          `).join('');
+          changelogArea.innerHTML = entries.map(entry => {
+            const isCurrent = entry.version === VERSION;
+            const notes    = (entry.notes || []).map(n => typeof n === 'string'
+              ? { type: detectType(n), text: n }
+              : { type: ['feature','bugfix','other'].includes(n.type) ? n.type : 'other', text: n.text || '' });
+            const features = notes.filter(n => n.type === 'feature');
+            const bugfixes = notes.filter(n => n.type === 'bugfix');
+            const others   = notes.filter(n => n.type === 'other');
+            const renderGroup = (items, cls, icon, label) => !items.length ? '' :
+              `<div class="fme-changelog-group">
+                <span class="fme-type-badge ${cls}">${icon} ${label}</span>
+                <ul class="fme-changelog-list">${items.map(n => `<li>${escHtml(n.text)}</li>`).join('')}</ul>
+              </div>`;
+            return `
+              <div class="fme-changelog-entry">
+                <div class="fme-changelog-entry-header${isCurrent ? ' is-current' : ''}">
+                  <span class="fme-changelog-version">v${escHtml(entry.version)}</span>
+                  ${entry.date ? `<span class="fme-changelog-date">${escHtml(entry.date)}</span>` : ''}
+                  ${isCurrent ? '<span class="fme-badge fme-badge-current">instalata</span>' : ''}
+                </div>
+                <div class="fme-changelog-body">
+                  ${renderGroup(features, 'fme-type-feature', '✨', 'Features')}
+                  ${renderGroup(bugfixes, 'fme-type-bugfix',  '🐛', 'Bugfixes')}
+                  ${renderGroup(others,   'fme-type-other',   '📝', 'Other')}
+                </div>
+              </div>`;
+          }).join('');
         }
 
         // ── Futures (roadmap) ─────────────────────────────────────────────
@@ -165,15 +171,20 @@
           }</div>`;
         }
       })
-      .catch(() => {
-        changelogArea.innerHTML = '<div class="fme-empty">Nu s-a putut incarca changelog-ul.</div>';
+      .catch((err) => {
+        changelogArea.innerHTML = '<div class="fme-empty">Nu s-a putut incarca changelog-ul: ' + (err && err.message ? err.message : err) + '</div>';
         futuresArea.innerHTML   = '<div class="fme-empty">Nu s-au putut incarca functionalitatile viitoare.</div>';
       });
-  });
 
   // ── Helpers ───────────────────────────────────────────────────────────────
   function escHtml(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function detectType(text) {
+    if (/^(fix|bug|🐛|fixed)/i.test(text)) return 'bugfix';
+    if (/^(add|new|feature|✨|🆕|added)/i.test(text)) return 'feature';
+    return 'other';
   }
 
 })();

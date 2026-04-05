@@ -8,19 +8,33 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
-      --bg: #f5f5f5;
-      --surface: #ffffff;
-      --border: #dde3ec;
-      --accent: #2d7dd2;
-      --accent-dark: #1a5fa3;
-      --text: #1c2534;
-      --text-muted: #666;
-      --text-dim: #999;
-      --success: #27ae60;
-      --danger: #e74c3c;
-      --warning: #f39c12;
-      --radius: 6px;
-      --font: 'Segoe UI', Arial, sans-serif;
+      --bg:            #f1f5f9;
+      --surface:       #ffffff;
+      --border:        #e2e8f0;
+      --border-light:  #f1f5f9;
+      --accent:        #3b82f6;
+      --accent-dark:   #2563eb;
+      --accent-bg:     #eff6ff;
+      --text:          #0f172a;
+      --text-muted:    #64748b;
+      --text-dim:      #94a3b8;
+      --success:       #16a34a;
+      --success-bg:    #f0fdf4;
+      --danger:        #dc2626;
+      --danger-bg:     #fef2f2;
+      --warning:       #d97706;
+      --warning-bg:    #fffbeb;
+      --feature-color: #7c3aed;
+      --feature-bg:    #f5f3ff;
+      --bugfix-color:  #dc2626;
+      --bugfix-bg:     #fef2f2;
+      --other-color:   #059669;
+      --other-bg:      #ecfdf5;
+      --radius:        8px;
+      --radius-sm:     5px;
+      --shadow:        0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+      --shadow-md:     0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.04);
+      --font:          'Segoe UI', system-ui, -apple-system, sans-serif;
     }
 
     body {
@@ -32,354 +46,457 @@
       min-height: 100vh;
     }
 
-    /* ── Header ── */
+    /* ─── Header ──────────────────────────────────────────────── */
     .fme-header {
-      background: var(--text);
+      background: #0f172a;
       color: #fff;
       padding: 0 32px;
       display: flex;
       align-items: center;
       gap: 16px;
-      height: 52px;
-      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      height: 56px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: 0 1px 0 rgba(255,255,255,.06), 0 2px 8px rgba(0,0,0,.25);
     }
 
     .fme-logo {
-      font-size: 12px;
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      text-decoration: none;
+    }
+
+    .fme-logo-badge {
+      background: var(--accent);
+      color: #fff;
+      font-size: 10px;
       font-weight: 800;
-      letter-spacing: 0.12em;
-      color: var(--accent);
-      background: rgba(45,125,210,0.2);
+      letter-spacing: .08em;
       padding: 3px 8px;
       border-radius: 4px;
       text-transform: uppercase;
     }
 
-    .fme-header-title {
-      font-size: 15px;
+    .fme-logo-sub {
+      font-size: 14px;
       font-weight: 600;
       color: #fff;
     }
 
-    .fme-header-version {
-      font-size: 11px;
-      color: rgba(255,255,255,0.45);
-      margin-left: 4px;
-    }
-
     .fme-header-spacer { flex: 1; }
 
-    .fme-header-link {
+    .fme-header-version {
+      font-size: 11px;
+      color: #64748b;
+      background: rgba(255,255,255,.07);
+      padding: 2px 9px;
+      border-radius: 20px;
+      border: 1px solid rgba(255,255,255,.1);
+    }
+
+    .fme-header-nav { display: flex; align-items: center; gap: 2px; }
+
+    .fme-header-nav a {
       font-size: 12px;
-      color: rgba(255,255,255,0.6);
+      color: #94a3b8;
       text-decoration: none;
-      transition: color .15s;
+      padding: 5px 10px;
+      border-radius: var(--radius-sm);
+      transition: color .15s, background .15s;
     }
-    .fme-header-link:hover { color: #fff; }
+    .fme-header-nav a:hover { color: #fff; background: rgba(255,255,255,.08); }
 
-    /* ── Layout ── */
-    .fme-layout {
-      max-width: 960px;
+    /* ─── Stats bar ────────────────────────────────────────────── */
+    .fme-stats-bar {
+      background: #fff;
+      border-bottom: 1px solid var(--border);
+      padding: 0 32px;
+      display: flex;
+      align-items: stretch;
+    }
+
+    .fme-stat {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 28px 14px 0;
+      margin-right: 28px;
+      border-right: 1px solid var(--border);
+    }
+    .fme-stat:last-child { border-right: none; margin-right: 0; }
+
+    .fme-stat-icon {
+      width: 38px;
+      height: 38px;
+      border-radius: var(--radius-sm);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 17px;
+      flex-shrink: 0;
+    }
+    .fme-stat-icon-blue   { background: var(--accent-bg); }
+    .fme-stat-icon-green  { background: var(--success-bg); }
+    .fme-stat-icon-purple { background: var(--feature-bg); }
+
+    .fme-stat-value { font-size: 21px; font-weight: 700; color: var(--text); line-height: 1.1; }
+    .fme-stat-label { font-size: 11px; color: var(--text-muted); margin-top: 1px; }
+
+    /* ─── Main layout ──────────────────────────────────────────── */
+    .fme-main {
+      max-width: 1050px;
       margin: 0 auto;
-      padding: 28px 24px;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
+      padding: 24px 24px 48px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
+    .fme-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+    /* ─── Update banner ────────────────────────────────────────── */
+    .fme-update-banner {
+      background: var(--warning-bg);
+      border: 1px solid #fcd34d;
+      border-radius: var(--radius);
+      padding: 14px 18px;
+      display: none;
+      align-items: center;
+      gap: 14px;
+    }
+    .fme-update-banner.visible { display: flex; }
+    .fme-update-banner-title { font-weight: 600; font-size: 13px; color: #92400e; }
+    .fme-update-banner-desc  { font-size: 12px; color: #b45309; margin-top: 1px; }
+
+    /* ─── Card ─────────────────────────────────────────────────── */
     .fme-card {
       background: var(--surface);
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      box-shadow: var(--shadow);
       overflow: hidden;
     }
 
-    .fme-card-wide { grid-column: 1 / -1; }
-
     .fme-card-header {
-      padding: 12px 16px;
+      padding: 12px 18px;
       border-bottom: 1px solid var(--border);
-      font-weight: 600;
-      font-size: 12px;
-      color: var(--text);
       display: flex;
       align-items: center;
       justify-content: space-between;
+      gap: 10px;
+      background: #fafafa;
     }
 
-    .fme-card-body { padding: 14px 16px; }
-
-    /* ── Forum URL input ── */
-    .fme-forum-row {
+    .fme-card-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text);
       display: flex;
-      gap: 8px;
+      align-items: center;
+      gap: 7px;
     }
 
-    .fme-forum-row input[type="text"] {
+    .fme-card-title-icon { font-size: 14px; }
+    .fme-card-body { padding: 16px 18px; }
+
+    /* ─── Forum URL ────────────────────────────────────────────── */
+    .fme-input-row { display: flex; gap: 8px; }
+
+    .fme-input {
       flex: 1;
       border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 7px 10px;
+      border-radius: var(--radius-sm);
+      padding: 8px 11px;
       font-size: 13px;
       font-family: var(--font);
-      outline: none;
-    }
-    .fme-forum-row input[type="text"]:focus { border-color: var(--accent); }
-
-    .fme-btn {
-      padding: 7px 14px;
-      border-radius: var(--radius);
-      border: 1px solid var(--border);
-      font-size: 12px;
-      font-family: var(--font);
-      cursor: pointer;
-      background: var(--surface);
       color: var(--text);
-      transition: background .15s;
+      background: var(--surface);
+      outline: none;
+      transition: border-color .15s, box-shadow .15s;
+    }
+    .fme-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+    .fme-input::placeholder { color: var(--text-dim); }
+
+    #fme-forum-status { font-size: 11px; color: var(--success); margin-top: 6px; min-height: 16px; }
+
+    .fme-admin-link-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 12px;
+      border: 1px solid #bfdbfe;
+      background: var(--accent-bg);
+      border-radius: var(--radius-sm);
+      margin-top: 10px;
       text-decoration: none;
+      color: var(--accent-dark);
+      font-size: 12px;
+      font-weight: 500;
+      transition: background .15s;
+    }
+    .fme-admin-link-box:hover { background: #dbeafe; }
+
+    /* ─── Buttons ──────────────────────────────────────────────── */
+    .fme-btn {
       display: inline-flex;
       align-items: center;
       gap: 5px;
-    }
-    .fme-btn:hover { background: #f0f4f8; }
-    .fme-btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
-    .fme-btn-primary:hover { background: var(--accent-dark); }
-    .fme-btn-danger  { background: var(--danger); color: #fff; border-color: var(--danger); }
-    .fme-btn-danger:hover  { background: #c0392b; }
-
-    /* ── Stats grid ── */
-    .fme-stats-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 10px;
-    }
-
-    .fme-stat {
-      text-align: center;
-      padding: 14px 8px;
-      background: var(--bg);
-      border-radius: var(--radius);
+      padding: 7px 14px;
+      border-radius: var(--radius-sm);
       border: 1px solid var(--border);
+      font-size: 12px;
+      font-family: var(--font);
+      font-weight: 500;
+      cursor: pointer;
+      background: var(--surface);
+      color: var(--text);
+      text-decoration: none;
+      transition: background .15s, border-color .15s;
+      white-space: nowrap;
     }
+    .fme-btn:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .fme-btn-primary { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .fme-btn-primary:hover { background: var(--accent-dark); border-color: var(--accent-dark); }
+    .fme-btn-danger  { background: var(--danger); color: #fff; border-color: var(--danger); }
+    .fme-btn-danger:hover  { background: #b91c1c; border-color: #b91c1c; }
+    .fme-btn-sm { padding: 4px 10px; font-size: 11px; }
 
-    .fme-stat-value {
-      font-size: 26px;
+    /* ─── Badges ───────────────────────────────────────────────── */
+    .fme-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      line-height: 1.4;
+    }
+    .fme-badge-version { background: var(--accent-bg);  color: var(--accent); }
+    .fme-badge-ok      { background: var(--success-bg); color: var(--success); }
+    .fme-badge-current { background: var(--accent-bg);  color: var(--accent); }
+
+    /* ─── Changelog type badges ────────────────────────────────── */
+    .fme-type-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 1px 8px;
+      border-radius: 4px;
+      font-size: 10px;
       font-weight: 700;
-      color: var(--accent);
-      line-height: 1;
-      margin-bottom: 4px;
+      letter-spacing: .04em;
+      text-transform: uppercase;
     }
+    .fme-type-feature { background: var(--feature-bg); color: var(--feature-color); }
+    .fme-type-bugfix  { background: var(--bugfix-bg);  color: var(--bugfix-color); }
+    .fme-type-other   { background: var(--other-bg);   color: var(--other-color); }
 
-    .fme-stat-label { font-size: 11px; color: var(--text-muted); }
-
-    /* ── Installed themes list ── */
+    /* ─── Installed themes ─────────────────────────────────────── */
     .fme-theme-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: 9px 0;
+      padding: 10px 0;
       border-bottom: 1px solid var(--border);
       gap: 10px;
     }
     .fme-theme-row:last-child { border-bottom: none; }
+    .fme-theme-row-name { font-weight: 600; font-size: 12px; }
+    .fme-theme-row-meta { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
 
-    .fme-theme-row-name  { font-weight: 600; font-size: 12px; }
-    .fme-theme-row-meta  { font-size: 11px; color: var(--text-dim); margin-top: 1px; }
-
-    .fme-badge {
-      display: inline-block;
-      padding: 1px 7px;
-      border-radius: 10px;
-      font-size: 10px;
-      font-weight: 600;
-    }
-    .fme-badge-version  { background: #e8f0fb; color: #2d7dd2; }
-    .fme-badge-ok       { background: #e8f7ef; color: #27ae60; }
-
-    /* ── Changelog ── */
-    .fme-changelog { padding: 0; list-style: none; }
-    .fme-changelog li { padding: 5px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
-    .fme-changelog li:last-child { border-bottom: none; }
-    .fme-changelog li::before { content: '•'; color: var(--accent); margin-right: 7px; }
-
-    .fme-changelog-block { margin-bottom: 18px; }
-    .fme-changelog-block:last-child { margin-bottom: 0; }
-    .fme-changelog-block-header {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-    .fme-changelog-block-version {
-      font-weight: 700;
-      font-size: 12px;
-      color: var(--accent);
-    }
-    .fme-changelog-block-date {
-      font-size: 11px;
-      color: var(--text-dim);
-    }
-    .fme-badge-current {
-      background: #e8f0fb;
-      color: #2d7dd2;
-      font-size: 10px;
-      font-weight: 600;
-      padding: 1px 7px;
-      border-radius: 10px;
-    }
-
-    /* ── Futures ── */
-    .fme-futures { display: flex; flex-direction: column; gap: 8px; }
-    .fme-future-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 10px 12px;
-      background: var(--bg);
+    /* ─── Changelog blocks ─────────────────────────────────────── */
+    .fme-changelog-entry {
       border: 1px solid var(--border);
       border-radius: var(--radius);
+      overflow: hidden;
+      margin-bottom: 10px;
     }
-    .fme-future-icon { font-size: 16px; margin-top: 1px; flex-shrink: 0; }
-    .fme-future-title { font-weight: 600; font-size: 12px; }
-    .fme-future-desc { font-size: 11px; color: var(--text-dim); margin-top: 2px; }
+    .fme-changelog-entry:last-child { margin-bottom: 0; }
 
-    /* ── Quick links ── */
+    .fme-changelog-entry-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 9px 14px;
+      background: #f8fafc;
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .fme-changelog-entry-header.is-current { background: var(--accent-bg); border-bottom-color: #bfdbfe; }
+
+    .fme-changelog-version { font-weight: 700; font-size: 13px; color: var(--accent); }
+    .fme-changelog-date    { font-size: 11px; color: var(--text-dim); }
+    .fme-changelog-body { padding: 12px 14px; }
+    .fme-changelog-group { margin-bottom: 8px; }
+    .fme-changelog-group:last-child { margin-bottom: 0; }
+
+    .fme-changelog-list { list-style: none; padding: 0; margin: 5px 0 0 0; }
+    .fme-changelog-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 2px 0;
+      font-size: 12px;
+      color: var(--text);
+    }
+    .fme-changelog-list li::before { content: '–'; color: var(--text-dim); flex-shrink: 0; }
+
+    /* ─── Quick links ──────────────────────────────────────────── */
     .fme-links { display: flex; flex-direction: column; gap: 6px; }
     .fme-link-item {
       display: flex;
       align-items: center;
       gap: 10px;
-      padding: 8px 10px;
+      padding: 9px 12px;
       border: 1px solid var(--border);
-      border-radius: var(--radius);
+      border-radius: var(--radius-sm);
       text-decoration: none;
       color: var(--text);
       font-size: 12px;
-      transition: background .15s;
+      transition: background .15s, border-color .15s;
     }
-    .fme-link-item:hover { background: #f0f4f8; }
-    .fme-link-icon { font-size: 15px; width: 20px; text-align: center; }
+    .fme-link-item:hover { background: var(--accent-bg); border-color: #bfdbfe; }
+    .fme-link-icon { font-size: 15px; width: 20px; text-align: center; flex-shrink: 0; }
+    .fme-link-name { font-weight: 500; }
     .fme-link-desc { font-size: 11px; color: var(--text-dim); }
 
-    /* ── Empty state ── */
-    .fme-empty { color: var(--text-dim); font-size: 12px; padding: 10px 0; text-align: center; }
-
-    /* ── Update banner ── */
-    .fme-update-banner {
-      grid-column: 1 / -1;
-      background: #fff8e6;
-      border: 1px solid #f0aa44;
+    /* ─── Futures ──────────────────────────────────────────────── */
+    .fme-futures { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .fme-future-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 12px 14px;
+      background: var(--bg);
+      border: 1px solid var(--border);
       border-radius: var(--radius);
-      padding: 12px 16px;
-      display: none;
-      align-items: center;
-      gap: 12px;
     }
-    .fme-update-banner.visible { display: flex; }
+    .fme-future-icon  { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .fme-future-title { font-weight: 600; font-size: 12px; }
+    .fme-future-desc  { font-size: 11px; color: var(--text-muted); margin-top: 3px; }
 
-    #fme-forum-status { font-size: 11px; color: var(--text-dim); margin-top: 6px; }
+    /* ─── Empty state ──────────────────────────────────────────── */
+    .fme-empty { color: var(--text-dim); font-size: 12px; padding: 14px 0; text-align: center; }
+
+    /* ─── Scrollbar ────────────────────────────────────────────── */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
   </style>
 </head>
 <body>
 
-  <div class="fme-header">
-    <span class="fme-logo">FME</span>
-    <span class="fme-header-title">Forumotion Extension</span>
-    <span class="fme-header-version" id="hdr-version"></span>
+  <header class="fme-header">
+    <div class="fme-logo">
+      <span class="fme-logo-badge">FME</span>
+      <span class="fme-logo-sub">Forumotion Extension</span>
+    </div>
     <div class="fme-header-spacer"></div>
-    <a class="fme-header-link" href="https://github.com/ForumotionExt/forumotion-extension" target="_blank" rel="noopener">GitHub</a>
+    <span class="fme-header-version" id="hdr-version"></span>
+    <nav class="fme-header-nav">
+      <a href="https://github.com/ForumotionExt/forumotion-themes" target="_blank" rel="noopener">Teme</a>
+      <a href="https://github.com/ForumotionExt/forumotion-extension/releases" target="_blank" rel="noopener">Releases</a>
+      <a href="https://github.com/ForumotionExt/forumotion-extension/issues" target="_blank" rel="noopener">Issues</a>
+    </nav>
+  </header>
+
+  <div class="fme-stats-bar">
+    <div class="fme-stat">
+      <div class="fme-stat-icon fme-stat-icon-blue">🎨</div>
+      <div>
+        <div class="fme-stat-value" id="stat-themes">0</div>
+        <div class="fme-stat-label">Teme instalate</div>
+      </div>
+    </div>
+    <div class="fme-stat">
+      <div class="fme-stat-icon fme-stat-icon-green">📦</div>
+      <div>
+        <div class="fme-stat-value" id="stat-version">—</div>
+        <div class="fme-stat-label">Versiune</div>
+      </div>
+    </div>
+    <div class="fme-stat">
+      <div class="fme-stat-icon fme-stat-icon-purple">⚡</div>
+      <div>
+        <div class="fme-stat-value" id="stat-status">Activ</div>
+        <div class="fme-stat-label">Status</div>
+      </div>
+    </div>
   </div>
 
-  <div class="fme-layout">
+  <main class="fme-main">
 
     <!-- Update banner (hidden until needed) -->
     <div class="fme-update-banner" id="fme-update-banner">
-      <span style="font-size:18px;">🔔</span>
+      <span style="font-size:20px;flex-shrink:0;">🔔</span>
       <div>
-        <div style="font-weight:600;font-size:13px;">Actualizare disponibila</div>
-        <div id="fme-update-msg" style="font-size:12px;color:var(--text-muted);"></div>
+        <div class="fme-update-banner-title">Actualizare disponibila</div>
+        <div class="fme-update-banner-desc" id="fme-update-msg"></div>
       </div>
-      <a id="fme-update-link" href="#" target="_blank" rel="noopener" class="fme-btn fme-btn-primary" style="margin-left:auto;">Descarca</a>
+      <a id="fme-update-link" href="#" target="_blank" rel="noopener" class="fme-btn fme-btn-primary" style="margin-left:auto;">Descarca &rarr;</a>
     </div>
 
-    <!-- Forum URL -->
-    <div class="fme-card fme-card-wide">
-      <div class="fme-card-header">
-        Forum conectat
-        <button class="fme-btn fme-btn-primary" id="fme-open-admin-btn" style="display:none;">Deschide Admin Panel</button>
-      </div>
-      <div class="fme-card-body">
-        <div class="fme-forum-row">
-          <input type="text" id="fme-forum-url" placeholder="https://mysite.forumotion.com" />
-          <button class="fme-btn fme-btn-primary" id="fme-save-forum-btn">Salveaza</button>
+    <!-- Row 1: Forum config + Quick links -->
+    <div class="fme-grid-2">
+
+      <div class="fme-card">
+        <div class="fme-card-header">
+          <span class="fme-card-title"><span class="fme-card-title-icon">🌐</span> Forum conectat</span>
+          <button class="fme-btn fme-btn-primary fme-btn-sm" id="fme-open-admin-btn" style="display:none;">Deschide Admin</button>
         </div>
-        <div id="fme-forum-status"></div>
+        <div class="fme-card-body">
+          <div class="fme-input-row">
+            <input class="fme-input" type="text" id="fme-forum-url" placeholder="https://mysite.forumotion.com" />
+            <button class="fme-btn fme-btn-primary" id="fme-save-forum-btn">Salveaza</button>
+          </div>
+          <div id="fme-forum-status"></div>
+          <a id="fme-admin-link" href="#" class="fme-admin-link-box" style="display:none;" target="_blank" rel="noopener">
+            🔧 <span id="fme-admin-link-desc">Admin Panel</span>
+          </a>
+        </div>
       </div>
+
+      <div class="fme-card">
+        <div class="fme-card-header">
+          <span class="fme-card-title"><span class="fme-card-title-icon">🔗</span> Link-uri rapide</span>
+        </div>
+        <div class="fme-card-body">
+          <div class="fme-links">
+            <a class="fme-link-item" href="https://github.com/ForumotionExt/forumotion-themes" target="_blank" rel="noopener">
+              <span class="fme-link-icon">🎨</span>
+              <div>
+                <div class="fme-link-name">Catalog teme</div>
+                <div class="fme-link-desc">ForumotionExt/forumotion-themes</div>
+              </div>
+            </a>
+            <a class="fme-link-item" href="https://github.com/ForumotionExt/forumotion-extension" target="_blank" rel="noopener">
+              <span class="fme-link-icon">⚙️</span>
+              <div>
+                <div class="fme-link-name">Extensie — sursa</div>
+                <div class="fme-link-desc">ForumotionExt/forumotion-extension</div>
+              </div>
+            </a>
+            <a class="fme-link-item" href="https://github.com/ForumotionExt/forumotion-extension/issues" target="_blank" rel="noopener">
+              <span class="fme-link-icon">🐛</span>
+              <div>
+                <div class="fme-link-name">Raporteaza o problema</div>
+                <div class="fme-link-desc">GitHub Issues</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </div>
+
     </div>
 
-    <!-- Stats -->
+    <!-- Teme instalate -->
     <div class="fme-card">
-      <div class="fme-card-header">Statistici rapide</div>
-      <div class="fme-card-body">
-        <div class="fme-stats-grid">
-          <div class="fme-stat">
-            <div class="fme-stat-value" id="stat-themes">0</div>
-            <div class="fme-stat-label">Teme instalate</div>
-          </div>
-          <div class="fme-stat">
-            <div class="fme-stat-value" id="stat-version">—</div>
-            <div class="fme-stat-label">Versiune</div>
-          </div>
-          <div class="fme-stat">
-            <div class="fme-stat-value" id="stat-status">✓</div>
-            <div class="fme-stat-label">Status</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Quick links -->
-    <div class="fme-card">
-      <div class="fme-card-header">Link-uri rapide</div>
-      <div class="fme-card-body">
-        <div class="fme-links">
-          <a class="fme-link-item" href="https://github.com/ForumotionExt/forumotion-themes" target="_blank" rel="noopener">
-            <span class="fme-link-icon">🎨</span>
-            <div>
-              <div>Catalog teme</div>
-              <div class="fme-link-desc">ForumotionExt/forumotion-themes</div>
-            </div>
-          </a>
-          <a class="fme-link-item" href="https://github.com/ForumotionExt/forumotion-extension" target="_blank" rel="noopener">
-            <span class="fme-link-icon">⚙️</span>
-            <div>
-              <div>Extensie — sursa</div>
-              <div class="fme-link-desc">ForumotionExt/forumotion-extension</div>
-            </div>
-          </a>
-          <a class="fme-link-item" href="https://github.com/ForumotionExt/forumotion-extension/issues" target="_blank" rel="noopener">
-            <span class="fme-link-icon">🐛</span>
-            <div>
-              <div>Raporteaza o problema</div>
-              <div class="fme-link-desc">GitHub Issues</div>
-            </div>
-          </a>
-          <a class="fme-link-item" id="fme-admin-link" href="#" style="display:none;">
-            <span class="fme-link-icon">🔧</span>
-            <div>
-              <div>Admin Panel</div>
-              <div class="fme-link-desc" id="fme-admin-link-desc">Deschide panoul de administrare</div>
-            </div>
-          </a>
-        </div>
-      </div>
-    </div>
-
-    <!-- Installed themes -->
-    <div class="fme-card fme-card-wide">
       <div class="fme-card-header">
-        Teme instalate
-        <button class="fme-btn fme-btn-danger" id="fme-uninstall-all-btn" style="display:none;">Dezinstaleaza toate</button>
+        <span class="fme-card-title"><span class="fme-card-title-icon">🎨</span> Teme instalate</span>
+        <button class="fme-btn fme-btn-danger fme-btn-sm" id="fme-uninstall-all-btn" style="display:none;">Dezinstaleaza toate</button>
       </div>
       <div class="fme-card-body" id="fme-themes-list">
         <div class="fme-empty">Nu sunt teme instalate.</div>
@@ -387,22 +504,26 @@
     </div>
 
     <!-- Changelog -->
-    <div class="fme-card fme-card-wide">
-      <div class="fme-card-header">Changelog</div>
+    <div class="fme-card">
+      <div class="fme-card-header">
+        <span class="fme-card-title"><span class="fme-card-title-icon">📋</span> Changelog</span>
+      </div>
       <div class="fme-card-body" id="fme-changelog-area">
         <div class="fme-empty">Se incarca&hellip;</div>
       </div>
     </div>
 
-    <!-- Futures / Roadmap -->
-    <div class="fme-card fme-card-wide">
-      <div class="fme-card-header">Functionalitati viitoare</div>
+    <!-- Roadmap -->
+    <div class="fme-card">
+      <div class="fme-card-header">
+        <span class="fme-card-title"><span class="fme-card-title-icon">🚀</span> Functionalitati viitoare</span>
+      </div>
       <div class="fme-card-body" id="fme-futures-area">
         <div class="fme-empty">Se incarca&hellip;</div>
       </div>
     </div>
 
-  </div>
+  </main>
 
   <script src="dashboard.js"></script>
 </body>
