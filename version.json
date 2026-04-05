@@ -18,22 +18,15 @@
     },
     {
       "version": "1.0.0",
-      "releaseDate": "2026-04-04",
-      "releaseUrl": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.0.0",
-      "changelog": [
-        {
-          "version": "1.0.0",
-          "date": "2026-04-04",
-          "notes": [
-            "Panou nativ integrat în ACP Forumotion",
-            "Tab Teme: browse și instalare teme CSS din catalog GitHub",
-            "Tab Template-uri: editare directă a template-urilor Forumotion",
-            "Tab Administrare teme: export, import și restaurare teme (.bbtheme)",
-            "Tab Actualizări: verificare automată versiune nouă",
-            "Tab Setări: configurare repository-uri GitHub și token PAT",
-            "Suport domenii: forumgratuit.ro, forumotion.com, forumotion.net, forumotion.eu"
-          ]
-        }
+      "date": "2026-03-01",
+      "notes": [
+        "Panou nativ integrat în ACP Forumotion",
+        "Tab Teme: browse și instalare teme CSS din catalog GitHub",
+        "Tab Template-uri: editare directă a template-urilor Forumotion",
+        "Tab Administrare teme: export, import și restaurare teme (.bbtheme)",
+        "Tab Actualizări: verificare automată versiune nouă",
+        "Tab Setări: configurare repository-uri GitHub și token PAT",
+        "Suport domenii: forumgratuit.ro, forumotion.com, forumotion.net, forumotion.eu"
       ]
     }
   ]
