@@ -10,7 +10,7 @@ var FMESettingsTab = (() => {
     autoCheckUpdates: true,
     githubOwner: 'ForumotionExt',
     githubRepo: 'forumotion-extension',
-    themesOwner: 'staark-dev',
+    themesOwner: 'ForumotionExt',
     themesRepo: 'forumotion-themes',
     templatesOwner: 'ForumotionExt',
     templatesRepo: 'templates',
