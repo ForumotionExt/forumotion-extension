@@ -1,12 +1,19 @@
 /**
  * FME Service Worker (Background Script)
  * Handles all GitHub API requests to avoid CORS issues from content scripts.
- * Also manages badge updates for available extension updates.
+ * Also manages badge updates, update notifications, version warehouse,
+ * and skipped-version tracking.
  */
 
 const GITHUB_API_BASE = 'https://api.github.com';
 const GITHUB_RAW_BASE = 'https://raw.githubusercontent.com';
 const UPDATE_ALARM_NAME = 'fme-update-check';
+
+// Maximum number of previous versions to keep in the warehouse
+const VERSION_WAREHOUSE_MAX = 10;
+
+// Notification IDs
+const NOTIF_ID_UPDATE = 'fme-update-available';
 
 // ─── Alarm setup for periodic update checks ──────────────────────────────────
 
@@ -22,33 +29,135 @@ chrome.alarms.onAlarm.addListener((alarm) => {
 
 async function scheduleUpdateCheck() {
   const settings = await getSettings();
-  if (settings.autoCheckUpdates) {
-    chrome.alarms.create(UPDATE_ALARM_NAME, {
-      periodInMinutes: 60 * 6 // every 6 hours
-    });
-  }
+  chrome.alarms.clear(UPDATE_ALARM_NAME, () => {
+    if (!settings.autoCheckUpdates) return;
+    const freq = settings.updateNotificationFrequency || '6h';
+    if (freq === 'never') return;
+    const periodMap = { '6h': 360, '12h': 720, '24h': 1440 };
+    const periodInMinutes = periodMap[freq] || 360;
+    chrome.alarms.create(UPDATE_ALARM_NAME, { periodInMinutes });
+  });
 }
 
 async function performUpdateCheck() {
   try {
     const settings = await getSettings();
     const owner = settings.githubOwner || 'ForumotionExt';
-    const repo = settings.githubRepo || 'forumotion-extension';
+    const repo  = settings.githubRepo  || 'forumotion-extension';
     const token = settings.githubToken || null;
 
     const data = await fetchGitHubFile(owner, repo, 'version.json', token);
     const manifest = chrome.runtime.getManifest();
     const currentVersion = manifest.version;
 
-    if (data && data.version && isNewerVersion(data.version, currentVersion)) {
+    // Build / refresh the version warehouse from fetched data
+    await buildVersionWarehouse(data, owner, repo);
+
+    const latestVersion = data.version;
+    const skippedVersions = settings.skippedVersions || [];
+    const isSkipped = skippedVersions.includes(latestVersion);
+
+    if (data && latestVersion && isNewerVersion(latestVersion, currentVersion) && !isSkipped) {
       chrome.action.setBadgeText({ text: 'NEW' });
       chrome.action.setBadgeBackgroundColor({ color: '#e74c3c' });
+
+      // Desktop notification (respects frequency / last-notification-time)
+      await maybeSendUpdateNotification(settings, latestVersion, data);
     } else {
       chrome.action.setBadgeText({ text: '' });
     }
   } catch (err) {
     console.error('[FME] Update check failed:', err.message);
   }
+}
+
+// ─── Desktop notifications ────────────────────────────────────────────────────
+
+async function maybeSendUpdateNotification(settings, latestVersion, data) {
+  const freq = settings.updateNotificationFrequency || '6h';
+  if (freq === 'never') return;
+
+  const lastTime = settings.lastNotificationTime ? new Date(settings.lastNotificationTime).getTime() : 0;
+  const freqMs = { '6h': 6, '12h': 12, '24h': 24 }[freq] * 60 * 60 * 1000;
+  if (Date.now() - lastTime < freqMs) return;
+
+  // Collect top 3 feature notes for the snippet
+  const latestEntry = (data.changelog || []).find(e => e.version === latestVersion) || {};
+  const notes = (latestEntry.notes || []).slice(0, 3).map(n => {
+    const text = typeof n === 'string' ? n : (n.text || '');
+    return text;
+  }).filter(Boolean);
+
+  const message = notes.length
+    ? notes.map(n => `• ${n}`).join('\n')
+    : 'O versiune noua este disponibila.';
+
+  chrome.notifications.create(NOTIF_ID_UPDATE, {
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL('icons/icon48.png'),
+    title: `Forumotion Extension v${latestVersion} disponibil`,
+    message,
+    buttons: [
+      { title: 'Actualizeaza acum' },
+      { title: 'Aminteste-mi mai tarziu' }
+    ],
+    requireInteraction: false
+  });
+
+  chrome.storage.sync.set({ lastNotificationTime: new Date().toISOString() });
+}
+
+// Handle notification button clicks
+chrome.notifications.onButtonClicked.addListener((notifId, btnIdx) => {
+  if (notifId !== NOTIF_ID_UPDATE) return;
+  chrome.notifications.clear(notifId);
+  if (btnIdx === 0) {
+    // "Actualizeaza acum" — open the GitHub releases page
+    getSettings().then(settings => {
+      const owner = settings.githubOwner || 'ForumotionExt';
+      const repo  = settings.githubRepo  || 'forumotion-extension';
+      chrome.tabs.create({ url: `https://github.com/${owner}/${repo}/releases/latest` });
+    });
+  }
+  // btnIdx === 1 means "Remind later" — just dismiss (notification already cleared)
+});
+
+chrome.notifications.onClicked.addListener((notifId) => {
+  if (notifId !== NOTIF_ID_UPDATE) return;
+  chrome.notifications.clear(notifId);
+  getSettings().then(settings => {
+    const owner = settings.githubOwner || 'ForumotionExt';
+    const repo  = settings.githubRepo  || 'forumotion-extension';
+    chrome.tabs.create({ url: `https://github.com/${owner}/${repo}/releases/latest` });
+  });
+});
+
+// ─── Version warehouse ────────────────────────────────────────────────────────
+
+async function buildVersionWarehouse(data, owner, repo) {
+  if (!data || !Array.isArray(data.changelog)) return;
+
+  const repoOwner = owner || 'ForumotionExt';
+  const repoName  = repo  || 'forumotion-extension';
+
+  const warehouse = data.changelog.slice(0, VERSION_WAREHOUSE_MAX).map(entry => ({
+    version:    entry.version  || '',
+    date:       entry.date     || '',
+    releaseUrl: entry.version === data.version
+      ? (data.releaseUrl || `https://github.com/${repoOwner}/${repoName}/releases/tag/v${entry.version}`)
+      : `https://github.com/${repoOwner}/${repoName}/releases/tag/v${entry.version}`,
+    notes: (entry.notes || []).map(n => (typeof n === 'string' ? { type: 'other', text: n } : n))
+  }));
+
+  return new Promise(resolve => {
+    chrome.storage.local.set({ fme_versionWarehouse: warehouse }, resolve);
+  });
+}
+
+function getVersionWarehouse() {
+  return new Promise(resolve => {
+    chrome.storage.local.get({ fme_versionWarehouse: [] }, r => resolve(r.fme_versionWarehouse));
+  });
 }
 
 // ─── Message handler ──────────────────────────────────────────────────────────
@@ -86,14 +195,79 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       return false;
 
     case 'RESCHEDULE_ALARM':
-      chrome.alarms.clear(UPDATE_ALARM_NAME, () => scheduleUpdateCheck());
-      sendResponse({ ok: true });
-      return false;
+      scheduleUpdateCheck().then(() => sendResponse({ ok: true }));
+      return true;
 
     case 'PREVIEW_FORUM_THEME':
       handleForumPreview(message.payload)
         .then(() => sendResponse({ ok: true }))
         .catch(err => sendResponse({ ok: false, error: err.message }));
+      return true;
+
+    // ── Skip-version helpers ──────────────────────────────────────────────────
+    case 'SKIP_VERSION': {
+      const ver = message.payload && message.payload.version;
+      if (!ver) { sendResponse({ ok: false, error: 'No version provided' }); return false; }
+      getSettings().then(settings => {
+        const skipped = Array.from(new Set([...(settings.skippedVersions || []), ver]));
+        chrome.storage.sync.set({ skippedVersions: skipped }, () => {
+          // Clear badge if the skipped version was the one triggering "NEW"
+          chrome.action.setBadgeText({ text: '' });
+          sendResponse({ ok: true, skippedVersions: skipped });
+        });
+      });
+      return true;
+    }
+
+    case 'UNSKIP_VERSION': {
+      const ver = message.payload && message.payload.version;
+      if (!ver) { sendResponse({ ok: false, error: 'No version provided' }); return false; }
+      getSettings().then(settings => {
+        const skipped = (settings.skippedVersions || []).filter(v => v !== ver);
+        chrome.storage.sync.set({ skippedVersions: skipped }, () => {
+          sendResponse({ ok: true, skippedVersions: skipped });
+        });
+      });
+      return true;
+    }
+
+    case 'GET_SKIPPED_VERSIONS':
+      getSettings().then(settings => {
+        sendResponse({ ok: true, skippedVersions: settings.skippedVersions || [] });
+      });
+      return true;
+
+    case 'CLEAR_SKIPPED_VERSIONS':
+      chrome.storage.sync.set({ skippedVersions: [] }, () => {
+        sendResponse({ ok: true });
+      });
+      return true;
+
+    // ── Version warehouse ─────────────────────────────────────────────────────
+    case 'GET_VERSION_WAREHOUSE':
+      getVersionWarehouse().then(warehouse => {
+        sendResponse({ ok: true, warehouse });
+      });
+      return true;
+
+    case 'REFRESH_VERSION_WAREHOUSE':
+      getSettings().then(async settings => {
+        try {
+          const owner = settings.githubOwner || 'ForumotionExt';
+          const repo  = settings.githubRepo  || 'forumotion-extension';
+          const data = await fetchGitHubFile(
+            owner,
+            repo,
+            'version.json',
+            settings.githubToken || null
+          );
+          await buildVersionWarehouse(data, owner, repo);
+          const warehouse = await getVersionWarehouse();
+          sendResponse({ ok: true, warehouse });
+        } catch (err) {
+          sendResponse({ ok: false, error: err.message });
+        }
+      });
       return true;
 
     default:
@@ -105,7 +279,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 /**
  * Fetches a JSON file from a GitHub repo via the raw content CDN.
- * Falls back to the Contents API if needed.
  */
 async function fetchGitHubFile(owner, repo, filePath, token = null, branch = 'main') {
   const rawUrl = `${GITHUB_RAW_BASE}/${owner}/${repo}/${branch}/${filePath}`;
@@ -207,7 +380,10 @@ const SETTINGS_DEFAULTS = {
   themesOwner: 'ForumotionExt',
   themesRepo: 'forumotion-themes',
   templatesOwner: 'ForumotionExt',
-  templatesRepo: 'templates'
+  templatesRepo: 'templates',
+  skippedVersions: [],
+  updateNotificationFrequency: '6h',
+  lastNotificationTime: null
 };
 
 function getSettings() {
@@ -224,6 +400,9 @@ async function migrateSettings() {
     chrome.storage.sync.get(SETTINGS_DEFAULTS, (stored) => {
       const updates = {};
       if (stored.themesOwner === 'staark-dev') updates.themesOwner = 'ForumotionExt';
+      // Ensure new fields exist for users upgrading from older versions
+      if (!Array.isArray(stored.skippedVersions)) updates.skippedVersions = [];
+      if (stored.updateNotificationFrequency === undefined) updates.updateNotificationFrequency = '6h';
       if (Object.keys(updates).length > 0) {
         chrome.storage.sync.set(updates, resolve);
       } else {

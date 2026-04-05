@@ -7,39 +7,39 @@
       "version": "1.2.0",
       "date": "2026-04-05",
       "notes": [
-        "Modal instalare teme: proces ghidat in 3 pasi cu suport variabile CSS",
-        "API installTemplates: aplica automat template-urile implicite ale temei",
-        "API previewWithTemplates: previzualizeaza tema impreuna cu template-urile asociate",
-        "API restoreFromPreview: restaureaza starea initiala dupa o previzualizare",
-        "Banner preview: indicator vizual activ in timpul previzualizarii pe forum",
-        "Dashboard: sectiune Changelog completa cu toate versiunile",
-        "Dashboard: sectiune Functionalitati viitoare (roadmap)"
+        { "type": "feature", "text": "Modal instalare teme: proces ghidat in 3 pasi cu suport variabile CSS" },
+        { "type": "feature", "text": "API installTemplates: aplica automat template-urile implicite ale temei" },
+        { "type": "feature", "text": "API previewWithTemplates: previzualizeaza tema impreuna cu template-urile asociate" },
+        { "type": "feature", "text": "API restoreFromPreview: restaureaza starea initiala dupa o previzualizare" },
+        { "type": "feature", "text": "Banner preview: indicator vizual activ in timpul previzualizarii pe forum" },
+        { "type": "feature", "text": "Dashboard: sectiune Changelog completa cu toate versiunile" },
+        { "type": "other",   "text": "Dashboard: sectiune Functionalitati viitoare (roadmap)" }
       ]
     },
     {
       "version": "1.1.0",
       "date": "2026-04-05",
       "notes": [
-        "Forum preview: tema se aplica pe forumul tau intr-un tab nou (15 secunde)",
-        "Fix: instalarea si preview-ul temelor din catalog functioneaza corect",
-        "Fix: butonul Reseteaza la implicit din editorul de templates functioneaza acum",
-        "Teme: catalog mutat la ForumotionExt/forumotion-themes cu structura noua",
-        "Redesign pagina teme: tabel nativ in stilul panoului de administrare Forumotion",
-        "Pagina dedicata pentru instalarea temelor cu suport variables",
-        "Dashboard standalone: extensia are acum pagina proprie, accesibila din popup"
+        { "type": "feature", "text": "Forum preview: tema se aplica pe forumul tau intr-un tab nou (15 secunde)" },
+        { "type": "bugfix",  "text": "Fix: instalarea si preview-ul temelor din catalog functioneaza corect" },
+        { "type": "bugfix",  "text": "Fix: butonul Reseteaza la implicit din editorul de templates functioneaza acum" },
+        { "type": "other",   "text": "Teme: catalog mutat la ForumotionExt/forumotion-themes cu structura noua" },
+        { "type": "feature", "text": "Redesign pagina teme: tabel nativ in stilul panoului de administrare Forumotion" },
+        { "type": "feature", "text": "Pagina dedicata pentru instalarea temelor cu suport variables" },
+        { "type": "feature", "text": "Dashboard standalone: extensia are acum pagina proprie, accesibila din popup" }
       ]
     },
     {
       "version": "1.0.0",
       "date": "2026-03-01",
       "notes": [
-        "Panou nativ integrat in ACP Forumotion",
-        "Tab Teme: browse si instalare teme CSS din catalog GitHub",
-        "Tab Template-uri: editare directa a template-urilor Forumotion",
-        "Tab Administrare teme: export, import si restaurare teme (.bbtheme)",
-        "Tab Actualizari: verificare automata versiune noua",
-        "Tab Setari: configurare repository-uri GitHub si token PAT",
-        "Suport domenii: forumgratuit.ro, forumotion.com, forumotion.net, forumotion.eu"
+        { "type": "feature", "text": "Panou nativ integrat in ACP Forumotion" },
+        { "type": "feature", "text": "Tab Teme: browse si instalare teme CSS din catalog GitHub" },
+        { "type": "feature", "text": "Tab Template-uri: editare directa a template-urilor Forumotion" },
+        { "type": "feature", "text": "Tab Administrare teme: export, import si restaurare teme (.bbtheme)" },
+        { "type": "feature", "text": "Tab Actualizari: verificare automata versiune noua" },
+        { "type": "feature", "text": "Tab Setari: configurare repository-uri GitHub si token PAT" },
+        { "type": "other",   "text": "Suport domenii: forumgratuit.ro, forumotion.com, forumotion.net, forumotion.eu" }
       ]
     }
   ],
