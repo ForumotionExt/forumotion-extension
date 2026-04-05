@@ -1,0 +1,80 @@
+{
+  "manifest_version": 3,
+  "name": "Forumotion Extension",
+  "short_name": "FME",
+  "version": "1.2.0",
+  "description": "Enhanced admin panel for Forumotion/ForumGratuit: themes, templates, and update management.",
+  "icons": {
+    "16": "icons/icon16.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  },
+  "action": {
+    "default_popup": "src/popup/popup.html",
+    "default_title": "Forumotion Extension",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "src/background/service-worker.js",
+    "type": "module"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "*://*.forumgratuit.ro/admin*",
+        "*://*.forumgratuit.ro/adminhd*",
+        "*://*.forumotion.com/admin*",
+        "*://*.forumotion.net/admin*",
+        "*://*.forumotion.eu/admin*",
+        "*://*.forumotion.eu/adminhd*"
+      ],
+      "js": [
+        "src/content/forum-api.js",
+        "src/content/github.js",
+        "src/content/tabs/settings.js",
+        "src/content/tabs/themes.js",
+        "src/content/tabs/templates.js",
+        "src/content/tabs/updates.js",
+        "src/content/panel.js",
+        "src/content/content.js"
+      ],
+      "css": [
+        "src/styles/panel.css",
+        "src/styles/themes-tab.css"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": [
+    "storage",
+    "alarms",
+    "scripting",
+    "tabs"
+  ],
+  "host_permissions": [
+    "*://*.forumgratuit.ro/*",
+    "*://*.forumotion.com/*",
+    "*://*.forumotion.net/*",
+    "*://*.forumotion.eu/*",
+    "https://api.github.com/*",
+    "https://raw.githubusercontent.com/*"
+  ],
+  "content_security_policy": {
+    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://raw.githubusercontent.com"
+  },
+  "web_accessible_resources": [
+    {
+      "resources": ["src/styles/*.css", "icons/*"],
+      "matches": [
+        "*://*.forumgratuit.ro/*",
+        "*://*.forumotion.com/*",
+        "*://*.forumotion.net/*",
+        "*://*.forumotion.eu/*"
+      ]
+    }
+  ]
+}

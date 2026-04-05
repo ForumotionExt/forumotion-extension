@@ -1,0 +1,409 @@
+/*
+ * FME Panel CSS — minimal, native-first
+ * Custom styles only where there is no native ACP equivalent.
+ * All fme- classes are scoped so they do not pollute the host page.
+ */
+
+/* ─── Scoped box-sizing (flex layouts need this) ─────────────────────────── */
+#fme-page-root *,
+#fme-page-root *::before,
+#fme-page-root *::after,
+.fme-modal-overlay *,
+.fme-modal-overlay *::before,
+.fme-modal-overlay *::after {
+  box-sizing: border-box;
+}
+
+/* ─── Update dot in the nav tab link ─────────────────────────────────────── */
+#fme-nav-tab .fme-update-dot {
+  color: #e74c3c;
+  font-size: 9px;
+  margin-left: 4px;
+  vertical-align: super;
+  line-height: 1;
+}
+
+/* ─── Full-page root — flex row next to native sidebar ───────────────────── */
+#fme-page-root {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-height: 400px;
+  border-top: 1px solid #dddddd;
+}
+
+/* ─── Left sidebar ────────────────────────────────────────────────────────── */
+#fme-page-sidebar {
+  width: 200px;
+  min-width: 200px;
+  border-right: 1px solid #dddddd;
+  flex-shrink: 0;
+  align-self: stretch;
+  background: #f5f5f5;
+}
+
+.fme-nav-section-title {
+  margin: 0;
+  padding: 10px 12px 6px;
+  font-size: 11px;
+  font-weight: bold;
+  color: #999;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.fme-nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.fme-nav-item {
+  margin: 0;
+  padding: 0;
+}
+
+.fme-nav-cat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  color: #333;
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: bold;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.fme-nav-cat:hover {
+  background: #e8f4f9;
+  color: #3c9ebf;
+  text-decoration: none;
+}
+
+.fme-nav-cat--active {
+  background: #3c9ebf;
+  color: #ffffff !important;
+  text-decoration: none;
+}
+
+.fme-nav-cat--active:hover {
+  background: #2d8aaa;
+  color: #ffffff;
+}
+
+/* Colored circle icon */
+.fme-nav-icon {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+}
+
+.fme-nav-cat[data-section="themes"]    .fme-nav-icon { background: #e8703a; }
+.fme-nav-cat[data-section="templates"] .fme-nav-icon { background: #3c9ebf; }
+.fme-nav-cat[data-section="updates"]   .fme-nav-icon { background: #27ae60; }
+.fme-nav-cat[data-section="settings"]  .fme-nav-icon { background: #8e44ad; }
+
+.fme-nav-label { flex: 1; }
+
+.fme-nav-cat .fme-update-dot {
+  color: #e74c3c;
+  font-size: 9px;
+  vertical-align: super;
+  line-height: 1;
+}
+
+.fme-nav-cat--active .fme-update-dot { color: #ffaaaa; }
+
+table#fme-themes-table {
+  text-align: center;
+}
+
+input[class^="fme"] {
+    padding: 2px 8px !important;
+    font-size: 11px !important;
+    background: #596371 !important;
+}
+
+/* ─── Main content area ───────────────────────────────────────────────────── */
+#fme-page-content {
+  flex: 1;
+  padding: 16px 20px;
+  overflow-y: auto;
+  min-width: 0;
+  font-size: 12px;
+  background: #ffffff;
+}
+
+dt label {
+  color: #555;
+  font-size: 12px !important;
+}
+
+/* ─── Loading spinner (no native ACP equivalent) ─────────────────────────── */
+.fme-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 40px 16px;
+  color: #666;
+  font-size: 12px;
+  flex-direction: column;
+}
+
+.fme-loading-inline {
+  flex-direction: row;
+  padding: 12px 0;
+}
+
+.fme-spinner {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #dddddd;
+  border-top-color: #3c9ebf;
+  border-radius: 50%;
+  animation: fme-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+
+.fme-spinner-sm { width: 14px; height: 14px; }
+
+@keyframes fme-spin { to { transform: rotate(360deg); } }
+
+/* ─── Alerts (minimal — just a colored border strip) ─────────────────────── */
+.fme-alert {
+  padding: 8px 12px;
+  border: 1px solid #dddddd;
+  border-left-width: 4px;
+  margin: 8px 0;
+  font-size: 12px;
+  background: #fafafa;
+}
+
+.fme-alert-info    { border-left-color: #3c9ebf; background: #f0f8fc; color: #31708f; }
+.fme-alert-success { border-left-color: #5cb85c; background: #f4fdf4; color: #3c763d; }
+.fme-alert-warning { border-left-color: #f0ad4e; background: #fffdf0; color: #8a6d3b; }
+.fme-alert-error   { border-left-color: #d9534f; background: #fdf5f5; color: #a94442; }
+.fme-alert-update  { border-left-color: #3c9ebf; background: #f0f8fc; color: #333; }
+
+/* ─── Status text under buttons / cards ──────────────────────────────────── */
+.fme-status-loading { color: #888; font-size: 11px; }
+.fme-status-success { color: #3c763d; font-size: 11px; }
+.fme-status-error   { color: #a94442; font-size: 11px; }
+.fme-theme-status   { min-height: 0; }
+.fme-admin-status   { font-size: 11px; margin-top: 6px; }
+
+/* ─── Themes grid — card layout (no ACP native equivalent) ───────────────── */
+#fme-themes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  gap: 14px;
+}
+
+.fme-theme-card {
+  border: 1px solid #dddddd;
+  background: #ffffff;
+  overflow: hidden;
+}
+
+.fme-theme-card--installed { border-color: #5cb85c; }
+
+.fme-theme-preview {
+  width: 100%;
+  height: 100px;
+  overflow: hidden;
+  background: #f0f0f0;
+}
+
+.fme-theme-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.fme-theme-preview--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 60px;
+  background: #e8f4f9;
+}
+
+.fme-theme-preview--placeholder span {
+  font-size: 22px;
+  font-weight: 900;
+  color: rgba(60, 158, 191, 0.35);
+  text-transform: uppercase;
+}
+
+.fme-theme-body {
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fme-theme-meta {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+
+.fme-theme-name {
+  font-weight: bold;
+  font-size: 13px;
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fme-theme-author { font-size: 11px; color: #888; }
+.fme-theme-desc   { font-size: 11px; color: #555; line-height: 1.4; }
+
+.fme-theme-actions {
+  display: flex;
+  gap: 5px;
+  margin-top: 5px;
+  flex-wrap: wrap;
+}
+
+/* Small version/engine/installed badges */
+.fme-badge {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: bold;
+  padding: 1px 5px;
+  border: 1px solid #ddd;
+  background: #f5f5f5;
+  color: #666;
+  white-space: nowrap;
+}
+
+.fme-badge-installed { background: #dff0d8; border-color: #d6e9c6; color: #3c763d; }
+.fme-badge-engine    { background: #fff3e0; border-color: #ffcc80; color: #e65100; }
+.fme-badge-update    { background: #fcf8e3; border-color: #faebcc; color: #8a6d3b; }
+
+.fme-tags { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 4px; }
+.fme-tag  { font-size: 10px; padding: 1px 5px; background: #f0f0f0; border: 1px solid #ddd; color: #888; }
+
+/* ─── Admin action cards (export/import/restore) ──────────────────────────── */
+.fme-admin-container { display: flex; flex-direction: column; gap: 16px; }
+
+.fme-admin-card {
+  border: 1px solid #dddddd;
+  background: #fafafa;
+  padding: 14px;
+}
+
+.fme-admin-card-title {
+  font-size: 13px;
+  font-weight: bold;
+  margin: 0 0 10px 0;
+  padding-bottom: 6px;
+  border-bottom: 1px solid #eeeeee;
+}
+
+.fme-admin-card-actions { margin-top: 10px; }
+.fme-admin-note { font-size: 12px; color: #888; margin: 0; }
+
+.panel_menu {
+    margin: 0px;
+    background-color: #fff;
+    border: 1px solid #cdcdcd;
+    padding: 0 0 10px 0;
+    border-width: 1px !important;
+}
+
+/* ─── Modal overlay (no ACP native equivalent) ────────────────────────────── */
+.fme-modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  z-index: 2147483645;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px 16px;
+  overflow-y: auto;
+}
+
+.fme-modal {
+  background: #ffffff;
+  border: 1px solid #cccccc;
+  width: 100%;
+  max-width: 720px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  max-height: 80vh;
+}
+
+.fme-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #dddddd;
+  background: #f5f5f5;
+}
+
+.fme-modal-title { font-size: 13px; font-weight: bold; }
+
+.fme-modal-close {
+  background: none;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+  color: #666;
+  line-height: 1;
+  padding: 0 4px;
+}
+
+.fme-modal-close:hover { color: #333; }
+
+.fme-modal-body {
+  flex: 1;
+  overflow: auto;
+  padding: 14px;
+}
+
+/* ─── Inline toolbar row ──────────────────────────────────────────────────── */
+.fme-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+
+.fme-toolbar input[type="search"],
+.fme-toolbar input[type="text"] { flex: 1; min-width: 120px; }
+
+/* ─── Code toolbar (template editor) ─────────────────────────────────────── */
+.fme-code-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+  flex-wrap: wrap;
+}
+
+/* ─── Empty state ─────────────────────────────────────────────────────────── */
+.fme-empty {
+  text-align: center;
+  padding: 30px 16px;
+  color: #888;
+  font-size: 13px;
+}
