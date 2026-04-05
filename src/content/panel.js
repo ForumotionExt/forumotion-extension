@@ -18,17 +18,23 @@ var FMEPanel = (() => {
   const STORAGE_KEY  = 'fme_active_section';
 
   const SECTIONS = [
+    // ── Acasă ─────────────────────────────────────────────────────────────────
+    { id: 'home',      label: 'Acasă',           icon: '<i class="fa fa-home"></i>',          group: 'FME' },
     // ── Conținut ────────────────────────────────────────────────────────────────
     { id: 'themes',    label: 'Teme',           icon: '<i class="fa fa-paint-brush"></i>',  group: 'Conținut' },
     { id: 'templates', label: 'Template-uri',   icon: '<i class="fa fa-file-code-o"></i>',  group: 'Conținut' },
+    { id: 'plugins',   label: 'Plugins',         icon: '<i class="fa fa-plug"></i>',          group: 'Conținut' },
     // ── CSS & JS ─────────────────────────────────────────────────────────────
     { id: 'acp-css',   label: 'ACP Styles',     icon: '<i class="fa fa-magic"></i>',          group: 'CSS & JS' },
     { id: 'forum-css', label: 'Forum CSS',       icon: '<i class="fa fa-css3"></i>',           group: 'CSS & JS' },
     { id: 'widgets',   label: 'Widgets JS',      icon: '<i class="fa fa-code"></i>',           group: 'CSS & JS' },
+    { id: 'chatbox',   label: 'Chatbox',         icon: '<i class="fa fa-comments"></i>',       group: 'CSS & JS' },
     // ── Utile ────────────────────────────────────────────────────────────────
     { id: 'stats',     label: 'Statistici',      icon: '<i class="fa fa-bar-chart"></i>',      group: 'Utile' },
+    { id: 'seo',       label: 'SEO Tools',        icon: '<i class="fa fa-search"></i>',         group: 'Utile' },
     { id: 'notes',     label: 'Notițe',          icon: '<i class="fa fa-sticky-note-o"></i>',  group: 'Utile' },
-    { id: 'backup',    label: 'Backup',          icon: '<i class="fa fa-database"></i>',        group: 'Utile' },
+    { id: 'activity',  label: 'Jurnal',           icon: '<i class="fa fa-history"></i>',        group: 'Utile' },
+    { id: 'backup',    label: 'Backup',           icon: '<i class="fa fa-database"></i>',        group: 'Utile' },
     // ── Meta ─────────────────────────────────────────────────────────────────
     { id: 'updates',   label: 'Actualizări',     icon: '<i class="fa fa-refresh"></i>',         group: 'Meta' },
     { id: 'settings',  label: 'Setări',          icon: '<i class="fa fa-cog"></i>',             group: 'Meta' },
@@ -39,16 +45,21 @@ var FMEPanel = (() => {
   let _navTab         = null;   // <li id="fme-nav-tab"> element
   let _nativeWrapper  = null;   // the ACP main content wrapper we hide/show
   let _prevActiveTab  = null;   // native <li id="activetab"> saved before FME activates
-  let _activeSection  = 'themes';
+  let _activeSection  = 'home';
   let _visible        = false;
   let _updateBadge    = false;
+  let _tid            = '';
+  let _acpMode        = false;
+  let _savedMenuHTML  = null;
+  let _savedMainHTML  = null;
 
   // ─── Public API ─────────────────────────────────────────────────────────────
 
   function mount() {
     if (document.getElementById(NAV_TAB_ID)) return; // already mounted
 
-    _activeSection = sessionStorage.getItem(STORAGE_KEY) || 'themes';
+    _activeSection = sessionStorage.getItem(STORAGE_KEY) || 'home';
+    _tid = extractTid();
 
     const topNav = findTopNav();
     if (!topNav) {
@@ -57,54 +68,101 @@ var FMEPanel = (() => {
     }
 
     injectNavTab(topNav);
-    buildPage();
 
     // Wire up nav click delegation via content.js helper
     if (typeof window.__fmeBindNavClicks === 'function') {
       window.__fmeBindNavClicks(_navTab, topNav);
     }
+
+    // Auto-activate if URL indicates FME page
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('part') === 'fme') {
+      const sub = urlParams.get('sub');
+      if (sub && SECTIONS.some(s => s.id === sub)) _activeSection = sub;
+      show(_activeSection);
+    }
   }
 
   function show(section) {
-    if (!_pageRoot) mount();
-    if (!_pageRoot) return; // mount failed (no nav found)
-
     if (section) _activeSection = section;
 
-    // Hide native content
-    _nativeWrapper = _nativeWrapper || findContentWrapper();
-    if (_nativeWrapper) _nativeWrapper.style.display = 'none';
+    if (!_visible) {
+      // Try ACP-integrated mode: take over native #menu and #main-content
+      const acpMenu = document.getElementById('menu');
+      const acpMainContent = document.getElementById('main-content');
 
-    // Swap activetab id: remove from native active tab, give to FME tab
+      if (acpMenu && acpMainContent) {
+        _acpMode = true;
+        _savedMenuHTML = acpMenu.innerHTML;
+        _savedMainHTML = acpMainContent.innerHTML;
+
+        acpMenu.innerHTML = buildAcpSidebar();
+        acpMainContent.innerHTML = '';
+        _contentArea = acpMainContent;
+
+        bindAcpSidebarEvents(acpMenu);
+      } else {
+        // Fallback to overlay mode
+        _acpMode = false;
+        if (!_pageRoot) buildPage();
+        if (!_pageRoot) return;
+
+        _nativeWrapper = _nativeWrapper || findContentWrapper();
+        if (_nativeWrapper) _nativeWrapper.style.display = 'none';
+
+        _pageRoot.style.display = 'flex';
+        _contentArea = _pageRoot.querySelector('#fme-page-content');
+      }
+    } else if (_acpMode) {
+      // Already visible in ACP mode — update sidebar active state
+      const acpMenu = document.getElementById('menu');
+      if (acpMenu) {
+        acpMenu.querySelectorAll('.submenu').forEach(sub => {
+          const a = sub.querySelector('a[data-fme-section]');
+          if (a) sub.classList.toggle('fme-submenu-active', a.dataset.fmeSection === _activeSection);
+        });
+      }
+    }
+
+    // Swap activetab id
     if (_navTab) {
       _prevActiveTab = document.getElementById('activetab');
-      if (_prevActiveTab) _prevActiveTab.removeAttribute('id');
+      if (_prevActiveTab && _prevActiveTab !== _navTab) _prevActiveTab.removeAttribute('id');
       _navTab.id = 'activetab';
     }
 
-    // Show FME page
-    _pageRoot.style.display = 'flex';
     _visible = true;
-
     activateSection(_activeSection, true);
   }
 
   function hide() {
     if (!_visible) return;
-
     _visible = false;
 
-    if (_pageRoot) _pageRoot.style.display = 'none';
+    if (_acpMode) {
+      const acpMenu = document.getElementById('menu');
+      const acpMainContent = document.getElementById('main-content');
+      if (acpMenu && _savedMenuHTML !== null) {
+        acpMenu.innerHTML = _savedMenuHTML;
+        _savedMenuHTML = null;
+      }
+      if (acpMainContent && _savedMainHTML !== null) {
+        acpMainContent.innerHTML = _savedMainHTML;
+        _savedMainHTML = null;
+      }
+      _acpMode = false;
+      _contentArea = null;
+    } else {
+      if (_pageRoot) _pageRoot.style.display = 'none';
+      if (_nativeWrapper) _nativeWrapper.style.display = '';
+    }
 
-    // Restore activetab id: give back to native tab, restore fme-nav-tab id
+    // Restore activetab id
     if (_navTab) {
-      _navTab.id = 'fme-nav-tab';
+      _navTab.id = NAV_TAB_ID;
       if (_prevActiveTab) _prevActiveTab.id = 'activetab';
       _prevActiveTab = null;
     }
-
-    // Restore native content
-    if (_nativeWrapper) _nativeWrapper.style.display = '';
   }
 
   function setUpdateBadge(show) {
@@ -117,6 +175,96 @@ var FMEPanel = (() => {
       ? _pageRoot.querySelector('.fme-nav-cat[data-section="updates"] .fme-update-dot')
       : null;
     if (sidebarDot) sidebarDot.style.display = show ? 'inline' : 'none';
+  }
+
+  // ─── URL & ACP integration ──────────────────────────────────────────────────
+
+  function extractTid() {
+    const params = new URLSearchParams(window.location.search);
+    return params.get('tid') || '';
+  }
+
+  function buildFmeUrl(section) {
+    let url = '/admin/?part=fme';
+    if (section) url += '&sub=' + encodeURIComponent(section);
+    if (_tid) url += '&tid=' + encodeURIComponent(_tid);
+    return url;
+  }
+
+  function buildAcpSidebar() {
+    const GROUP_ICONS = {
+      'Conținut': 'fa-paint-brush',
+      'CSS & JS': 'fa-code',
+      'Utile':    'fa-wrench',
+      'Meta':     'fa-cog',
+      'FME':      'fa-home',
+    };
+
+    let html = '<div class="header">&nbsp;FME Extension</div>';
+
+    const groups = [];
+    let current = null;
+    for (const s of SECTIONS) {
+      if (!current || current.name !== s.group) {
+        current = { name: s.group, items: [] };
+        groups.push(current);
+      }
+      current.items.push(s);
+    }
+
+    for (const g of groups) {
+      const icon = GROUP_ICONS[g.name] || 'fa-folder';
+      const escapedName = g.name.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+      html +=
+        '<div class="coins-top">' +
+          '<div class="left-top">&nbsp;&nbsp;<i class="fa ' + icon + '"></i>&nbsp;' +
+            escapedName + '</div>' +
+        '</div>' +
+        '<br clear="all">' +
+        '<div class="coins-border">';
+
+      for (const s of g.items) {
+        const active = s.id === _activeSection ? ' fme-submenu-active' : '';
+        html +=
+          '<div class="submenu' + active + '">' +
+            '<a href="' + buildFmeUrl(s.id) + '" data-fme-section="' + s.id + '">' +
+              '<span>' + s.icon + ' ' + s.label +
+                (s.id === 'updates' && _updateBadge
+                  ? ' <span class="fme-update-dot" style="color:#e74c3c;font-size:9px;">●</span>'
+                  : '') +
+              '</span>' +
+            '</a>' +
+          '</div>';
+      }
+      html += '</div><br clear="all"><br>';
+    }
+
+    return html;
+  }
+
+  function bindAcpSidebarEvents(menuEl) {
+    menuEl.addEventListener('click', (e) => {
+      const link = e.target.closest('a[data-fme-section]');
+      if (!link) return;
+      e.preventDefault();
+
+      const section = link.dataset.fmeSection;
+      if (!section || section === _activeSection) return;
+
+      _activeSection = section;
+      sessionStorage.setItem(STORAGE_KEY, section);
+
+      // Update URL without reload
+      history.replaceState(null, '', buildFmeUrl(section));
+
+      // Update sidebar active state
+      menuEl.querySelectorAll('.submenu').forEach(sub => {
+        const a = sub.querySelector('a[data-fme-section]');
+        if (a) sub.classList.toggle('fme-submenu-active', a.dataset.fmeSection === section);
+      });
+
+      activateSection(section, true);
+    });
   }
 
   // ─── Nav tab injection ───────────────────────────────────────────────────────
@@ -162,7 +310,7 @@ var FMEPanel = (() => {
     _navTab.id = NAV_TAB_ID;
 
     const link = document.createElement('a');
-    link.href = '#';
+    link.href = buildFmeUrl();
 
     // Wrap text in <span> to match native tab structure: <a><span>Label</span></a>
     const labelSpan = document.createElement('span');
@@ -342,7 +490,7 @@ var FMEPanel = (() => {
     if (!doRender || !_contentArea) return;
 
     // Always re-render dynamic tabs; lazy-render everything else
-    const ALWAYS_RERENDER = new Set(['updates', 'stats', 'notes', 'backup']);
+    const ALWAYS_RERENDER = new Set(['home', 'updates', 'stats', 'notes', 'backup', 'activity', 'seo', 'plugins']);
     const alreadyRendered = _contentArea.dataset.renderedSection === sectionId;
     if (alreadyRendered && !ALWAYS_RERENDER.has(sectionId)) return;
 
@@ -355,6 +503,9 @@ var FMEPanel = (() => {
     if (_contentArea) _contentArea.scrollTop = 0;
 
     switch (sectionId) {
+      case 'home':
+        renderHomePage(_contentArea);
+        break;
       case 'themes':
         if (typeof FMEThemesTab !== 'undefined') {
           FMEThemesTab.render(_contentArea);
@@ -388,6 +539,14 @@ var FMEPanel = (() => {
         if (typeof FMEWidgetsTab !== 'undefined') FMEWidgetsTab.render(_contentArea);
         else showMissingModule(_contentArea, 'FMEWidgetsTab');
         break;
+      case 'chatbox':
+        if (typeof FMEChatboxTab !== 'undefined') FMEChatboxTab.render(_contentArea);
+        else showMissingModule(_contentArea, 'FMEChatboxTab');
+        break;
+      case 'plugins':
+        if (typeof FMEPluginsTab !== 'undefined') FMEPluginsTab.render(_contentArea);
+        else showMissingModule(_contentArea, 'FMEPluginsTab');
+        break;
       case 'stats':
         if (typeof FMEStatsTab !== 'undefined') FMEStatsTab.render(_contentArea);
         else showMissingModule(_contentArea, 'FMEStatsTab');
@@ -404,6 +563,14 @@ var FMEPanel = (() => {
         if (typeof FMESettingsTab !== 'undefined') FMESettingsTab.render(_contentArea);
         else showMissingModule(_contentArea, 'FMESettingsTab');
         break;
+      case 'activity':
+        if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.render(_contentArea);
+        else showMissingModule(_contentArea, 'FMEActivityLog');
+        break;
+      case 'seo':
+        if (typeof FMESeoTab !== 'undefined') FMESeoTab.render(_contentArea);
+        else showMissingModule(_contentArea, 'FMESeoTab');
+        break;
       default:
         _contentArea.innerHTML = '';
     }
@@ -415,6 +582,255 @@ var FMEPanel = (() => {
         Modulul <strong>${moduleName}</strong> nu a fost incarcat.
       </div>
     `;
+  }
+
+  // ─── Home page ────────────────────────────────────────────────────────────────
+
+  function renderHomePage(container) {
+    container.innerHTML = '';
+
+    const wrapper = document.createElement('div');
+    wrapper.className = 'main-content';
+    wrapper.id        = 'main-content';
+    wrapper.style.fontSize = '12px';
+
+    // Header
+    wrapper.innerHTML = `
+      <div class="fme-section-header">
+        <h2 class="fme-section-title">FME</h2>
+        <ul class="h2-breadcrumb clearfix"><li class="first">Acasă</li></ul>
+        <blockquote class="block_left">
+          <p class="explain">
+            <strong>Forumotion Manager Extension</strong> — extensie Chrome open-source pentru administrarea avansată a forumurilor Forumotion.
+          </p>
+        </blockquote>
+      </div>
+    `;
+
+    // About section
+    const aboutSection = document.createElement('div');
+    aboutSection.innerHTML = `
+      <fieldset style="margin:0 12px 12px 12px;">
+        <legend><i class="fa fa-info-circle"></i> Ce face extensia?</legend>
+        <table class="table1 forumline" cellspacing="1" style="margin-bottom:0;">
+          <tbody>
+            <tr>
+              <td class="row1" style="width:30%;vertical-align:top;">
+                <span class="gen" style="font-weight:bold;"><i class="fa fa-paint-brush"></i> Teme & CSS</span>
+              </td>
+              <td class="row2">
+                <span class="gen">Browse, instalare și preview teme CSS din catalog GitHub. Editor CSS pentru ACP și Forum cu preseturi.</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="row1" style="vertical-align:top;">
+                <span class="gen" style="font-weight:bold;"><i class="fa fa-file-code-o"></i> Template-uri</span>
+              </td>
+              <td class="row2">
+                <span class="gen">Editare directă a template-urilor Forumotion (overall_header, overall_footer, etc.) cu preview live.</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="row1" style="vertical-align:top;">
+                <span class="gen" style="font-weight:bold;"><i class="fa fa-code"></i> Widgets JS</span>
+              </td>
+              <td class="row2">
+                <span class="gen">Manager de snippet-uri JavaScript custom cu execuție pe ACP și/sau Forum. Catalog built-in inclus.</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="row1" style="vertical-align:top;">
+                <span class="gen" style="font-weight:bold;"><i class="fa fa-comments"></i> Chatbox</span>
+              </td>
+              <td class="row2">
+                <span class="gen">Chatbox custom care înlocuiește chatbox-ul nativ Forumotion cu UI modern și butoane funcționale.</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="row1" style="vertical-align:top;">
+                <span class="gen" style="font-weight:bold;"><i class="fa fa-wrench"></i> Utile</span>
+              </td>
+              <td class="row2">
+                <span class="gen">Statistici forum, notițe locale, backup/restore complet al configurației FME în format JSON.</span>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </fieldset>
+    `;
+    wrapper.appendChild(aboutSection);
+
+    // ACP Quick Links section
+    const linksSection = document.createElement('div');
+    linksSection.style.marginTop = '4px';
+    const tid = _tid ? '&tid=' + encodeURIComponent(_tid) : '';
+    const ACP_LINKS = [
+      { icon: 'fa-sitemap',      label: 'Categorii & Forumuri', href: '/admin/?part=general&sub=forum_01' + tid },
+      { icon: 'fa-users',        label: 'Utilizatori',          href: '/admin/?part=users&sub=users' + tid },
+      { icon: 'fa-shield',       label: 'Permisiuni',           href: '/admin/?part=general&sub=groups' + tid },
+      { icon: 'fa-puzzle-piece', label: 'Module',               href: '/admin/?part=modules' + tid },
+      { icon: 'fa-picture-o',    label: 'Imagini & Culori',     href: '/admin/?part=themes&sub=logos' + tid },
+      { icon: 'fa-css3',         label: 'CSS (Colors)',         href: '/admin/?part=themes&sub=css' + tid },
+      { icon: 'fa-smile-o',      label: 'Smilies',              href: '/admin/?part=general&sub=smilies' + tid },
+      { icon: 'fa-star',         label: 'Ranguri',              href: '/admin/?part=general&sub=ranks' + tid },
+      { icon: 'fa-ban',          label: 'Ban / IP',             href: '/admin/?part=users&sub=ban' + tid },
+      { icon: 'fa-envelope',     label: 'Mesaje private',       href: '/admin/?part=general&sub=pm' + tid },
+      { icon: 'fa-globe',        label: 'Pagina de index',      href: '/', target: '_blank' },
+      { icon: 'fa-bookmark',     label: 'Chatbox',              href: '/chatbox/', target: '_blank' },
+    ];
+    let linksRows = '';
+    ACP_LINKS.forEach((lnk, i) => {
+      const rowClass = i % 2 === 0 ? 'row1' : 'row2';
+      const tgt = lnk.target ? ' target="' + lnk.target + '"' : '';
+      linksRows += '<tr>' +
+        '<td class="' + rowClass + '" style="width:30px;text-align:center;">' +
+          '<i class="fa ' + lnk.icon + '" style="color:#3c9ebf;"></i></td>' +
+        '<td class="' + rowClass + '">' +
+          '<a href="' + escAttr(lnk.href) + '"' + tgt + ' class="gen" style="font-weight:bold;">' +
+          escHtml(lnk.label) + '</a></td>' +
+      '</tr>';
+    });
+    linksSection.innerHTML = `
+      <fieldset style="margin:0 12px 12px 12px;">
+        <legend><i class="fa fa-link"></i> Linkuri rapide ACP</legend>
+        <table class="table1 forumline" cellspacing="1" style="margin-bottom:0;">
+          <tbody>${linksRows}</tbody>
+        </table>
+      </fieldset>
+    `;
+    wrapper.appendChild(linksSection);
+
+    // Changelog section — fetch version.json
+    const changelogSection = document.createElement('div');
+    changelogSection.style.marginTop = '4px';
+    changelogSection.innerHTML = `
+      <fieldset style="margin:0 12px 12px 12px;">
+        <legend><i class="fa fa-list-alt"></i> Ultimul Changelog</legend>
+        <div id="fme-home-changelog">
+          <p style="color:#888;font-size:11px;"><i class="fa fa-spinner fa-spin"></i> Se încarcă changelog-ul...</p>
+        </div>
+      </fieldset>
+    `;
+    wrapper.appendChild(changelogSection);
+
+    // Support section
+    const supportSection = document.createElement('div');
+    supportSection.style.marginTop = '4px';
+    supportSection.innerHTML = `
+      <fieldset style="margin:0 12px 12px 12px;border-color:#f39c12;background:#fffdf5;">
+        <legend style="color:#e67e22;font-weight:600;">&#128155; Susține proiectul FME</legend>
+        <p style="margin:4px 0 10px 0;color:#555;font-size:11px;line-height:1.6;">
+          FME (Forumotion Manager Extension) este un proiect open-source gratuit.<br/>
+          Dacă îți este util, poți susține dezvoltarea continuă printr-o donație simbolică. Mulțumim!
+        </p>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
+          <a href="https://ko-fi.com" target="_blank" rel="noopener noreferrer"
+             style="display:inline-flex;align-items:center;gap:6px;background:#FF5E5B;color:#fff;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
+            &#9749; Ko-fi
+          </a>
+          <a href="https://github.com/sponsors" target="_blank" rel="noopener noreferrer"
+             style="display:inline-flex;align-items:center;gap:6px;background:#24292e;color:#fff;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
+            &#10084;&#65039; GitHub Sponsors
+          </a>
+          <a href="https://github.com" target="_blank" rel="noopener noreferrer"
+             style="display:inline-flex;align-items:center;gap:6px;background:#4a7ebf;color:#fff;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
+            &#11088; GitHub
+          </a>
+        </div>
+        <p style="margin:10px 0 0 0;font-size:10px;color:#aaa;">
+          Ai o sugestie sau ai găsit un bug? Deschide un issue pe GitHub.
+        </p>
+      </fieldset>
+    `;
+    wrapper.appendChild(supportSection);
+
+    container.appendChild(wrapper);
+
+    // Load changelog from version.json bundled with the extension
+    loadChangelog(changelogSection.querySelector('#fme-home-changelog'));
+  }
+
+  async function loadChangelog(target) {
+    try {
+      const url = chrome.runtime.getURL('version.json');
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      const latest = (data.changelog && data.changelog[0]) || null;
+      if (!latest) {
+        target.innerHTML = '<p style="color:#888;font-size:11px;">Nu s-a găsit changelog.</p>';
+        return;
+      }
+
+      const TYPE_ICONS = {
+        feature: { icon: '&#10024;', color: '#27ae60', label: 'Nou' },
+        bugfix:  { icon: '&#128295;', color: '#e74c3c', label: 'Fix' },
+        other:   { icon: '&#128196;', color: '#3498db', label: 'Altele' },
+      };
+
+      let html = '<div style="margin-bottom:6px;">' +
+        '<strong style="font-size:13px;">v' + escHtml(latest.version) + '</strong>' +
+        '<span style="color:#888;font-size:11px;margin-left:8px;">' + escHtml(latest.date) + '</span>';
+      if (data.releaseUrl) {
+        html += ' <a href="' + escAttr(data.releaseUrl) + '" target="_blank" rel="noopener" ' +
+          'style="font-size:11px;margin-left:6px;">Vezi pe GitHub &rarr;</a>';
+      }
+      html += '</div>';
+
+      html += '<table class="table1 forumline" cellspacing="1" style="margin:0;">' +
+        '<thead><tr>' +
+          '<th class="thbg" style="width:60px;">Tip</th>' +
+          '<th class="thbg">Descriere</th>' +
+        '</tr></thead><tbody>';
+
+      (latest.notes || []).forEach((note, i) => {
+        const t = TYPE_ICONS[note.type] || TYPE_ICONS.other;
+        const rowClass = i % 2 === 0 ? 'row1' : 'row2';
+        html += '<tr>' +
+          '<td class="' + rowClass + '" style="text-align:center;">' +
+            '<span style="background:' + t.color + ';color:#fff;padding:1px 6px;border-radius:3px;font-size:10px;font-weight:600;">' +
+              t.icon + ' ' + t.label + '</span>' +
+          '</td>' +
+          '<td class="' + rowClass + '"><span class="gen">' + escHtml(note.text) + '</span></td>' +
+        '</tr>';
+      });
+
+      html += '</tbody></table>';
+
+      // older versions summary
+      if (data.changelog.length > 1) {
+        html += '<details style="margin-top:8px;font-size:11px;cursor:pointer;">' +
+          '<summary style="color:#3c9ebf;font-weight:600;">Versiuni anterioare (' + (data.changelog.length - 1) + ')</summary>';
+        for (let v = 1; v < data.changelog.length; v++) {
+          const entry = data.changelog[v];
+          html += '<div style="margin:6px 0 2px 0;font-weight:600;">v' + escHtml(entry.version) +
+            ' <span style="color:#888;font-weight:normal;">(' + escHtml(entry.date) + ')</span></div>' +
+            '<ul style="margin:0 0 0 16px;padding:0;">';
+          (entry.notes || []).forEach(n => {
+            const t = TYPE_ICONS[n.type] || TYPE_ICONS.other;
+            html += '<li style="margin:2px 0;">' +
+              '<span style="color:' + t.color + ';font-size:10px;">' + t.icon + '</span> ' +
+              escHtml(n.text) + '</li>';
+          });
+          html += '</ul>';
+        }
+        html += '</details>';
+      }
+
+      target.innerHTML = html;
+    } catch (e) {
+      console.warn('[FME] Failed to load changelog:', e);
+      target.innerHTML = '<p style="color:#e74c3c;font-size:11px;">Nu s-a putut încărca changelog-ul.</p>';
+    }
+  }
+
+  function escHtml(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function escAttr(str) {
+    return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   }
 
   // ─── Exports ──────────────────────────────────────────────────────────────────

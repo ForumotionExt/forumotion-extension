@@ -53,18 +53,22 @@
    *  - clicking any native tab hides the FME page
    */
   function bindNavClicks(fmeNavItem, topNavUl) {
-    // FME tab click
+    // FME tab click — navigate to FME page URL
+    // If already on FME page, prevent unnecessary reload
     fmeNavItem.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      FMEPanel.show();
+      const params = new URLSearchParams(window.location.search);
+      if (params.get('part') === 'fme') {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      // Otherwise let the <a href="/admin/?part=fme&tid=..."> navigate naturally
     });
 
     // Native tab clicks — hide FME page when user navigates away
     topNavUl.addEventListener('click', (e) => {
       const link = e.target.closest('a');
       if (!link) return;
-      // Only act if the click is NOT inside the FME tab
       if (fmeNavItem.contains(link)) return;
       FMEPanel.hide();
     });

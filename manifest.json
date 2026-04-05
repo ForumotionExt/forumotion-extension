@@ -45,6 +45,10 @@
         "src/content/tabs/stats.js",
         "src/content/tabs/notes.js",
         "src/content/tabs/backup.js",
+        "src/content/tabs/chatbox.js",
+        "src/content/tabs/activity-log.js",
+        "src/content/tabs/seo-tools.js",
+        "src/content/tabs/plugins.js",
         "src/content/panel.js",
         "src/content/content.js"
       ],
@@ -70,7 +74,8 @@
         "*://*.forumotion.eu/adminhd*"
       ],
       "js": [
-        "src/content/forum-injector.js"
+        "src/content/forum-injector.js",
+        "src/content/forum-chatbox.js"
       ],
       "run_at": "document_idle"
     }
@@ -95,7 +100,7 @@
   },
   "web_accessible_resources": [
     {
-      "resources": ["src/styles/*.css", "icons/*"],
+      "resources": ["src/styles/*.css", "icons/*", "version.json"],
       "matches": [
         "*://*.forumgratuit.ro/*",
         "*://*.forumotion.com/*",

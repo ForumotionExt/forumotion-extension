@@ -178,34 +178,40 @@ var FMEForumAPI = (() => {
   /**
    * Locates the edit URL for a specific template on the current forum.
    *
+   * Forumotion ACP edit URL pattern:
+   *   /admin/?part=themes&sub=templates&mode=edit_{category}&t={numericId}&l={category}&extended_admin=1&tid={tid}
+   *
    * Strategy:
-   *   1. Try a direct edit URL using the template ID.
-   *   2. Verify the page has a textarea (i.e., it is an actual edit page).
-   *   3. If not, fetch the category list page and scan table rows for a
-   *      name match, then return the edit link href.
+   *   1. If templateId is numeric, try direct edit URL.
+   *   2. Fetch the category list page and scan table rows for a
+   *      name match. Match by templateId key and optional label text.
    *
    * @param {string}      tid        — forum theme ID
-   * @param {string}      templateId — template identifier (e.g. "header")
-   * @param {string|null} category   — template category / mode (e.g. "main")
+   * @param {string}      templateId — template identifier (e.g. "overall_header" or "101")
+   * @param {string}      category   — template category (e.g. "main", "post", "mod")
+   * @param {string|null} label      — optional display label for matching (e.g. "Antetul forumului")
    * @returns {Promise<string|null>}
    */
-  async function findTemplateEditUrl(tid, templateId, category) {
+  async function findTemplateEditUrl(tid, templateId, category, label) {
     const origin = window.location.origin;
+    category = category || 'main';
+    const mode = 'edit_' + category;
 
-    // 1. Direct edit URL attempt
-    const directUrl = `${origin}/admin/?part=themes&sub=templates&action=edit&id=${encodeURIComponent(templateId)}&extended_admin=1&tid=${encodeURIComponent(tid)}`;
-
-    try {
-      const doc = await fetchPage(directUrl);
-      if (doc.querySelector('textarea')) {
-        return directUrl;
+    // 1. If templateId is numeric, try direct edit URL
+    if (/^\d+$/.test(String(templateId))) {
+      const directUrl = `${origin}/admin/?part=themes&sub=templates&mode=${mode}&t=${templateId}&l=${encodeURIComponent(category)}&extended_admin=1&tid=${encodeURIComponent(tid)}`;
+      try {
+        const doc = await fetchPage(directUrl);
+        if (doc.querySelector('textarea')) {
+          return directUrl;
+        }
+      } catch (_) {
+        // fall through to list-page scan
       }
-    } catch (_) {
-      // fall through to list-page scan
     }
 
     // 2. Fetch the template list page for the given category
-    const listUrl = `${origin}/admin/?part=themes&sub=templates&mode=${encodeURIComponent(category || 'main')}&extended_admin=1&tid=${encodeURIComponent(tid)}`;
+    const listUrl = `${origin}/admin/?part=themes&sub=templates&mode=${mode}&extended_admin=1&tid=${encodeURIComponent(tid)}`;
 
     try {
       const doc = await fetchPage(listUrl);
@@ -214,23 +220,32 @@ var FMEForumAPI = (() => {
       const norm = s => String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
       const normTarget = norm(templateId);
 
+      // Also prepare label-based match (strip [bracketed] suffixes)
+      const cleanLabel = label ? label.replace(/\s*\[.*\]\s*$/, '').trim() : '';
+      const normLabel  = norm(cleanLabel);
+
       const rows = Array.from(doc.querySelectorAll('table tr'));
       for (const row of rows) {
         const cells = row.querySelectorAll('td');
         if (cells.length === 0) continue;
 
-        // Check all cell text content for a name match
+        // Check all cell text content for a match
         let nameMatch = false;
         for (const cell of cells) {
-          if (norm(cell.textContent) === normTarget) {
-            nameMatch = true;
-            break;
-          }
+          const cellNorm = norm(cell.textContent);
+          // Exact match by template key
+          if (cellNorm === normTarget) { nameMatch = true; break; }
+          // Exact match by label
+          if (normLabel && cellNorm === normLabel) { nameMatch = true; break; }
+          // Contains match (cell text contains the template key)
+          if (normTarget.length >= 4 && cellNorm.includes(normTarget)) { nameMatch = true; break; }
         }
 
         if (nameMatch) {
-          // Find edit link in this row
-          const editLink = row.querySelector('a[href*="action=edit"]');
+          // Find edit link in this row — prefer href with &t= or mode=edit_
+          const editLink = row.querySelector('a[href*="&t="]') ||
+                           row.querySelector('a[href*="mode=edit"]') ||
+                           row.querySelector('a[href*="action=edit"]');
           if (editLink) {
             return resolveUrl(editLink.getAttribute('href'), listUrl);
           }
@@ -241,6 +256,117 @@ var FMEForumAPI = (() => {
     }
 
     return null;
+  }
+
+  // ─── resetTemplate ─────────────────────────────────────────────────────────
+
+  /**
+   * Resets a modified template back to default by visiting the delete URL.
+   * URL pattern: /admin/?del=1&extended_admin=1&l={category}&main_mode=edit&mode=edit_{category}&part=themes&sub=templates&t={numericId}&tid={tid}
+   *
+   * Since we may not have the numeric ID, we first find the reset/delete URL
+   * by loading the template edit page and extracting the reset link.
+   *
+   * @param {string}      tid         — forum theme ID
+   * @param {string}      templateId  — template identifier
+   * @param {string}      category    — template category
+   * @param {string|null} label       — optional display label
+   * @returns {Promise<boolean>} true if reset succeeded
+   */
+  async function resetTemplate(tid, templateId, category, label) {
+    category = category || 'main';
+    const editUrl = await findTemplateEditUrl(tid, templateId, category, label);
+    if (!editUrl) return false;
+
+    try {
+      const formData = await loadTemplateContent(editUrl);
+      if (formData.resetUrl) {
+        // Visit the reset/delete URL to restore default template
+        const res = await fetch(formData.resetUrl, { credentials: 'include' });
+        return res.ok;
+      }
+    } catch (_) {}
+
+    return false;
+  }
+
+  // ─── saveJsPlugin ─────────────────────────────────────────────────────────
+
+  /**
+   * Saves a JavaScript plugin/widget via the Forumotion JS management page.
+   * URL: /admin/?part=modules&sub=html&mode=js_edit&extended_admin=1&tid={tid}
+   *
+   * @param {string} tid       — forum theme ID
+   * @param {string} jsCode    — the JavaScript code to save
+   * @param {string} placement — "all" (all pages), "index", "topics", etc.
+   * @param {boolean} enabled  — whether the JS block is active
+   * @returns {Promise<boolean>} true if saved successfully
+   */
+  async function saveJsPlugin(tid, jsCode, placement, enabled) {
+    const origin = window.location.origin;
+    placement = placement || 'all';
+    const editUrl = `${origin}/admin/?part=modules&sub=html&mode=js_edit&extended_admin=1&tid=${encodeURIComponent(tid)}`;
+
+    try {
+      const doc = await fetchPage(editUrl);
+
+      // Find the main form
+      const form = doc.querySelector('form');
+      if (!form) throw new Error('Form not found on JS edit page');
+
+      const formAction = resolveUrl(form.getAttribute('action') || editUrl, editUrl);
+
+      // Collect hidden fields
+      const hiddenFields = Array.from(form.querySelectorAll('input[type="hidden"]')).map(inp => ({
+        name:  inp.name  || '',
+        value: inp.value || '',
+      }));
+
+      // Find the textarea for JS code
+      const textarea = form.querySelector('textarea');
+      if (!textarea) throw new Error('Textarea not found on JS edit page');
+      const textareaName = textarea.name || textarea.getAttribute('name') || '';
+
+      // Build POST body
+      const params = new URLSearchParams();
+      for (const f of hiddenFields) {
+        if (f.name) params.append(f.name, f.value || '');
+      }
+      if (textareaName) params.append(textareaName, jsCode || '');
+
+      // Placement field
+      const placementSel = form.querySelector('select[name*="placement"]');
+      if (placementSel) {
+        params.append(placementSel.name, 'js_placement_' + placement);
+      }
+
+      // Disabled field
+      const disabledInput = form.querySelector('input[name*="disabled"], select[name*="disabled"]');
+      if (disabledInput) {
+        params.append(disabledInput.name, enabled ? 'false' : 'true');
+      }
+
+      // Mode field
+      params.append('mode', 'save');
+
+      // Submit
+      const submitBtn = form.querySelector('input[type="submit"]');
+      if (submitBtn && submitBtn.name) {
+        params.append(submitBtn.name, submitBtn.value || '');
+      }
+
+      const res = await fetch(formAction, {
+        method:      'POST',
+        headers:     { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body:        params.toString(),
+        credentials: 'include',
+      });
+
+      return res.ok;
+    } catch (e) {
+      console.warn('[FME ForumAPI] saveJsPlugin error:', e);
+      return false;
+    }
   }
 
   // ─── Internal helpers ──────────────────────────────────────────────────────
@@ -261,5 +387,5 @@ var FMEForumAPI = (() => {
 
   // ─── Public API ────────────────────────────────────────────────────────────
 
-  return { getTid, fetchPage, loadTemplateContent, saveTemplate, findTemplateEditUrl };
+  return { getTid, fetchPage, loadTemplateContent, saveTemplate, findTemplateEditUrl, resetTemplate, saveJsPlugin };
 })();

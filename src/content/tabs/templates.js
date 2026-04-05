@@ -27,6 +27,8 @@ var FMETemplatesTab = (() => {
   let _templates      = [];   // array of { name, description, status, editUrl, value }
   let _searchTimer    = null;
   let _modal          = null; // the modal DOM element (appended to document.body)
+  let _installedThemes = {};  // loaded from chrome.storage.local for FME badge detection
+  let _fmeTemplateIds = new Set(); // template IDs known to be installed by FME themes
 
   // ─── Public API ──────────────────────────────────────────────────────────────
   function stylePanel() {
@@ -50,6 +52,9 @@ var FMETemplatesTab = (() => {
     _container = container;
     container.innerHTML = '';
     stylePanel();
+
+    // Load installed themes to detect FME-modified templates
+    await loadInstalledThemes();
 
     const wrapper = document.createElement('div');
     wrapper.className = 'fme-templates-wrapper';
@@ -203,6 +208,12 @@ var FMETemplatesTab = (() => {
     }
 
     try {
+      if (_currentMode === '__fme__') {
+        // Special FME mode: show templates from all installed themes
+        await loadFmeModifiedTemplates(wrapper, tid);
+        return;
+      }
+
       const url = buildListUrl(tid, _currentMode);
       const doc = await fetchPage(url);
       _templates = parseTemplateList(doc);
@@ -211,6 +222,77 @@ var FMETemplatesTab = (() => {
     } catch (err) {
       showFetchError(listArea, 'Nu s-a putut accesa panoul de administrare.', err.message);
     }
+  }
+
+  /**
+   * Loads templates modified by installed FME themes.
+   * Strategy 1: Match by stored template IDs (fast, for themes installed after update).
+   * Strategy 2: Scan all categories for modified templates and check for @FME marker in content (fallback).
+   */
+  async function loadFmeModifiedTemplates(wrapper, tid) {
+    const listArea = wrapper.querySelector('#fme-tpl-list-area');
+    _templates = [];
+
+    listArea.innerHTML = `
+      <div class="fme-loading">
+        <div class="fme-spinner"></div>
+        <span>Se scanează template-urile FME...</span>
+      </div>
+    `;
+
+    const hasFmeIds = _fmeTemplateIds.size > 0;
+
+    if (hasFmeIds) {
+      // Strategy 1: scan only categories from installed themes
+      const categoriesToScan = new Set();
+      for (const theme of Object.values(_installedThemes)) {
+        for (const tpl of (theme.templates || [])) {
+          categoriesToScan.add(tpl.category || 'main');
+        }
+      }
+
+      for (const cat of categoriesToScan) {
+        try {
+          const url = buildListUrl(tid, cat);
+          const doc = await fetchPage(url);
+          const catTemplates = parseTemplateList(doc);
+          const fmeFiltered = catTemplates.filter(t => _fmeTemplateIds.has(t.name));
+          fmeFiltered.forEach(t => { t._fmeCategory = cat; });
+          _templates.push(...fmeFiltered);
+        } catch (_) { /* skip */ }
+      }
+    } else {
+      // Strategy 2: scan ALL categories for modified templates
+      // Then verify each has the @FME marker by checking its content
+      for (const cat of CATEGORIES) {
+        try {
+          const url = buildListUrl(tid, cat.key);
+          const doc = await fetchPage(url);
+          const catTemplates = parseTemplateList(doc);
+          // Only check modified templates (not "Valoare de origine")
+          const modified = catTemplates.filter(t =>
+            t.status && t.status !== 'Valoare de origine' && t.status !== ''
+          );
+          for (const tpl of modified) {
+            try {
+              const tplData = await loadTemplateContent(tpl.editUrl);
+              if (tplData.content && tplData.content.includes('<!-- @FME')) {
+                tpl._fmeCategory = cat.key;
+                tpl._fmeMarkerDetected = true;
+                _templates.push(tpl);
+              }
+            } catch (_) { /* skip */ }
+          }
+        } catch (_) { /* skip */ }
+      }
+    }
+
+    if (_templates.length === 0) {
+      listArea.innerHTML = '<div class="fme-empty">Nu au fost găsite template-uri modificate de FME.</div>';
+      return;
+    }
+
+    renderTable(wrapper);
   }
 
   function buildListUrl(tid, mode) {
@@ -238,13 +320,21 @@ var FMETemplatesTab = (() => {
     let rowsHtml = '';
     filtered.forEach((tpl, idx) => {
       const isModified = tpl.status && tpl.status !== 'Valoare de origine' && tpl.status !== '';
+      const fmeTheme = findThemeForTemplate(tpl.name);
+      const hasFmeMarker = tpl._fmeMarkerDetected || !!fmeTheme;
+      const fmeBadge = hasFmeMarker
+        ? `<span class="fme-badge fme-badge-installed" style="font-size:10px;margin-left:4px;" title="${fmeTheme ? 'Modificat de tema: ' + escHtml(fmeTheme.name) : 'Detectat marker @FME'}">FME</span>`
+        : '';
+      const categoryBadge = tpl._fmeCategory
+        ? ` <span style="font-size:10px;color:#999;margin-left:4px;">[${escHtml(tpl._fmeCategory)}]</span>`
+        : '';
       const statusBadge = isModified
         ? `<span class="fme-badge fme-badge-update">${escHtml(tpl.status)}</span>`
         : `<span style="color:var(--fme-text-dim);font-size:11px;">${escHtml(tpl.status || 'Valoare de origine')}</span>`;
 
       rowsHtml += `
         <tr>
-          <td><strong>${escHtml(tpl.name)}</strong></td>
+          <td><strong>${escHtml(tpl.name)}</strong>${fmeBadge}${categoryBadge}</td>
           <td style="color:var(--fme-text-muted);">${escHtml(tpl.description)}</td>
           <td>${statusBadge}</td>
           <td>
@@ -480,6 +570,20 @@ var FMETemplatesTab = (() => {
 
       loadState.style.display  = 'none';
       editorArea.style.display = 'flex';
+
+      // Detect FME marker in template content
+      if (typeof FMEThemesTab !== 'undefined' && FMEThemesTab.parseFmeMarker) {
+        const marker = FMEThemesTab.parseFmeMarker(data.content);
+        if (marker) {
+          const infoDiv = document.createElement('div');
+          infoDiv.className = 'fme-alert fme-alert-info';
+          infoDiv.style.cssText = 'margin:0;padding:8px 12px;font-size:11px;';
+          const dateStr = new Date(marker.date).toLocaleDateString('ro-RO', { year: 'numeric', month: 'short', day: 'numeric' });
+          infoDiv.innerHTML = `<strong>\u2605 FME</strong> &mdash; Acest template a fost instalat de tema <strong>${escHtml(marker.themeId)}</strong> (v${escHtml(marker.version)}) pe ${dateStr}.`;
+          editorArea.insertBefore(infoDiv, editorArea.firstChild);
+        }
+      }
+
       textarea.focus();
 
     } catch (err) {
@@ -589,16 +693,28 @@ var FMETemplatesTab = (() => {
   function buildCategoryTabs(wrapper) {
     const tabsContainer = wrapper.querySelector('#fme-tpl-categories');
 
+    const hasFmeTemplates = hasInstalledThemesWithTemplates();
+
+    // When FME tab is shown, make it the default active tab
+    if (hasFmeTemplates) {
+      _currentMode = '__fme__';
+    }
+
     const template = document.createElement('template');
 
     template.innerHTML = `
       <div id="menu-body">
         <div id="tabs_menu">
           <ul>
+            ${hasFmeTemplates ? `
+              <li class="fme-filter-tab fme-filter-tab--active" id="activetab" data-mode="__fme__">
+                <a href="#"><span>\u2605 FME Modificate</span></a>
+              </li>
+            ` : ''}
             ${CATEGORIES.map((cat, i) => `
               <li 
-                class="fme-filter-tab${i === 0 ? ' fme-filter-tab--active' : ''}"
-                ${i === 0 ? 'id="activetab"' : ''}
+                class="fme-filter-tab${!hasFmeTemplates && i === 0 ? ' fme-filter-tab--active' : ''}"
+                ${!hasFmeTemplates && i === 0 ? 'id="activetab"' : ''}
                 data-mode="${cat.key}"
               >
                 <a href="#"><span>${cat.label}</span></a>
@@ -643,6 +759,38 @@ var FMETemplatesTab = (() => {
 
     // Refresh
     wrapper.querySelector('#fme-tpl-refresh').addEventListener('click', () => loadTemplateList(wrapper));
+  }
+
+  // ─── Installed themes (FME marker detection) ─────────────────────────────────
+
+  function loadInstalledThemes() {
+    return new Promise(resolve => {
+      chrome.storage.local.get({ fme_installed_themes: {} }, data => {
+        _installedThemes = data.fme_installed_themes || {};
+        _fmeTemplateIds = new Set();
+        Object.values(_installedThemes).forEach(theme => {
+          (theme.templates || []).forEach(t => _fmeTemplateIds.add(t.id));
+        });
+        resolve();
+      });
+    });
+  }
+
+  /** Find which theme installed a given template ID */
+  function findThemeForTemplate(templateId) {
+    for (const theme of Object.values(_installedThemes)) {
+      if ((theme.templates || []).some(t => t.id === templateId)) {
+        return theme;
+      }
+    }
+    return null;
+  }
+
+  /** Check if any themes are installed (with or without template data stored) */
+  function hasInstalledThemesWithTemplates() {
+    // Show FME tab if any theme is installed — even without stored templates[] array
+    // (older themes may have installed templates before we added the templates tracking)
+    return Object.keys(_installedThemes).length > 0;
   }
 
   // ─── Error state ──────────────────────────────────────────────────────────────

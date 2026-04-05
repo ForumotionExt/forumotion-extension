@@ -43,6 +43,19 @@ var FMEThemesTab = (() => {
 
   const BANNER_ID = 'fme-preview-banner';
 
+  // Marker injected into templates installed by FME — source of truth, independent of storage
+  const FME_MARKER_PREFIX = '<!-- @FME';
+  function buildFmeMarker(themeId, version) {
+    return `<!-- @FME theme="${themeId}" v="${version}" date="${new Date().toISOString()}" -->`;
+  }
+  function parseFmeMarker(content) {
+    const m = (content || '').match(/<!-- @FME theme="([^"]+)" v="([^"]+)" date="([^"]+)" -->/);
+    return m ? { themeId: m[1], version: m[2], date: m[3] } : null;
+  }
+  function stripFmeMarker(content) {
+    return (content || '').replace(/\n?<!-- @FME theme="[^"]+" v="[^"]+" date="[^"]+" -->\n?/g, '');
+  }
+
   // ─── Public API ──────────────────────────────────────────────────────────────
 
   async function render(container) {
@@ -83,6 +96,20 @@ var FMEThemesTab = (() => {
               <span>Se incarca temele din GitHub&hellip;</span>
             </div>
           </div>
+        </fieldset>
+
+        <fieldset style="margin:0 12px 12px 12px;">
+          <legend>\u00CEncarcă temă proprie</legend>
+          <div style="padding:4px 0 8px;font-size:11px;color:#64748b;">
+            Încarcă un fișier <strong>manifest.json</strong> sau o arhivă <strong>.zip</strong> cu o temă proprie.
+            Se validează strict după modelul de pe GitHub.
+          </div>
+          <div class="div_btns" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">
+            <input type="button" id="fme-upload-theme-btn" value="Alege manifest.json" class="btn" />
+            <input type="file" id="fme-upload-theme-file" accept=".json,application/json" style="display:none;" />
+            <span id="fme-upload-theme-status" style="font-size:11px;min-width:180px;"></span>
+          </div>
+          <div id="fme-upload-validation-area" style="display:none;margin-top:10px;"></div>
         </fieldset>
       </div>
     `;
@@ -227,6 +254,17 @@ var FMEThemesTab = (() => {
     });
 
     wrapper.querySelector('#fme-themes-refresh').addEventListener('click', () => loadData(wrapper));
+
+    // Custom theme upload
+    const uploadBtn  = wrapper.querySelector('#fme-upload-theme-btn');
+    const uploadFile = wrapper.querySelector('#fme-upload-theme-file');
+    uploadBtn.addEventListener('click', () => uploadFile.click());
+    uploadFile.addEventListener('change', () => {
+      const file = uploadFile.files[0];
+      if (!file) return;
+      handleCustomUpload(file, wrapper);
+      uploadFile.value = '';
+    });
   }
 
   // ─── Install modal ───────────────────────────────────────────────────────────
@@ -365,8 +403,8 @@ var FMEThemesTab = (() => {
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
         ${installed
           ? `<input type="button" id="fme-modal-uninstall-btn" value="Dezinstaleaza" />
-             <input type="button" id="fme-modal-reinstall-btn" value="Reinstaleaza CSS" style="margin-left:4px;" />`
-          : `<input type="button" id="fme-modal-install-btn" value="Instaleaza CSS" />`
+             <input type="button" id="fme-modal-reinstall-btn" value="Reinstaleaza tema" style="margin-left:4px;" />`
+          : `<input type="button" id="fme-modal-install-btn" value="Instaleaza tema" />`
         }
         <input type="button" id="fme-modal-preview-btn" value="${escHtml(previewBtnLabel)}" />
         <input type="button" id="fme-modal-cancel-btn" value="Inchide" />
@@ -390,43 +428,8 @@ var FMEThemesTab = (() => {
         }
       }
 
-      e.target.disabled = true;
-      e.target.value = 'Se instaleaza...';
-      statusEl.innerHTML = '';
-      progressEl.style.display = 'none';
-
       const vars = getVariableValues(content);
-
-      // Install CSS
-      const result = await handleInstall(theme, manifest, vars);
-      setModalStatus(statusEl, result.type, result.message);
-
-      // Install templates if CSS succeeded and templates exist
-      if (result.type === 'success' && tplFiles.length > 0 && tid) {
-        progressEl.style.display = 'block';
-        progressEl.textContent = 'Se instaleaza template-urile...';
-
-        const tplResult = await installTemplates(manifest, tid, (msg) => {
-          progressEl.textContent = msg;
-        });
-
-        if (tplResult.errors.length > 0) {
-          const errMsg = tplResult.errors.map(e => `${e.id}: ${e.error}`).join('; ');
-          progressEl.textContent = `Template-uri instalate: ${tplResult.installed}/${tplFiles.length}. Erori: ${errMsg}`;
-        } else {
-          progressEl.textContent = `Template-uri instalate: ${tplResult.installed}/${tplFiles.length}`;
-        }
-      }
-
-      if (result.type === 'success') {
-        _installedThemes = await getInstalledThemes();
-        renderTable(_container.querySelector('.fme-themes-wrapper') || _container);
-        e.target.value = 'Instalata!';
-        setTimeout(() => { e.target.value = 'Reinstaleaza CSS'; e.target.disabled = false; }, 2500);
-      } else {
-        e.target.value = 'Instaleaza CSS';
-        e.target.disabled = false;
-      }
+      showInstallProgressModal(theme, manifest, vars, e.target);
     });
 
     content.querySelector('#fme-modal-uninstall-btn')?.addEventListener('click', async () => {
@@ -648,14 +651,18 @@ var FMEThemesTab = (() => {
 
       injectThemeCSS(theme.id, cssText);
 
+      const tplFiles = manifest.files?.templates || [];
       _installedThemes[theme.id] = {
         id: theme.id,
         name: manifest.name || theme.name,
         cssText,
         version: manifest.version || theme.version || '1.0.0',
-        installedAt: new Date().toISOString()
+        installedAt: new Date().toISOString(),
+        templates: tplFiles.map(t => ({ id: t.id, category: t.category || 'main', label: t.label || t.id })),
+        plugins: (manifest.files?.plugins || []).map(p => ({ id: p.id, label: p.label || p.id })),
       };
       await saveInstalledThemes(_installedThemes);
+      if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('theme-install', 'Temă instalată: ' + (manifest.name || theme.name));
       return { type: 'success', message: `"${manifest.name || theme.name}" instalata cu succes!` };
     } catch (err) {
       return { type: 'error', message: 'Eroare: ' + err.message };
@@ -663,7 +670,24 @@ var FMEThemesTab = (() => {
   }
 
   async function handleUninstall(themeId) {
+    if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('theme-uninstall', 'Temă dezinstalată: ' + themeId);
     removeThemeCSS(themeId);
+
+    // Reset modified templates back to default
+    const themeData = _installedThemes[themeId];
+    if (themeData && themeData.templates && themeData.templates.length > 0) {
+      const tid = FMEForumAPI.getTid();
+      if (tid) {
+        for (const tpl of themeData.templates) {
+          try {
+            await FMEForumAPI.resetTemplate(tid, tpl.id, tpl.category || 'main', tpl.label || null);
+          } catch (_) {
+            // Skip errors on individual template resets
+          }
+        }
+      }
+    }
+
     delete _installedThemes[themeId];
     await saveInstalledThemes(_installedThemes);
   }
@@ -677,13 +701,13 @@ var FMEThemesTab = (() => {
    * @param {Function} [progressCb] — called with a progress string for each step
    * @returns {Promise<{ installed: number, errors: Array<{ id, error }> }>}
    */
-  async function installTemplates(manifest, tid, progressCb) {
+  async function installTemplates(manifest, tid, progressCb, themePathOverride) {
     const tplFiles = manifest.files?.templates || [];
     if (tplFiles.length === 0) return { installed: 0, errors: [] };
 
     const errors    = [];
     let   installed = 0;
-    const themePath = (manifest.path || '').replace(/\/$/, '');
+    const themePath = (themePathOverride || manifest.path || '').replace(/\/$/, '');
 
     for (const tpl of tplFiles) {
       try {
@@ -696,16 +720,20 @@ var FMEThemesTab = (() => {
         );
 
         // 2. Find the edit URL on the forum
-        const editUrl = await FMEForumAPI.findTemplateEditUrl(tid, tpl.id, tpl.category || null);
+        const editUrl = await FMEForumAPI.findTemplateEditUrl(tid, tpl.id, tpl.category || 'main', tpl.label || null);
         if (!editUrl) throw new Error(`Template ${tpl.id} negasit`);
 
         // 3. Load form data
         const formData = await FMEForumAPI.loadTemplateContent(editUrl);
 
-        // 4. Save
+        // 4. Strip any old FME marker and append fresh one
+        const cleanContent = stripFmeMarker(htmlContent);
+        const markedContent = cleanContent + '\n' + buildFmeMarker(manifest.name || 'unknown', manifest.version || '1.0.0');
+
+        // 5. Save
         await FMEForumAPI.saveTemplate(
           formData.formAction, formData.hiddenFields,
-          formData.textareaName, htmlContent, formData.submitField
+          formData.textareaName, markedContent, formData.submitField
         );
 
         installed++;
@@ -805,6 +833,216 @@ var FMEThemesTab = (() => {
     })();
   }
 
+  // ─── Install progress modal ──────────────────────────────────────────────────
+
+  /**
+   * Shows a step-by-step install progress modal replacing the modal body.
+   * Installs CSS first, then templates one by one, then plugins.
+   */
+  function showInstallProgressModal(theme, manifest, vars, installBtn) {
+    if (!_modal) return;
+
+    const modalEl = _modal.querySelector('.fme-modal');
+    if (!modalEl) return;
+
+    const header = modalEl.querySelector('.fme-modal-header .fme-modal-title');
+    if (header) header.textContent = `Instalare: ${manifest.name || theme.name}`;
+
+    const body = modalEl.querySelector('.fme-modal-body');
+    const tplFiles    = manifest.files?.templates || [];
+    const pluginFiles = manifest.files?.plugins   || [];
+    const cssFiles    = manifest.files?.css        || [];
+    const tid         = FMEForumAPI.getTid();
+
+    // Total steps: 1 (CSS) + templates + plugins
+    const totalSteps = 1 + tplFiles.length + pluginFiles.length;
+
+    body.innerHTML = `
+      <div id="fme-install-progress-wrap" style="padding:8px 0;">
+        <div id="fme-install-progress-steps" style="font-size:12px;line-height:1.8;color:#555;min-height:120px;max-height:300px;overflow-y:auto;margin-bottom:12px;"></div>
+        <div id="fme-install-progress-bar-wrap"
+             style="background:#e8e8e8;border-radius:4px;height:8px;overflow:hidden;margin-bottom:12px;">
+          <div id="fme-install-progress-bar"
+               style="background:#27ae60;height:100%;width:0%;transition:width 0.3s;"></div>
+        </div>
+        <div id="fme-install-progress-status" style="font-size:12px;color:#27ae60;font-weight:600;min-height:20px;"></div>
+        <div style="margin-top:14px;">
+          <input type="button" id="fme-install-progress-close" value="Inchide" disabled />
+        </div>
+      </div>
+    `;
+
+    const stepsEl  = body.querySelector('#fme-install-progress-steps');
+    const barEl    = body.querySelector('#fme-install-progress-bar');
+    const statusEl = body.querySelector('#fme-install-progress-status');
+    const closeBtn = body.querySelector('#fme-install-progress-close');
+
+    let stepsDone = 0;
+
+    function addStep(msg, type) {
+      const line = document.createElement('div');
+      const colors = { error: '#e74c3c', success: '#27ae60', info: '#555' };
+      line.style.cssText = `color:${colors[type] || colors.info};padding:1px 0;`;
+      line.textContent = msg;
+      stepsEl.appendChild(line);
+      stepsEl.scrollTop = stepsEl.scrollHeight;
+    }
+
+    function advance() {
+      stepsDone++;
+      barEl.style.width = Math.min(100, Math.round((stepsDone / totalSteps) * 100)) + '%';
+    }
+
+    closeBtn.addEventListener('click', () => {
+      closeModal();
+      // Re-render table to reflect newly installed state
+      _installedThemes && renderTable(_container.querySelector('.fme-themes-wrapper') || _container);
+    });
+
+    // Run install steps async
+    (async () => {
+      let cssOk = false;
+      let tplInstalled = 0;
+      let tplErrors = [];
+
+      // ── Step 1: CSS ─────────────────────────────────────────────────────────
+      addStep('◆ Pas 1: Instalare CSS\u2026', 'info');
+
+      try {
+        const result = await handleInstall(theme, manifest, vars);
+        advance();
+
+        if (result.type === 'success') {
+          addStep('  ✓ CSS instalat cu succes.', 'success');
+          cssOk = true;
+        } else {
+          addStep('  ✗ ' + result.message, 'error');
+        }
+      } catch (err) {
+        advance();
+        addStep('  ✗ Eroare CSS: ' + err.message, 'error');
+      }
+
+      // ── Step 2: Templates ────────────────────────────────────────────────────
+      if (cssOk && tplFiles.length > 0 && tid) {
+        addStep(`◆ Pas 2: Instalare template-uri (${tplFiles.length})\u2026`, 'info');
+
+        for (const tpl of tplFiles) {
+          const label = tpl.label || tpl.id || tpl.file;
+          addStep(`  ⏳ Template: ${label}\u2026`, 'info');
+
+          try {
+            const themePath = (theme.path || manifest.path || '').replace(/\/$/, '');
+
+            // Fetch HTML from GitHub
+            const htmlContent = await FMEGitHub.fetchRaw(
+              _settings.themesOwner, _settings.themesRepo,
+              `${themePath}/${tpl.file}`, 'main', _settings.githubToken || null
+            );
+
+            // Find edit URL on forum ACP
+            const editUrl = await FMEForumAPI.findTemplateEditUrl(tid, tpl.id, tpl.category || 'main', tpl.label || null);
+            if (!editUrl) throw new Error('Template negasit in ACP');
+
+            // Load form data
+            const formData = await FMEForumAPI.loadTemplateContent(editUrl);
+
+            // Strip old marker + append new
+            const cleanContent = stripFmeMarker(htmlContent);
+            const markedContent = cleanContent + '\n' + buildFmeMarker(manifest.name || 'unknown', manifest.version || '1.0.0');
+
+            // Save
+            await FMEForumAPI.saveTemplate(
+              formData.formAction, formData.hiddenFields,
+              formData.textareaName, markedContent, formData.submitField
+            );
+
+            tplInstalled++;
+            addStep(`  ✓ ${label}`, 'success');
+          } catch (err) {
+            tplErrors.push({ id: label, error: err.message });
+            addStep(`  ✗ ${label}: ${err.message}`, 'error');
+          }
+
+          advance();
+        }
+      } else if (tplFiles.length > 0 && !tid) {
+        addStep('◆ Template-uri: skip (tid nedisponibil)', 'error');
+        tplFiles.forEach(() => advance());
+      } else if (tplFiles.length > 0 && !cssOk) {
+        addStep('◆ Template-uri: skip (CSS a esuat)', 'error');
+        tplFiles.forEach(() => advance());
+      }
+
+      // ── Step 3: Plugins ──────────────────────────────────────────────────────
+      if (pluginFiles.length > 0 && tid) {
+        addStep(`◆ Pas ${tplFiles.length > 0 ? '3' : '2'}: Instalare plugin-uri (${pluginFiles.length})\u2026`, 'info');
+
+        for (const p of pluginFiles) {
+          const plabel = p.label || p.id || p.file;
+          addStep(`  ⏳ Plugin: ${plabel}\u2026`, 'info');
+
+          try {
+            const themePath = (theme.path || manifest.path || '').replace(/\/$/, '');
+
+            // Fetch JS code from GitHub
+            const jsCode = await FMEGitHub.fetchRaw(
+              _settings.themesOwner, _settings.themesRepo,
+              `${themePath}/${p.file}`, 'main', _settings.githubToken || null
+            );
+
+            // Save via JS module system
+            const placement = p.placement || 'all';
+            const saved = await FMEForumAPI.saveJsPlugin(tid, jsCode, placement, true);
+
+            if (saved) {
+              addStep(`  ✓ ${plabel}`, 'success');
+            } else {
+              addStep(`  ⚠ ${plabel} (salvat local, activare manuală din Plugins)`, 'info');
+            }
+          } catch (err) {
+            addStep(`  ⚠ ${plabel}: ${err.message} (se poate activa manual din Plugins)`, 'info');
+          }
+
+          advance();
+        }
+      } else if (pluginFiles.length > 0) {
+        addStep(`◆ Plugin-uri: ${pluginFiles.length} disponibile (se pot activa din tab-ul Plugins)`, 'info');
+        pluginFiles.forEach(() => advance());
+      }
+
+      // ── Summary ──────────────────────────────────────────────────────────────
+      barEl.style.width = '100%';
+
+      _installedThemes = await getInstalledThemes();
+
+      const summaryParts = [];
+      if (cssOk)          summaryParts.push('CSS ✓');
+      if (tplInstalled)   summaryParts.push(`${tplInstalled}/${tplFiles.length} template-uri ✓`);
+      if (tplErrors.length) summaryParts.push(`${tplErrors.length} erori template`);
+      if (pluginFiles.length) summaryParts.push(`${pluginFiles.length} plugin-uri`);
+
+      const allOk = cssOk && tplErrors.length === 0;
+
+      if (allOk) {
+        statusEl.style.color = '#27ae60';
+        statusEl.textContent = 'Instalare completa: ' + summaryParts.join(' | ');
+        addStep('✓ Instalare finalizata cu succes!', 'success');
+      } else if (cssOk) {
+        statusEl.style.color = '#e67e22';
+        statusEl.textContent = 'Instalare partiala: ' + summaryParts.join(' | ');
+        addStep('⚠ Instalare finalizata cu erori.', 'error');
+      } else {
+        statusEl.style.color = '#e74c3c';
+        statusEl.textContent = 'Instalare esuata.';
+        barEl.style.background = '#e74c3c';
+        addStep('✗ Instalarea a esuat.', 'error');
+      }
+
+      closeBtn.disabled = false;
+    })();
+  }
+
   // ─── Preview with templates (Preview C) ──────────────────────────────────────
 
   /**
@@ -854,7 +1092,7 @@ var FMEThemesTab = (() => {
     for (const tpl of tplFiles) {
       try {
         progressCb(`Backup: ${tpl.id || tpl.label}…`);
-        const editUrl = await FMEForumAPI.findTemplateEditUrl(tid, tpl.id, tpl.category || null);
+        const editUrl = await FMEForumAPI.findTemplateEditUrl(tid, tpl.id, tpl.category || 'main', tpl.label || null);
         if (!editUrl) throw new Error('negasit');
 
         const formData = await FMEForumAPI.loadTemplateContent(editUrl);
@@ -1083,9 +1321,367 @@ var FMEThemesTab = (() => {
     el.innerHTML = `<div class="fme-alert ${cls}" style="margin:0;">${escHtml(msg)}</div>`;
   }
 
+  // ─── Custom theme upload + validation ─────────────────────────────────────────
+
+  /**
+   * Strict manifest validation rules.
+   * Schema can also be fetched from GitHub (themesRepo/schema.json) if available.
+   */
+  const MANIFEST_SCHEMA = {
+    required:     ['author', 'version', 'description', 'files'],
+    stringFields: ['author', 'version', 'description', 'name', 'minEngine', 'path'],
+    validEngines: ['phpbb3', 'phpbb2', 'prosilver', 'subsilver', 'subsilver2', 'invision', 'punbb', 'mybb'],
+    versionRegex: /^\d+\.\d+\.\d+$/,
+    filesRequired: ['css'],        // files.css is mandatory
+    filesOptional: ['templates', 'js', 'plugins', 'preview'],
+    cssFileFields: ['file', 'label'],
+    tplFileFields: ['id', 'file'],
+    jsFileFields:  ['file', 'label'],
+    pluginFields:  ['id'],
+  };
+
+  /**
+   * Validate a manifest object against the FME schema.
+   * @param {object} manifest
+   * @returns {{ valid: boolean, errors: string[], warnings: string[] }}
+   */
+  function validateManifest(manifest) {
+    const errors = [];
+    const warnings = [];
+
+    if (!manifest || typeof manifest !== 'object') {
+      return { valid: false, errors: ['Manifestul nu este un obiect JSON valid.'], warnings: [] };
+    }
+
+    // Required fields
+    for (const field of MANIFEST_SCHEMA.required) {
+      if (manifest[field] === undefined || manifest[field] === null || manifest[field] === '') {
+        errors.push(`Câmpul obligatoriu "${field}" lipsește.`);
+      }
+    }
+
+    // String fields type check
+    for (const field of MANIFEST_SCHEMA.stringFields) {
+      if (manifest[field] !== undefined && typeof manifest[field] !== 'string') {
+        errors.push(`Câmpul "${field}" trebuie să fie string.`);
+      }
+    }
+
+    // Version format
+    if (manifest.version && !MANIFEST_SCHEMA.versionRegex.test(manifest.version)) {
+      errors.push(`Versiunea "${manifest.version}" nu e validă (formatul așteptat: X.Y.Z).`);
+    }
+
+    // Engine validation
+    if (manifest.minEngine) {
+      const eng = manifest.minEngine.toLowerCase();
+      if (!MANIFEST_SCHEMA.validEngines.includes(eng)) {
+        warnings.push(`Engine "${manifest.minEngine}" necunoscut. Acceptate: ${MANIFEST_SCHEMA.validEngines.join(', ')}.`);
+      }
+    }
+
+    // Tags
+    if (manifest.tags !== undefined) {
+      if (!Array.isArray(manifest.tags)) {
+        errors.push('"tags" trebuie să fie un array de stringuri.');
+      } else if (manifest.tags.some(t => typeof t !== 'string')) {
+        errors.push('Toate elementele din "tags" trebuie să fie stringuri.');
+      }
+    }
+
+    // Variables
+    if (manifest.variables !== undefined) {
+      if (!Array.isArray(manifest.variables)) {
+        errors.push('"variables" trebuie să fie un array.');
+      } else {
+        manifest.variables.forEach((v, i) => {
+          if (!v.id) errors.push(`variables[${i}]: lipsește "id".`);
+          if (!v.type) warnings.push(`variables[${i}]: lipsește "type" (recomandat: color, text).`);
+        });
+      }
+    }
+
+    // Files validation
+    if (manifest.files && typeof manifest.files === 'object') {
+      // CSS files (mandatory)
+      if (!manifest.files.css || !Array.isArray(manifest.files.css) || manifest.files.css.length === 0) {
+        errors.push('"files.css" este obligatoriu și trebuie să conțină cel puțin un fișier.');
+      } else {
+        manifest.files.css.forEach((f, i) => {
+          if (!f.file) errors.push(`files.css[${i}]: lipsește "file".`);
+          if (f.file && !/\.(css|scss)$/i.test(f.file)) warnings.push(`files.css[${i}]: "${f.file}" nu pare a fi un fișier CSS.`);
+        });
+      }
+
+      // Templates
+      if (manifest.files.templates) {
+        if (!Array.isArray(manifest.files.templates)) {
+          errors.push('"files.templates" trebuie să fie un array.');
+        } else {
+          manifest.files.templates.forEach((f, i) => {
+            if (!f.id) errors.push(`files.templates[${i}]: lipsește "id".`);
+            if (!f.file) errors.push(`files.templates[${i}]: lipsește "file".`);
+          });
+        }
+      }
+
+      // JS files
+      if (manifest.files.js) {
+        if (!Array.isArray(manifest.files.js)) {
+          errors.push('"files.js" trebuie să fie un array.');
+        } else {
+          manifest.files.js.forEach((f, i) => {
+            if (!f.file) errors.push(`files.js[${i}]: lipsește "file".`);
+          });
+        }
+      }
+
+      // Plugins
+      if (manifest.files.plugins) {
+        if (!Array.isArray(manifest.files.plugins)) {
+          errors.push('"files.plugins" trebuie să fie un array.');
+        } else {
+          manifest.files.plugins.forEach((f, i) => {
+            if (!f.id) errors.push(`files.plugins[${i}]: lipsește "id".`);
+          });
+        }
+      }
+
+      // Preview
+      if (manifest.files.preview && typeof manifest.files.preview !== 'object') {
+        warnings.push('"files.preview" ar trebui să fie un obiect cu "screenshot".'); 
+      }
+
+      // Unknown keys in files
+      const knownFileKeys = new Set([...MANIFEST_SCHEMA.filesRequired, ...MANIFEST_SCHEMA.filesOptional]);
+      Object.keys(manifest.files).forEach(k => {
+        if (!knownFileKeys.has(k)) warnings.push(`files: cheie necunoscută "${k}".`);
+      });
+    } else if (manifest.files !== undefined) {
+      errors.push('"files" trebuie să fie un obiect.');
+    }
+
+    return { valid: errors.length === 0, errors, warnings };
+  }
+
+  /**
+   * Handle custom theme upload (manifest.json file).
+   */
+  async function handleCustomUpload(file, wrapper) {
+    const statusEl     = wrapper.querySelector('#fme-upload-theme-status');
+    const validArea    = wrapper.querySelector('#fme-upload-validation-area');
+    statusEl.style.color = '#555';
+    statusEl.textContent = 'Se citește fișierul...';
+    validArea.style.display = 'none';
+    validArea.innerHTML = '';
+
+    let manifest;
+    try {
+      const text = await file.text();
+      manifest = JSON.parse(text);
+    } catch (err) {
+      statusEl.style.color = '#e74c3c';
+      statusEl.textContent = 'JSON invalid: ' + err.message;
+      return;
+    }
+
+    // Validate
+    const result = validateManifest(manifest);
+
+    // Try to also fetch remote schema for additional checks
+    let remoteSchema = null;
+    try {
+      if (_settings) {
+        remoteSchema = await FMEGitHub.fetchJSON(
+          _settings.themesOwner, _settings.themesRepo,
+          'schema.json', 'main', _settings.githubToken || null
+        );
+      }
+    } catch (_) { /* no remote schema available, that's ok */ }
+
+    if (remoteSchema && remoteSchema.requiredFields) {
+      for (const field of remoteSchema.requiredFields) {
+        if (!manifest[field]) {
+          result.errors.push(`Schema remotă: câmpul "${field}" este obligatoriu.`);
+          result.valid = false;
+        }
+      }
+    }
+
+    // Render validation results
+    validArea.style.display = 'block';
+
+    if (result.valid) {
+      statusEl.style.color = '#27ae60';
+      statusEl.textContent = '✓ Manifest valid!';
+
+      const cssCount = (manifest.files?.css || []).length;
+      const tplCount = (manifest.files?.templates || []).length;
+      const jsCount  = (manifest.files?.js || []).length;
+      const plgCount = (manifest.files?.plugins || []).length;
+
+      let warningsHtml = '';
+      if (result.warnings.length > 0) {
+        warningsHtml = `
+          <div class="fme-alert fme-alert-info" style="margin-top:8px;font-size:11px;">
+            <strong>Atenționări:</strong>
+            <ul style="margin:4px 0 0 16px;padding:0;">${result.warnings.map(w => `<li>${escHtml(w)}</li>`).join('')}</ul>
+          </div>
+        `;
+      }
+
+      validArea.innerHTML = `
+        <div class="fme-alert fme-alert-success" style="margin:0;">
+          <strong>✓ Manifestul "${escHtml(manifest.name || manifest.author || '?')}" este valid!</strong>
+        </div>
+        <table class="forumline" width="100%" cellspacing="1" cellpadding="4" style="margin-top:8px;">
+          <tr class="row1"><td style="width:120px;font-weight:600;">Nume</td><td>${escHtml(manifest.name || '—')}</td></tr>
+          <tr class="row2"><td style="font-weight:600;">Autor</td><td>${escHtml(manifest.author || '—')}</td></tr>
+          <tr class="row1"><td style="font-weight:600;">Versiune</td><td>${escHtml(manifest.version || '—')}</td></tr>
+          <tr class="row2"><td style="font-weight:600;">Engine</td><td>${escHtml(manifest.minEngine || 'Orice')}</td></tr>
+          <tr class="row1"><td style="font-weight:600;">Componente</td>
+            <td>${cssCount} CSS, ${tplCount} TPL, ${jsCount} JS, ${plgCount} Plugins</td>
+          </tr>
+          <tr class="row2"><td style="font-weight:600;">Descriere</td><td>${escHtml(manifest.description || '—')}</td></tr>
+        </table>
+        ${warningsHtml}
+        <div style="margin-top:10px;">
+          <input type="button" id="fme-upload-install-btn" value="Instalează tema" class="icon_ok" />
+          <span id="fme-upload-install-status" style="font-size:11px;margin-left:8px;"></span>
+        </div>
+      `;
+
+      // Wire install button
+      validArea.querySelector('#fme-upload-install-btn').addEventListener('click', async () => {
+        const btn = validArea.querySelector('#fme-upload-install-btn');
+        const iStatus = validArea.querySelector('#fme-upload-install-status');
+        btn.disabled = true;
+        btn.value = 'Se instalează...';
+        iStatus.textContent = '';
+
+        try {
+          await installCustomTheme(manifest, wrapper);
+          iStatus.style.color = '#27ae60';
+          iStatus.textContent = '✓ Tema a fost instalată local!';
+          btn.value = 'Instalată!';
+        } catch (err) {
+          iStatus.style.color = '#e74c3c';
+          iStatus.textContent = 'Eroare: ' + err.message;
+          btn.value = 'Instalează tema';
+          btn.disabled = false;
+        }
+      });
+    } else {
+      statusEl.style.color = '#e74c3c';
+      statusEl.textContent = `✗ ${result.errors.length} erori găsite.`;
+
+      validArea.innerHTML = `
+        <div class="fme-alert fme-alert-error" style="margin:0;">
+          <strong>Manifestul nu este valid.</strong> Corectează erorile de mai jos:
+          <ul style="margin:6px 0 0 16px;padding:0;">
+            ${result.errors.map(e => `<li>${escHtml(e)}</li>`).join('')}
+          </ul>
+        </div>
+        ${result.warnings.length > 0 ? `
+          <div class="fme-alert fme-alert-info" style="margin-top:8px;font-size:11px;">
+            <strong>Atenționări:</strong>
+            <ul style="margin:4px 0 0 16px;padding:0;">${result.warnings.map(w => `<li>${escHtml(w)}</li>`).join('')}</ul>
+          </div>
+        ` : ''}
+        <div style="margin-top:8px;padding:8px 10px;background:#fff8f0;border:1px solid #f0c78a;border-radius:4px;font-size:11px;color:#8a6d3b;">
+          <strong>Model manifest.json corect:</strong><br>
+          <pre style="margin-top:6px;font-family:Consolas,monospace;font-size:11px;background:#fafafa;padding:8px;border-radius:3px;overflow-x:auto;">{
+  "name": "Numele Temei",
+  "author": "AutorulTău",
+  "version": "1.0.0",
+  "description": "Descriere scurtă a temei",
+  "minEngine": "phpbb3",
+  "tags": ["dark", "modern"],
+  "files": {
+    "css": [{ "file": "style.css", "label": "Stiluri principale" }],
+    "templates": [{ "id": "overall_header", "file": "tpl/header.html", "category": "main", "label": "Header" }],
+    "plugins": [{ "id": "my-plugin", "label": "Plugin-ul meu", "file": "plugins/my-plugin.js" }],
+    "preview": { "screenshot": "preview.png" }
+  },
+  "variables": [{ "id": "accent-color", "type": "color", "label": "Culoare accent", "default": "#6c63ff" }]
+}</pre>
+        </div>
+      `;
+    }
+  }
+
+  /**
+   * Install a custom theme from a locally validated manifest.
+   * Only CSS inline content is supported for local themes (no GitHub fetch).
+   * For full themes with files, the user must host on GitHub.
+   */
+  async function installCustomTheme(manifest, wrapper) {
+    const themeId = 'custom-' + (manifest.name || 'theme').toLowerCase().replace(/[^a-z0-9]+/g, '-') + '-' + Date.now().toString(36);
+
+    // For a local manifest, we can't fetch CSS files from GitHub.
+    // Check if CSS is provided inline or as data URIs.
+    const cssFiles = manifest.files?.css || [];
+    if (cssFiles.length === 0) throw new Error('Niciun fișier CSS definit.');
+
+    // Try to fetch CSS from the themes repo if a path is specified
+    let cssText = '';
+    const themePath = (manifest.path || '').replace(/\/$/, '');
+
+    if (themePath && _settings) {
+      // Theme has a path — try fetching from GitHub
+      try {
+        const cssTexts = await Promise.all(
+          cssFiles.map(f => FMEGitHub.fetchRaw(
+            _settings.themesOwner, _settings.themesRepo,
+            `${themePath}/${f.file}`, 'main', _settings.githubToken || null
+          ))
+        );
+        cssText = cssTexts.join('\n\n');
+      } catch (err) {
+        throw new Error(`Nu s-au putut încărca fișierele CSS de pe GitHub: ${err.message}. Asigură-te că fișierele există la calea "${themePath}" în repo-ul de teme.`);
+      }
+    } else {
+      // No path — check for inline CSS content in the manifest
+      if (cssFiles[0].content) {
+        cssText = cssFiles.map(f => f.content || '').join('\n\n');
+      } else {
+        throw new Error('Tema nu are "path" setat și nici CSS inline. Setează "path" în manifest pentru a încărca de pe GitHub, sau adaugă "content" în files.css[].');
+      }
+    }
+
+    // Apply variables
+    const vars = {};
+    (manifest.variables || []).forEach(v => { vars[v.id] = v.default || ''; });
+    if (Object.keys(vars).length) cssText = applyVariables(cssText, vars);
+
+    // Inject and save
+    injectThemeCSS(themeId, cssText);
+
+    const tplFiles = manifest.files?.templates || [];
+    _installedThemes[themeId] = {
+      id:          themeId,
+      name:        manifest.name || 'Temă proprie',
+      cssText,
+      version:     manifest.version || '1.0.0',
+      installedAt: new Date().toISOString(),
+      templates:   tplFiles.map(t => ({ id: t.id, category: t.category || 'main', label: t.label || t.id })),
+      plugins:     (manifest.files?.plugins || []).map(p => ({ id: p.id, label: p.label || p.id })),
+      custom:      true,
+      path:        themePath || null,
+    };
+    await saveInstalledThemes(_installedThemes);
+
+    if (typeof FMEActivityLog !== 'undefined') {
+      FMEActivityLog.log('theme-install', 'Temă proprie instalată: ' + (manifest.name || themeId));
+    }
+
+    // Rebuild table
+    renderTable(_container.querySelector('.fme-themes-wrapper') || _container);
+  }
+
   function escHtml(str) {
     return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
   }
 
-  return { render, reapplyInstalledThemes };
+  return { render, reapplyInstalledThemes, parseFmeMarker, stripFmeMarker, FME_MARKER_PREFIX, getInstalledThemes };
 })();

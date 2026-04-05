@@ -172,6 +172,107 @@ input[type="submit"]:hover, input[type="button"]:hover, button:hover, .button:ho
   let _currentCss = '';
   let _guardActive = false;
 
+  /* ─── CSS Snippet Catalog ────────────────────────────────────────────────── */
+  const CSS_SNIPPETS = [
+    {
+      id: 'glow-avatars',
+      name: 'Glow Avatars',
+      desc: 'Efect de strălucire pe avatare la hover',
+      css: `/* FME Snippet: Glow Avatars */
+.postdetails img, .user-avatar img, .postprofile img {
+  border-radius: 50% !important;
+  transition: box-shadow 0.3s ease, transform 0.3s ease !important;
+}
+.postdetails img:hover, .user-avatar img:hover, .postprofile img:hover {
+  box-shadow: 0 0 15px rgba(108,99,255,0.6), 0 0 30px rgba(108,99,255,0.3) !important;
+  transform: scale(1.05) !important;
+}`,
+    },
+    {
+      id: 'sticky-navbar',
+      name: 'Sticky Navbar',
+      desc: 'Bara de navigare rămâne fixă la scroll',
+      css: `/* FME Snippet: Sticky Navbar */
+#nav, .nav, #menu, .menu-nav, ul.nav, #page-header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 999 !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}`,
+    },
+    {
+      id: 'hide-ads',
+      name: 'Ascunde reclame',
+      desc: 'Ascunde reclamele Forumotion de pe forum',
+      css: `/* FME Snippet: Hide Ads */
+iframe[src*="ads"], iframe[src*="pub"],
+div[id*="ad_"], div[class*="ad_banner"],
+div[id*="google_ads"], .adsbygoogle,
+#fa_toolbar, #fa_icon, #fa_right,
+.social_share, #fa_share,
+td[class="ad_"] { display: none !important; }`,
+    },
+    {
+      id: 'custom-scrollbar',
+      name: 'Custom Scrollbar',
+      desc: 'Scrollbar slim și modern',
+      css: `/* FME Snippet: Custom Scrollbar */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #f1f1f1; }
+::-webkit-scrollbar-thumb { background: #888; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+* { scrollbar-width: thin; scrollbar-color: #888 #f1f1f1; }`,
+    },
+    {
+      id: 'smooth-transitions',
+      name: 'Tranziții Smooth',
+      desc: 'Adaugă tranziții subtile la link-uri și butoane',
+      css: `/* FME Snippet: Smooth Transitions */
+a, button, input[type="submit"], input[type="button"], .button {
+  transition: all 0.2s ease !important;
+}
+a:hover { opacity: 0.85 !important; }
+button:hover, input[type="submit"]:hover, .button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15) !important;
+}`,
+    },
+    {
+      id: 'rounded-corners',
+      name: 'Border Radius Global',
+      desc: 'Colțuri rotunjite pe blocuri, postări, tabel',
+      css: `/* FME Snippet: Rounded Corners */
+table.forumline, .forumline, fieldset,
+.post, .postbody, table.tablebg,
+.catRow, .forumRow, .topicRow, .catHead {
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}`,
+    },
+    {
+      id: 'post-separator',
+      name: 'Post Separator',
+      desc: 'Separator vizual elegant între postări',
+      css: `/* FME Snippet: Post Separator */
+.post, table.tablebg, tr.post {
+  margin-bottom: 12px !important;
+  border-bottom: 3px solid rgba(108,99,255,0.2) !important;
+  padding-bottom: 12px !important;
+}`,
+    },
+    {
+      id: 'topic-hover',
+      name: 'Topic Hover Effect',
+      desc: 'Efect de highlight la hover pe topicuri',
+      css: `/* FME Snippet: Topic Hover */
+tr.row1:hover, tr.row2:hover,
+.forumRow:hover, .topicRow:hover {
+  background: rgba(60,158,191,0.08) !important;
+  transition: background 0.2s ease !important;
+}`,
+    },
+  ];
+
   // ─── Public API ──────────────────────────────────────────────────────────────
 
   function render(container) {
@@ -218,10 +319,31 @@ input[type="submit"]:hover, input[type="button"]:hover, button:hover, .button:ho
           <strong>ℹ</strong> CSS-ul este aplicat de <em>Forum Injector</em> pe toate paginile forumului (non-ACP). Nu se poate previzualiza direct din ACP — deschide forumul pentru a vedea efectele.
         </div>
       </fieldset>
+
+      <fieldset class="fieldset_left" style="margin-top:14px;">
+        <legend>Catalog Snippet CSS</legend>
+        <div style="padding:4px 0 8px;font-size:11px;color:#64748b;">
+          Snippet-uri rapide pe care le poți adăuga la CSS-ul tău. Click pe <strong>Adaugă</strong> pentru a insera codul în editor.
+        </div>
+        <table class="forumline" width="100%" cellspacing="1" cellpadding="4">
+          <tr>
+            <th class="thHead" colspan="3" style="text-align:left;">Snippet-uri disponibile</th>
+          </tr>
+          ${CSS_SNIPPETS.map((s, i) => `
+          <tr class="${i % 2 === 0 ? 'row1' : 'row2'}">
+            <td style="width:160px;font-weight:600;">${s.name}</td>
+            <td style="font-size:11px;color:#555;">${s.desc}</td>
+            <td style="width:80px;text-align:center;">
+              <input type="button" class="btn fme-snippet-add" data-snippet-id="${s.id}" value="Adaug\u0103" />
+            </td>
+          </tr>`).join('')}
+        </table>
+      </fieldset>
     `;
 
     container.appendChild(wrapper);
     bindEvents(wrapper);
+    bindSnippetEvents(wrapper);
     loadSaved(wrapper);
   }
 
@@ -264,6 +386,7 @@ input[type="submit"]:hover, input[type="button"]:hover, button:hover, .button:ho
       chrome.storage.local.set({ [STORAGE_KEY]: css }, () => {
         updateInfo(wrapper, css);
         setStatus(statusEl, 'Salvat ✓', '#10b981');
+        if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('css-forum-save', 'CSS forum salvat (' + css.split('\n').length + ' linii)');
       });
     });
 
@@ -301,6 +424,25 @@ input[type="submit"]:hover, input[type="button"]:hover, button:hover, .button:ho
       chrome.storage.local.set({ [STORAGE_KEY]: '' }, () => {
         updateInfo(wrapper, '');
         setStatus(statusEl, 'Șters.', '#f43f5e');
+      });
+    });
+  }
+
+  // ─── Snippet catalog events ──────────────────────────────────────────────────
+
+  function bindSnippetEvents(wrapper) {
+    const editor   = wrapper.querySelector('#fme-fcss-editor');
+    const statusEl = wrapper.querySelector('#fme-fcss-status');
+
+    wrapper.querySelectorAll('.fme-snippet-add').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const snippet = CSS_SNIPPETS.find(s => s.id === btn.dataset.snippetId);
+        if (!snippet) return;
+        const existing = editor.value.trim();
+        editor.value = existing ? existing + '\n\n' + snippet.css : snippet.css;
+        updateInfo(wrapper, editor.value);
+        setStatus(statusEl, `Snippet "${snippet.name}" adăugat!`, '#6c63ff');
+        editor.scrollTop = editor.scrollHeight;
       });
     });
   }

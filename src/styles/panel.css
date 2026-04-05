@@ -133,6 +133,11 @@
 .fme-nav-cat[data-section="forum-css"]  .fme-nav-icon { background: #023531;}
 .fme-nav-cat[data-section="widgets"]   .fme-nav-icon { background: #39683b;}
 .fme-nav-cat[data-section="stats"]   .fme-nav-icon { background: #5557c0;}
+.fme-nav-cat[data-section="chatbox"]   .fme-nav-icon { background: #27ae60; }
+.fme-nav-cat[data-section="home"]      .fme-nav-icon { background: #e8703a; }
+.fme-nav-cat[data-section="seo"]       .fme-nav-icon { background: #e67e22; }
+.fme-nav-cat[data-section="activity"]  .fme-nav-icon { background: #9b59b6; }
+.fme-nav-cat[data-section="plugins"]   .fme-nav-icon { background: #2ecc71; }
 .fme-nav-label { flex: 1; }
 
 .fme-nav-cat .fme-update-dot {
@@ -143,6 +148,25 @@
 }
 
 .fme-nav-cat--active .fme-update-dot { color: #ffaaaa; }
+
+/* ─── ACP-integrated sidebar (native #menu takeover) ─────────────────────── */
+.fme-submenu-active {
+  background: #5a9fd4 !important;
+}
+.fme-submenu-active a,
+.fme-submenu-active a span {
+  color: #fff !important;
+}
+#menu .coins-border .submenu a[data-fme-section] span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+#menu .coins-border .submenu a[data-fme-section] span i {
+  width: 16px;
+  text-align: center;
+  flex-shrink: 0;
+}
 
 table#fme-themes-table {
   text-align: center;

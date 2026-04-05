@@ -190,6 +190,7 @@ var FMEBackupTab = (() => {
     anchor.download = `fme-backup-${new Date().toISOString().slice(0, 10)}.json`;
     anchor.click();
     URL.revokeObjectURL(url);
+    if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('backup-export', 'Backup exportat');
 
     statusEl.style.color = '#27ae60';
     statusEl.textContent  = 'Descărcat ✓';
@@ -257,6 +258,7 @@ var FMEBackupTab = (() => {
     ]);
 
     previewEl.style.display = 'none';
+    if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('backup-import', 'Backup importat');
     statusEl.style.color    = '#27ae60';
     statusEl.textContent    = 'Import reușit ✓';
     setTimeout(() => { statusEl.textContent = ''; }, 3000);

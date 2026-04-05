@@ -203,6 +203,7 @@ var FMESettingsTab = (() => {
           return;
         }
         showSuccess(savedMsg);
+        if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('settings-save', 'Setări extensie salvate');
         // Reschedule alarm based on new setting
         chrome.runtime.sendMessage({ type: 'RESCHEDULE_ALARM', payload: {} });
       });

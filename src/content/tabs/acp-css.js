@@ -13,8 +13,9 @@
 var FMEAcpCssTab = (() => {
   'use strict';
 
-  const STORAGE_KEY  = 'fme_acp_custom_css';
-  const STYLE_TAG_ID = 'fme-acp-custom-style';
+  const STORAGE_KEY      = 'fme_acp_custom_css';
+  const ACTIVE_THEME_KEY = 'fme_acp_active_theme';
+  const STYLE_TAG_ID     = 'fme-acp-custom-style';
 
   /* ─── Built-in preset: Dark 2026 ─────────────────────────────────────────── */
   const PRESET_2026 = `/* =================================================
@@ -449,8 +450,108 @@ div.avatar {
 ::selection { background: rgba(108,99,255,0.35); color: #fff; }`;
 
   let _container  = null;
-  let _currentCss  = '';      // latest applied CSS (kept for the style guard)
-  let _guardActive = false;   // only one MutationObserver per page
+  let _currentCss  = '';
+  let _guardActive = false;
+
+  // ─── Theme catalog ────────────────────────────────────────────────────────────
+
+  function _getBaseRules() {
+    const marker = '\n/* === GLOBAL === */';
+    const idx = PRESET_2026.indexOf(marker);
+    return idx >= 0 ? PRESET_2026.slice(idx) : '';
+  }
+
+  function buildThemeCss(vars, name) {
+    return '/* FME Theme: ' + name + ' */\n:root {\n' +
+      '  --fme-bg:      ' + vars.bg      + ';\n' +
+      '  --fme-surface: ' + vars.surface + ';\n' +
+      '  --fme-card:    ' + vars.card    + ';\n' +
+      '  --fme-border:  ' + vars.border  + ';\n' +
+      '  --fme-accent:  ' + vars.accent  + ';\n' +
+      '  --fme-cyan:    ' + vars.cyan    + ';\n' +
+      '  --fme-text:    ' + vars.text    + ';\n' +
+      '  --fme-muted:   ' + vars.muted   + ';\n' +
+      '  --fme-success: ' + vars.success + ';\n' +
+      '  --fme-error:   ' + vars.error   + ';\n' +
+      '  --fme-warn:    ' + vars.warn    + ';\n' +
+      '  --fme-radius:  ' + (vars.radius || '8px') + ';\n' +
+      '  --fme-shadow:  ' + (vars.shadow || '0 4px 24px rgba(0,0,0,0.45)') + ';\n' +
+      '}\n' + _getBaseRules();
+  }
+
+  const PRESET_THEMES = [
+    {
+      id: 'dark-2026', name: 'Dark 2026',
+      description: 'Spațiu profund & violet electric',
+      swatches: ['#0f1117', '#6c63ff', '#00d2ff', '#10b981'],
+      get css() { return PRESET_2026; },
+    },
+    {
+      id: 'nord', name: 'Nord',
+      description: 'Polare arctice & albastru nordic',
+      swatches: ['#2e3440', '#88c0d0', '#a3be8c', '#bf616a'],
+      vars: { bg: '#2e3440', surface: '#3b4252', card: '#434c5e', border: '#4c566a',
+               accent: '#88c0d0', cyan: '#81a1c1', text: '#eceff4', muted: '#d8dee9',
+               success: '#a3be8c', error: '#bf616a', warn: '#ebcb8b' },
+      get css() { return buildThemeCss(this.vars, this.name); },
+    },
+    {
+      id: 'dracula', name: 'Dracula',
+      description: 'Violet & roz vampiric clasic',
+      swatches: ['#282a36', '#bd93f9', '#50fa7b', '#ff5555'],
+      vars: { bg: '#282a36', surface: '#21222c', card: '#2d2f40', border: '#44475a',
+               accent: '#bd93f9', cyan: '#ff79c6', text: '#f8f8f2', muted: '#6272a4',
+               success: '#50fa7b', error: '#ff5555', warn: '#ffb86c', radius: '6px' },
+      get css() { return buildThemeCss(this.vars, this.name); },
+    },
+    {
+      id: 'solarized', name: 'Solarized Dark',
+      description: 'Tonuri calde oceanice Solarized',
+      swatches: ['#002b36', '#268bd2', '#859900', '#dc322f'],
+      vars: { bg: '#002b36', surface: '#073642', card: '#0c3d48', border: '#586e75',
+               accent: '#268bd2', cyan: '#2aa198', text: '#839496', muted: '#657b83',
+               success: '#859900', error: '#dc322f', warn: '#b58900', radius: '4px',
+               shadow: '0 4px 24px rgba(0,0,0,0.5)' },
+      get css() { return buildThemeCss(this.vars, this.name); },
+    },
+    {
+      id: 'forest', name: 'Forest Night',
+      description: 'Dark & verde ca GitHub Night',
+      swatches: ['#0d1117', '#3fb950', '#58a6ff', '#f85149'],
+      vars: { bg: '#0d1117', surface: '#161b22', card: '#1c2128', border: '#30363d',
+               accent: '#3fb950', cyan: '#58a6ff', text: '#c9d1d9', muted: '#8b949e',
+               success: '#3fb950', error: '#f85149', warn: '#d29922', radius: '6px' },
+      get css() { return buildThemeCss(this.vars, this.name); },
+    },
+    {
+      id: 'midnight', name: 'Midnight Blue',
+      description: 'Albastru nocturn profund & corporate',
+      swatches: ['#060e1d', '#4078c0', '#34d399', '#f87171'],
+      vars: { bg: '#060e1d', surface: '#0a1628', card: '#0d1f35', border: '#1a3050',
+               accent: '#4078c0', cyan: '#79b8ff', text: '#d1d5db', muted: '#6b7280',
+               success: '#34d399', error: '#f87171', warn: '#fbbf24',
+               shadow: '0 4px 24px rgba(0,0,0,0.6)' },
+      get css() { return buildThemeCss(this.vars, this.name); },
+    },
+    {
+      id: 'coffee', name: 'Coffee',
+      description: 'Tonuri calde de cafea & chihlimbar',
+      swatches: ['#1c1410', '#c87941', '#84c754', '#e9553c'],
+      vars: { bg: '#1c1410', surface: '#24201a', card: '#2d2720', border: '#3d3530',
+               accent: '#c87941', cyan: '#e8a97a', text: '#e8d5b7', muted: '#a08060',
+               success: '#84c754', error: '#e9553c', warn: '#f59e0b', radius: '6px' },
+      get css() { return buildThemeCss(this.vars, this.name); },
+    },
+    {
+      id: 'catppuccin', name: 'Catppuccin Mocha',
+      description: 'Pasteluri moi & elegant modern',
+      swatches: ['#1e1e2e', '#cba6f7', '#a6e3a1', '#f38ba8'],
+      vars: { bg: '#1e1e2e', surface: '#181825', card: '#1e1e2e', border: '#313244',
+               accent: '#cba6f7', cyan: '#89dceb', text: '#cdd6f4', muted: '#a6adc8',
+               success: '#a6e3a1', error: '#f38ba8', warn: '#f9e2af', radius: '8px' },
+      get css() { return buildThemeCss(this.vars, this.name); },
+    },
+  ];
 
   // ─── Public API ──────────────────────────────────────────────────────────────
 
@@ -468,9 +569,11 @@ div.avatar {
         <h2 class="fme-section-title">FME</h2>
         <ul class="h2-breadcrumb clearfix"><li class="first">ACP Styles</li></ul>
         <blockquote class="block_left">
-          <p class="explain">Scrie, incarca sau activeaza un preset CSS pentru Panoul de Administrare. Modificarile se aplica live si se salveaza automat.</p>
+          <p class="explain">Aplică o temă predefinită sau scrie CSS-ul tău personalizat pentru Panoul de Administrare. Modificările se aplică live și se salvează automat.</p>
         </blockquote>
       </div>
+
+      <div id="fme-theme-catalog-area"></div>
 
       <fieldset class="fieldset_left">
         <legend>CSS personalizat ACP</legend>
@@ -483,7 +586,6 @@ div.avatar {
         <div class="div_btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-start;margin-bottom:10px;">
           <input type="button" id="fme-css-save"   value="Salveaza &amp; Aplica"  class="icon_ok" />
           <input type="button" id="fme-css-upload" value="Incarca fisier .css"    class="btn" />
-          <input type="button" id="fme-css-preset" value="&#10022; Dark 2026"     class="btn" />
           <input type="button" id="fme-css-clear"  value="Sterge tot"             class="icon_cancel" />
           <input type="file"   id="fme-css-file-input" accept=".css,text/css" style="display:none;" />
         </div>
@@ -495,6 +597,7 @@ div.avatar {
     `;
 
     container.appendChild(wrapper);
+    buildCatalogSection(wrapper);
     bindEvents(wrapper);
     loadSaved(wrapper);
   }
@@ -502,10 +605,11 @@ div.avatar {
   // ─── Load saved CSS ───────────────────────────────────────────────────────────
 
   function loadSaved(wrapper) {
-    chrome.storage.local.get({ [STORAGE_KEY]: '' }, (result) => {
+    chrome.storage.local.get({ [STORAGE_KEY]: '', [ACTIVE_THEME_KEY]: '' }, (result) => {
       const css = result[STORAGE_KEY] || '';
       wrapper.querySelector('#fme-acp-css-editor').value = css;
       updateInfo(wrapper, css);
+      highlightActiveTheme(wrapper, result[ACTIVE_THEME_KEY] || '');
     });
   }
 
@@ -515,13 +619,16 @@ div.avatar {
     const editor    = wrapper.querySelector('#fme-acp-css-editor');
     const saveBtn   = wrapper.querySelector('#fme-css-save');
     const uploadBtn = wrapper.querySelector('#fme-css-upload');
-    const presetBtn = wrapper.querySelector('#fme-css-preset');
     const clearBtn  = wrapper.querySelector('#fme-css-clear');
     const fileInput = wrapper.querySelector('#fme-css-file-input');
     const statusEl  = wrapper.querySelector('#fme-css-status');
 
-    // Live preview
-    editor.addEventListener('input', () => applyToPage(editor.value));
+    // Live preview + clear active theme when user edits manually
+    editor.addEventListener('input', () => {
+      applyToPage(editor.value);
+      chrome.storage.local.set({ [ACTIVE_THEME_KEY]: '' });
+      highlightActiveTheme(wrapper, '');
+    });
 
     // Tab key → 2 spaces
     editor.addEventListener('keydown', (e) => {
@@ -540,6 +647,7 @@ div.avatar {
         applyToPage(css);
         updateInfo(wrapper, css);
         setStatus(statusEl, 'Salvat si aplicat!', '#10b981');
+        if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('css-acp-save', 'CSS ACP salvat (' + css.split('\n').length + ' linii)');
       });
     });
 
@@ -563,23 +671,15 @@ div.avatar {
       fileInput.value = '';
     });
 
-    // Load preset
-    presetBtn.addEventListener('click', () => {
-      if (editor.value.trim() && !confirm('Inlocuieste CSS-ul curent cu presetul Dark 2026?')) return;
-      editor.value = PRESET_2026;
-      applyToPage(PRESET_2026);
-      updateInfo(wrapper, PRESET_2026);
-      setStatus(statusEl, 'Dark 2026 incarcat!', '#6c63ff');
-    });
-
     // Clear
     clearBtn.addEventListener('click', () => {
       if (!editor.value.trim()) return;
       if (!confirm('Stergi tot CSS-ul custom din ACP?')) return;
       editor.value = '';
-      chrome.storage.local.set({ [STORAGE_KEY]: '' }, () => {
+      chrome.storage.local.set({ [STORAGE_KEY]: '', [ACTIVE_THEME_KEY]: '' }, () => {
         applyToPage('');
         updateInfo(wrapper, '');
+        highlightActiveTheme(wrapper, '');
         setStatus(statusEl, 'Sters.', '#f43f5e');
       });
     });
@@ -642,6 +742,93 @@ div.avatar {
     el.style.color = color || '#10b981';
     el.textContent = msg;
     setTimeout(() => { el.textContent = ''; }, 3000);
+  }
+
+  function escHtml(str) {
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  // ─── Theme catalog UI ────────────────────────────────────────────────────────
+
+  function buildCatalogSection(wrapper) {
+    const area = wrapper.querySelector('#fme-theme-catalog-area');
+    if (!area) return;
+
+    const section = document.createElement('div');
+    section.className = 'panel-menu';
+    //section.style.cssText = 'margin:0 0 10px 0!important;background:#fff!important;border:1px solid #cdcdcd!important;padding:0 0 10px 0!important;';
+    section.innerHTML = `
+      <br/><fieldset style="margin:0 12px 12px 12px;border-color:#4a7ebf;">
+        <legend style="color:#4a7ebf;font-weight:600;">&#127912; Teme ACP predefinite</legend>
+        <p style="margin:4px 0 12px 0;color:#666;font-size:11px;">
+          Selectează o temă ready-to-use pentru panoul de administrare. CSS-ul este aplicat live și salvat automat.<br/>
+          Poți edita CSS-ul manual mai jos pentru personalizări suplimentare.
+        </p>
+        <div id="fme-theme-cards" style="display:flex;flex-wrap:wrap;gap:10px;"></div>
+      </fieldset>
+    `;
+
+    const cardsContainer = section.querySelector('#fme-theme-cards');
+    PRESET_THEMES.forEach(theme => {
+      const card = document.createElement('div');
+      card.className = 'fme-theme-card';
+      card.dataset.themeId = theme.id;
+      card.style.cssText = 'width:140px;padding:10px;border:2px solid #ddd;border-radius:6px;background:#f9f9f9;cursor:default;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;';
+
+      const swatches = (theme.swatches || ['#333', '#555', '#777', '#999'])
+        .map(c => `<span style="flex:1;height:18px;background:${escHtml(c)};border-radius:3px;"></span>`)
+        .join('');
+
+      card.innerHTML = `
+        <div style="display:flex;gap:2px;margin-bottom:8px;">${swatches}</div>
+        <div style="font-weight:600;font-size:12px;color:#333;margin-bottom:4px;">${escHtml(theme.name)}</div>
+        <div style="font-size:10px;color:#666;margin-bottom:8px;line-height:1.4;">${escHtml(theme.description)}</div>
+        <input type="button" class="fme-apply-theme-btn icon_ok" data-theme-id="${escHtml(theme.id)}"
+               value="Activează" style="width:100%;font-size:11px;padding:3px 0;" />
+      `;
+
+      card.querySelector('.fme-apply-theme-btn').addEventListener('click', () => {
+        applyTheme(theme, wrapper);
+      });
+
+      cardsContainer.appendChild(card);
+    });
+
+    area.appendChild(section);
+  }
+
+  function applyTheme(theme, wrapper) {
+    const css      = theme.css;
+    const editor   = wrapper.querySelector('#fme-acp-css-editor');
+    const statusEl = wrapper.querySelector('#fme-css-status');
+
+    if (editor) editor.value = css;
+    applyToPage(css);
+    updateInfo(wrapper, css);
+
+    chrome.storage.local.set({ [STORAGE_KEY]: css, [ACTIVE_THEME_KEY]: theme.id }, () => {
+      setStatus(statusEl, theme.name + ' activat!', '#4a7ebf');
+      highlightActiveTheme(wrapper, theme.id);
+      if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('css-acp-save', 'Temă ACP aplicată: ' + theme.name);
+    });
+  }
+
+  function highlightActiveTheme(wrapper, activeId) {
+    wrapper.querySelectorAll('.fme-theme-card').forEach(card => {
+      const id  = card.dataset.themeId;
+      const btn = card.querySelector('.fme-apply-theme-btn');
+      if (id === activeId) {
+        card.style.borderColor = '#4a7ebf';
+        card.style.background  = '#f0f7ff';
+        card.style.boxShadow   = '0 0 0 2px rgba(74,126,191,0.4)';
+        if (btn) { btn.value = '\u2713 Activ'; btn.disabled = true; }
+      } else {
+        card.style.borderColor = '#ddd';
+        card.style.background  = '#f9f9f9';
+        card.style.boxShadow   = '';
+        if (btn) { btn.value = 'Activează'; btn.disabled = false; }
+      }
+    });
   }
 
   // ─── Auto-apply on load / navigation (called from content.js) ──────────────

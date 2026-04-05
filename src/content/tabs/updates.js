@@ -58,7 +58,7 @@ var FMEUpdatesTab = (() => {
         </div>
       </fieldset>
 
-      <div id="fme-update-result"></div>
+      <div id="fme-update-result" style="display: none;"></div>
 
       <fieldset id="fme-versions-fieldset" style="display:none;">
         <legend>Versiuni disponibile</legend>

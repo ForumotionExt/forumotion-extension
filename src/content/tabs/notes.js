@@ -176,6 +176,7 @@ var FMENotesTab = (() => {
 
     chrome.storage.local.set({ [STORAGE_KEY]: _notes }, () => {
       if (!showStatus) return;
+      if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('notes-save', 'Notiță salvată: ' + _notes[_activeIdx].title);
       const statusEl = wrapper.querySelector('#fme-note-status');
       if (statusEl) {
         statusEl.textContent = 'Salvată ✓';
