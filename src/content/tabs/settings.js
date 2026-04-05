@@ -13,7 +13,8 @@ var FMESettingsTab = (() => {
     themesOwner: 'staark-dev',
     themesRepo: 'forumotion-themes',
     templatesOwner: 'ForumotionExt',
-    templatesRepo: 'templates'
+    templatesRepo: 'templates',
+    updateNotificationFrequency: '6h'
   };
 
   function render(container) {
@@ -102,6 +103,34 @@ var FMESettingsTab = (() => {
           </label>
         </fieldset>
 
+        <fieldset style="margin-top:12px;">
+          <legend>Notificari actualizari</legend>
+          <dl>
+            <dt>
+              <label for="fme-notif-freq">Frecventa notificari desktop&nbsp;:</label>
+            </dt>
+            <dd>
+              <select id="fme-notif-freq" style="width:auto;">
+                <option value="6h">La fiecare 6 ore</option>
+                <option value="12h">La fiecare 12 ore</option>
+                <option value="24h">La fiecare 24 ore</option>
+                <option value="never">Niciodata</option>
+              </select>
+              <br><small>Controleaza cat de des primesti notificari desktop cand exista o versiune noua.</small>
+            </dd>
+          </dl>
+          <dl>
+            <dt>
+              <label>Versiuni ignorate&nbsp;:</label>
+            </dt>
+            <dd>
+              <input type="button" id="fme-clear-skipped" value="Sterge toate versiunile ignorate" class="icon_ok" />
+              <span id="fme-skipped-status" style="font-size:11px;color:#888;margin-left:6px;"></span>
+              <br><small>Versiunile ignorate nu declanseaza notificari sau badge-ul NEW.</small>
+            </dd>
+          </dl>
+        </fieldset>
+
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap;">
           <input type="submit" id="fme-settings-save" value="Salveaza" />
           <input type="button" id="fme-reset-settings" value="Resetare la implicit" />
@@ -128,28 +157,44 @@ var FMESettingsTab = (() => {
       setVal(wrapper, 'fme-ext-repo', settings.githubRepo);
       const autoCheck = wrapper.querySelector('#fme-auto-updates');
       if (autoCheck) autoCheck.checked = !!settings.autoCheckUpdates;
+
+      const freqSel = wrapper.querySelector('#fme-notif-freq');
+      if (freqSel) freqSel.value = settings.updateNotificationFrequency || '6h';
+    });
+
+    // Show count of skipped versions
+    chrome.storage.sync.get({ skippedVersions: [] }, (s) => {
+      const statusEl = wrapper.querySelector('#fme-skipped-status');
+      if (statusEl) {
+        const count = (s.skippedVersions || []).length;
+        statusEl.textContent = count > 0 ? `(${count} versiune${count > 1 ? 'i' : ''} ignorata${count > 1 ? 'te' : ''})` : '(niciuna)';
+      }
     });
   }
 
   function bindEvents(wrapper) {
-    const form = wrapper.querySelector('#fme-settings-form');
-    const resetBtn = wrapper.querySelector('#fme-reset-settings');
-    const savedMsg = wrapper.querySelector('#fme-settings-saved');
-    const errorMsg = wrapper.querySelector('#fme-settings-error');
+    const form       = wrapper.querySelector('#fme-settings-form');
+    const resetBtn   = wrapper.querySelector('#fme-reset-settings');
+    const savedMsg   = wrapper.querySelector('#fme-settings-saved');
+    const errorMsg   = wrapper.querySelector('#fme-settings-error');
+    const clearSkBtn = wrapper.querySelector('#fme-clear-skipped');
+    const statusEl   = wrapper.querySelector('#fme-skipped-status');
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
       hideAlerts(savedMsg, errorMsg);
 
+      const freqSel = wrapper.querySelector('#fme-notif-freq');
       const settings = {
-        githubToken: getVal(wrapper, 'fme-github-token').trim(),
-        themesOwner: getVal(wrapper, 'fme-themes-owner').trim() || DEFAULTS.themesOwner,
-        themesRepo: getVal(wrapper, 'fme-themes-repo').trim() || DEFAULTS.themesRepo,
+        githubToken:   getVal(wrapper, 'fme-github-token').trim(),
+        themesOwner:   getVal(wrapper, 'fme-themes-owner').trim()    || DEFAULTS.themesOwner,
+        themesRepo:    getVal(wrapper, 'fme-themes-repo').trim()     || DEFAULTS.themesRepo,
         templatesOwner: getVal(wrapper, 'fme-templates-owner').trim() || DEFAULTS.templatesOwner,
-        templatesRepo: getVal(wrapper, 'fme-templates-repo').trim() || DEFAULTS.templatesRepo,
-        githubOwner: getVal(wrapper, 'fme-ext-owner').trim() || DEFAULTS.githubOwner,
-        githubRepo: getVal(wrapper, 'fme-ext-repo').trim() || DEFAULTS.githubRepo,
-        autoCheckUpdates: wrapper.querySelector('#fme-auto-updates')?.checked ?? true
+        templatesRepo: getVal(wrapper, 'fme-templates-repo').trim()  || DEFAULTS.templatesRepo,
+        githubOwner:   getVal(wrapper, 'fme-ext-owner').trim()       || DEFAULTS.githubOwner,
+        githubRepo:    getVal(wrapper, 'fme-ext-repo').trim()        || DEFAULTS.githubRepo,
+        autoCheckUpdates: wrapper.querySelector('#fme-auto-updates')?.checked ?? true,
+        updateNotificationFrequency: freqSel ? freqSel.value : '6h'
       };
 
       chrome.storage.sync.set(settings, () => {
@@ -168,8 +213,20 @@ var FMESettingsTab = (() => {
       chrome.storage.sync.set(DEFAULTS, () => {
         loadCurrentSettings(wrapper);
         showSuccess(savedMsg);
+        chrome.runtime.sendMessage({ type: 'RESCHEDULE_ALARM', payload: {} });
       });
     });
+
+    if (clearSkBtn) {
+      clearSkBtn.addEventListener('click', () => {
+        chrome.storage.sync.set({ skippedVersions: [] }, () => {
+          if (statusEl) statusEl.textContent = '(niciuna)';
+          chrome.action.setBadgeText && chrome.action.setBadgeText({ text: '' });
+          chrome.runtime.sendMessage({ type: 'CHECK_UPDATE' });
+          showSuccess(savedMsg);
+        });
+      });
+    }
   }
 
   function getVal(wrapper, id) {
