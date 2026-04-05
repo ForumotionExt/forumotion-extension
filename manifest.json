@@ -2,7 +2,7 @@
   "manifest_version": 3,
   "name": "Forumotion Extension",
   "short_name": "FME",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "description": "Enhanced admin panel for Forumotion/ForumGratuit: themes, templates, CSS editor, widgets, notes, backup, and update management.",
   "icons": {
     "16": "icons/icon16.png",

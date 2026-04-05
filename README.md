@@ -2,7 +2,7 @@
 
 > A Chrome extension that enhances the Forumotion / ForumGratuit admin control panel (ACP) with professional theme management, template editing, and automatic update notifications.
 
-![Version](https://img.shields.io/badge/version-1.3.0-blue)
+![Version](https://img.shields.io/badge/version-1.4.0-blue)
 ![Manifest](https://img.shields.io/badge/manifest-v3-green)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
@@ -35,6 +35,10 @@
 | **Statistici** | Utile | Overview of installed themes, CSS file sizes, widget and note counts, storage usage, and on-demand forum statistics. |
 | **Notițe** | Utile | Multi-tab personal notepad (up to 5 notes) with 1.5-second auto-save. |
 | **Backup & Restore** | Utile | Export all FME data (themes, CSS, widgets, notes, settings) to a dated JSON file. Restore from any previous backup. |
+| **SEO Tools** | Utile | Analiză SEO cu 28 verificări, inventar meta tags, analiză link-uri, și recomandări prioritizate. |
+| **Activity Log** | Utile | Jurnal de activitate cu filtrare, export CSV și ștergere selectivă. |
+| **Chatbox** | Utile | Panou de administrare chatbox cu configurare directă din FME. |
+| **Plugins** | Conținut | Manager de plugin-uri JS din catalog GitHub cu instalare/dezinstalare automată. |
 | **Actualizări** | Meta | Automatic version check every 6 hours. Full changelog, rollback links, skip-version support, and `NEW` badge on the extension icon. |
 | **Setări** | Meta | Configure GitHub repositories, Personal Access Token (PAT), and update preferences. Synced across devices via `chrome.storage.sync`. |
 
@@ -108,6 +112,7 @@ forumotion-extension/
     ├── content/
     │   ├── content.js            # Entry point: panel init, navigation, ACP widget runner
     │   ├── forum-api.js          # Reads/writes Forumotion admin templates (same-origin fetch)
+    │   ├── forum-chatbox.js      # Forum chatbox: auto-rejoin, login, /clear, sound, char counter
     │   ├── github.js             # GitHub API wrapper (delegates to service worker)
     │   ├── panel.js              # FME nav tab, 10-section routing with 4 sidebar groups
     │   ├── forum-injector.js     # Non-admin pages: applies Forum CSS + forum-targeted widgets
@@ -120,6 +125,10 @@ forumotion-extension/
     │       ├── notes.js          # Multi-tab notepad with auto-save
     │       ├── backup.js         # Export/import all FME data as JSON
     │       ├── stats.js          # Extension + forum stats overview
+    │       ├── seo-tools.js      # SEO analysis: 28 checks, meta tags, links, recommendations
+    │       ├── activity-log.js   # Activity log with filtering and CSV export
+    │       ├── chatbox.js        # Chatbox admin panel configuration
+    │       ├── plugins.js        # JS plugin manager from GitHub catalog
     │       ├── updates.js        # Version check, changelog, rollback, skip-version
     │       └── settings.js       # Settings form with chrome.storage.sync
     ├── popup/
@@ -175,6 +184,23 @@ The extension follows a **distributed, message-passing architecture** across thr
 ---
 
 ## Changelog
+
+### v1.4.0 — 2026-04-06
+- **Tab SEO Tools:** analiză SEO completă cu 28 verificări, inventar meta tags, analiză link-uri, și recomandări
+- **Tab Plugins:** manager de plugin-uri JS din catalog GitHub cu instalare/dezinstalare automată
+- **Tab Activity Log:** jurnal de activitate cu filtrare, export CSV și ștergere selectivă
+- **Tab Chatbox:** panou de administrare chatbox cu configurare directă din FME
+- **Forum Chatbox:** chatbox complet cu auto-rejoin, buton login, comandă `/clear`, contor caractere, notificări sonore și panou comenzi
+- **Instalare teme:** modal progres pas-cu-pas pentru CSS, template-uri și plugin-uri JS
+- **Dezinstalare teme:** resetare automată template-uri la implicit înainte de ștergere
+- **Plugin JS install:** descărcare și salvare automată JS din GitHub via `saveJsPlugin()`
+- **Quick ACP Links:** link-uri rapide către secțiunile importante ale ACP
+- **CSS Snippet Catalog:** colecție de snippet-uri CSS predefinite aplicabile cu un click
+- **Template Marker System:** sistem de marcaje pentru template-uri modificate
+- **Panel Home page:** pagină principală cu sumar rapid și acces direct la funcționalități
+- Fix: `findTemplateEditUrl` rescris complet — URL-uri corecte Forumotion (`mode=edit_{category}&t={id}&l={category}`)
+- Fix: instalare template-uri folosea `manifest.path` (undefined) în loc de `theme.path`
+- Fix: butonul de instalare afișa "Instalează CSS" în loc de "Instalează tema"
 
 ### v1.3.0 — 2026-04-05
 - **5 new tabs:** Forum CSS, Widgets JS, Notițe, Backup & Restore, Statistici
