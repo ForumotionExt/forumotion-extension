@@ -58,7 +58,7 @@ var FMEUpdatesTab = (() => {
         </div>
       </fieldset>
 
-      <div id="fme-update-result" style="display: none;"></div>
+      <div id="fme-update-result" style="display:none;margin:10px 0;"></div>
 
       <fieldset id="fme-versions-fieldset" style="display:none;">
         <legend>Versiuni disponibile</legend>
@@ -87,6 +87,7 @@ var FMEUpdatesTab = (() => {
     const vFieldset   = wrapper.querySelector('#fme-versions-fieldset');
     const btn         = wrapper.querySelector('#fme-check-updates');
 
+    resultEl.style.display = 'block';
     resultEl.innerHTML   = '<div class="fme-loading fme-loading-inline"><div class="fme-spinner fme-spinner-sm"></div><span>Se verifica actualizarile…</span></div>';
     changelogEl.innerHTML = '';
     versionsEl.innerHTML  = '';
@@ -188,7 +189,7 @@ var FMEUpdatesTab = (() => {
     changelog.forEach(entry => {
       const isInstalled = entry.version === currentVersion;
       const item        = document.createElement('div');
-      item.style.cssText = `padding:10px 12px;border:1px solid ${isInstalled ? '#3c9ebf' : '#ddd'};background:${isInstalled ? '#f0f8fc' : '#fafafa'};margin-bottom:8px;`;
+      item.style.cssText = `padding:10px 12px;border:1px solid ${isInstalled ? 'var(--fme-accent, #3c9ebf)' : 'var(--fme-border, #ddd)'};background:var(--fme-card, ${isInstalled ? '#f0f8fc' : '#fafafa'});color:var(--fme-text, #333);margin-bottom:8px;`;
 
       const notes    = (entry.notes || []).map(normalizeNote);
       const features = notes.filter(n => n.type === 'feature');
@@ -251,14 +252,14 @@ var FMEUpdatesTab = (() => {
       notes.forEach(n => { if (counts[n.type] !== undefined) counts[n.type]++; });
 
       const card = document.createElement('div');
-      card.style.cssText = `padding:10px 12px;border:1px solid ${isInstalled ? '#3c9ebf' : (isLatest ? '#f0ad4e' : '#ddd')};background:${isInstalled ? '#f0f8fc' : '#fafafa'};margin-bottom:6px;`;
+      card.style.cssText = `padding:10px 12px;border:1px solid ${isInstalled ? 'var(--fme-accent, #3c9ebf)' : (isLatest ? 'var(--fme-warn, #f0ad4e)' : 'var(--fme-border, #ddd)')};background:var(--fme-card, ${isInstalled ? '#f0f8fc' : '#fafafa'});color:var(--fme-text, #333);margin-bottom:6px;`;
 
       const badgeHtml = isLatest
         ? '<span class="fme-badge fme-badge-update">🆕 Noua versiune</span>'
         : (isInstalled ? '<span class="fme-badge fme-badge-installed">Instalata</span>' : '');
 
       const skippedBadge = isSkippedVer
-        ? '<span class="fme-badge" style="background:#fff3e0;border-color:#ffcc80;color:#8a6d3b;">Ignorata</span>'
+        ? '<span class="fme-badge" style="background:color-mix(in srgb, var(--fme-warn, #f0ad4e) 15%, transparent);border-color:var(--fme-warn, #ffcc80);color:var(--fme-warn, #8a6d3b);">Ignorata</span>'
         : '';
 
       const countHtml = [
@@ -289,7 +290,7 @@ var FMEUpdatesTab = (() => {
           ${entry.date ? `<span style="font-size:11px;color:#888;">${escHtml(entry.date)}</span>` : ''}
           ${badgeHtml} ${skippedBadge}
         </div>
-        ${countHtml ? `<div style="font-size:11px;color:#666;margin-bottom:6px;">${countHtml}</div>` : ''}
+        ${countHtml ? `<div style="font-size:11px;color:var(--fme-muted, #666);margin-bottom:6px;">${countHtml}</div>` : ''}
         ${actionsHtml ? `<div class="div_btns" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;">${actionsHtml}</div>` : ''}
       `;
 
@@ -338,19 +339,38 @@ var FMEUpdatesTab = (() => {
 
   function bindEvents(wrapper, currentVersion) {
     wrapper.querySelector('#fme-check-updates').addEventListener('click', () => {
-      checkUpdates(wrapper, currentVersion);
+      checkUpdates(wrapper, chrome.runtime.getManifest().version || currentVersion);
     });
 
     wrapper.querySelector('#fme-notif-settings').addEventListener('click', () => {
-      // Navigate to settings tab
-      const settingsLink = document.querySelector('[data-section="settings"]');
-      if (settingsLink) settingsLink.click();
+      openNotificationSettings();
     });
 
     wrapper.querySelector('#fme-clear-skipped').addEventListener('click', async () => {
       await sendMsg('CLEAR_SKIPPED_VERSIONS');
-      await checkUpdates(wrapper, currentVersion);
+      await checkUpdates(wrapper, chrome.runtime.getManifest().version || currentVersion);
     });
+  }
+
+  function openNotificationSettings() {
+    try {
+      if (typeof FMEPanel !== 'undefined' && typeof FMEPanel.show === 'function') {
+        FMEPanel.show('settings');
+      } else {
+        const settingsLink = document.querySelector('a[data-fme-section="settings"]') ||
+                             document.querySelector('.fme-nav-cat[data-section="settings"]') ||
+                             document.querySelector('[data-section="settings"]');
+        if (settingsLink) settingsLink.click();
+      }
+
+      setTimeout(() => {
+        const freqSel = document.querySelector('#fme-notif-freq');
+        if (freqSel) {
+          freqSel.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          try { freqSel.focus(); } catch (_) {}
+        }
+      }, 120);
+    } catch (_) {}
   }
 
   // ─── Helpers ──────────────────────────────────────────────────────────────────

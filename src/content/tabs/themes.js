@@ -81,7 +81,7 @@ var FMEThemesTab = (() => {
           <li class="fme-filter-tab" data-filter="installed"><a href="#"><span>Instalate</span></a></li>
         </ul></div></div>
       </div>
-      <div class="panel-menu" style="margin:0!important;background:#fff!important;border:1px solid #cdcdcd!important;padding:0 0 10px 0!important;">
+      <div class="panel-menu" style="margin:0!important;background:var(--fme-card, #fff)!important;border:1px solid var(--fme-border, #cdcdcd)!important;padding:0 0 10px 0!important;color:var(--fme-text, #333)!important;">
         <br/>
         <fieldset style="margin:0 12px 12px 12px;">
           <legend>Catalog teme</legend>
@@ -100,7 +100,7 @@ var FMEThemesTab = (() => {
 
         <fieldset style="margin:0 12px 12px 12px;">
           <legend>\u00CEncarcă temă proprie</legend>
-          <div style="padding:4px 0 8px;font-size:11px;color:#64748b;">
+          <div style="padding:4px 0 8px;font-size:11px;color:var(--fme-muted, #64748b);">
             Încarcă un fișier <strong>manifest.json</strong> sau o arhivă <strong>.zip</strong> cu o temă proprie.
             Se validează strict după modelul de pe GitHub.
           </div>
@@ -186,7 +186,7 @@ var FMEThemesTab = (() => {
       rowsHtml += `
         <tr>
           <td><strong>${escHtml(theme.name || theme.id)}</strong></td>
-          <td style="color:#666;">${escHtml(theme.author || '—')}</td>
+          <td style="color:var(--fme-muted, #666);">${escHtml(theme.author || '—')}</td>
           <td>${theme.version ? `<span class="fme-badge fme-badge-version">v${escHtml(theme.version)}</span>` : '—'}</td>
           <td>${tagsHtml || '—'}</td>
           <td>${statusHtml}</td>
@@ -360,12 +360,12 @@ var FMEThemesTab = (() => {
 
         <div style="flex:1;min-width:220px;">
           <table style="width:100%;font-size:12px;margin-bottom:8px;">
-            <tr><td style="color:#666;width:80px;">Autor</td><td><strong>${escHtml(manifest.author||theme.author||'—')}</strong></td></tr>
-            <tr><td style="color:#666;">Versiune</td><td><span class="fme-badge fme-badge-version">v${escHtml(manifest.version||theme.version||'1.0.0')}</span></td></tr>
-            <tr><td style="color:#666;">Engine</td><td>${escHtml(manifest.minEngine||theme.minEngine||'—')}</td></tr>
-            <tr><td style="color:#666;">Tags</td><td>${(manifest.tags||theme.tags||[]).map(t=>`<span class="fme-tag">${escHtml(t)}</span>`).join(' ')}</td></tr>
+            <tr><td style="color:var(--fme-muted, #666);width:80px;">Autor</td><td><strong>${escHtml(manifest.author||theme.author||'—')}</strong></td></tr>
+            <tr><td style="color:var(--fme-muted, #666);">Versiune</td><td><span class="fme-badge fme-badge-version">v${escHtml(manifest.version||theme.version||'1.0.0')}</span></td></tr>
+            <tr><td style="color:var(--fme-muted, #666);">Engine</td><td>${escHtml(manifest.minEngine||theme.minEngine||'—')}</td></tr>
+            <tr><td style="color:var(--fme-muted, #666);">Tags</td><td>${(manifest.tags||theme.tags||[]).map(t=>`<span class="fme-tag">${escHtml(t)}</span>`).join(' ')}</td></tr>
           </table>
-          <p style="font-size:12px;color:#555;line-height:1.5;">${escHtml(manifest.description||theme.description||'')}</p>
+          <p style="font-size:12px;color:color-mix(in srgb, var(--fme-text, #333) 84%, transparent);line-height:1.5;">${escHtml(manifest.description||theme.description||'')}</p>
         </div>
       </div>
 
@@ -373,16 +373,16 @@ var FMEThemesTab = (() => {
         <legend>Compatibilitate</legend>
         <table style="width:100%;font-size:12px;padding:4px 0;">
           <tr>
-            <td style="color:#666;width:150px;padding:3px 0;">Versiune forum</td>
-            <td id="fme-compat-current"><span style="color:#999;">Se verifica&hellip;</span></td>
+            <td style="color:var(--fme-muted, #666);width:150px;padding:3px 0;">Versiune forum</td>
+            <td id="fme-compat-current"><span style="color:var(--fme-muted, #999);">Se verifica&hellip;</span></td>
           </tr>
           <tr>
-            <td style="color:#666;padding:3px 0;">Ceruta de tema</td>
+            <td style="color:var(--fme-muted, #666);padding:3px 0;">Ceruta de tema</td>
             <td>${escHtml(manifest.minEngine || theme.minEngine || '—')}</td>
           </tr>
           <tr>
-            <td style="color:#666;padding:3px 0;">Status</td>
-            <td id="fme-compat-status"><span style="color:#999;">Se verifica&hellip;</span></td>
+            <td style="color:var(--fme-muted, #666);padding:3px 0;">Status</td>
+            <td id="fme-compat-status"><span style="color:var(--fme-muted, #999);">Se verifica&hellip;</span></td>
           </tr>
         </table>
       </fieldset>
@@ -391,14 +391,14 @@ var FMEThemesTab = (() => {
         <legend>Componente incluse</legend>
         <table class="fme-table" style="margin:8px 0 4px;">
           <thead><tr><th style="width:60px;">Tip</th><th>Fisier</th><th style="width:140px;">Status</th></tr></thead>
-          <tbody>${componentRows || '<tr><td colspan="3" style="color:#999;text-align:center;padding:8px;">Nicio componenta gasita</td></tr>'}</tbody>
+          <tbody>${componentRows || '<tr><td colspan="3" style="color:var(--fme-muted, #999);text-align:center;padding:8px;">Nicio componenta gasita</td></tr>'}</tbody>
         </table>
       </fieldset>
 
       ${varHtml}
 
       <div id="fme-install-status" style="min-height:24px;margin-top:10px;"></div>
-      <div id="fme-install-progress" style="display:none;font-size:12px;color:#555;margin-top:6px;padding:6px 8px;background:#f8f8f8;border:1px solid #e0e0e0;border-radius:3px;"></div>
+      <div id="fme-install-progress" style="display:none;font-size:12px;color:var(--fme-text, #555);margin-top:6px;padding:6px 8px;background:var(--fme-surface, #f8f8f8);border:1px solid var(--fme-border, #e0e0e0);border-radius:3px;"></div>
 
       <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap;">
         ${installed
@@ -480,8 +480,8 @@ var FMEThemesTab = (() => {
       if (!currentEl || !statusEl2) return; // modal closed
 
       if (!detected) {
-        currentEl.innerHTML = '<span style="color:#999;">Nedeterminata</span>';
-        statusEl2.innerHTML = '<span style="color:#999;">—</span>';
+        currentEl.innerHTML = '<span style="color:var(--fme-muted, #999);">Nedeterminata</span>';
+        statusEl2.innerHTML = '<span style="color:var(--fme-muted, #999);">—</span>';
         return;
       }
 
@@ -489,24 +489,24 @@ var FMEThemesTab = (() => {
       currentEl.textContent = label;
 
       if (!requiredEngine) {
-        statusEl2.innerHTML = '<span style="color:#999;">Nicio restrictie</span>';
+        statusEl2.innerHTML = '<span style="color:var(--fme-muted, #999);">Nicio restrictie</span>';
         return;
       }
 
       const ok = engineCompatible(detected, requiredEngine);
       if (ok) {
-        statusEl2.innerHTML = '<span style="color:#27ae60;font-weight:600;">&#x2713; Compatibil</span>';
+        statusEl2.innerHTML = '<span style="color:var(--fme-success, #27ae60);font-weight:600;">&#x2713; Compatibil</span>';
       } else {
         statusEl2.innerHTML = `
-          <span style="color:#e74c3c;font-weight:600;">&#x2717; Incompatibil</span>
-          <span style="color:#999;font-size:11px;margin-left:6px;">
+          <span style="color:var(--fme-danger, #e74c3c);font-weight:600;">&#x2717; Incompatibil</span>
+          <span style="color:var(--fme-muted, #999);font-size:11px;margin-left:6px;">
             (forum: ${escHtml(label)}, cerut: ${escHtml(requiredEngine)})
           </span>`;
         // Warn on install button
         const installBtn = content.querySelector('#fme-modal-install-btn,#fme-modal-reinstall-btn');
         if (installBtn) {
           installBtn.title = 'Atentie: tema poate sa nu fie compatibila cu platforma forumului tau.';
-          installBtn.style.borderColor = '#e67e22';
+          installBtn.style.borderColor = 'var(--fme-warning, #e67e22)';
         }
       }
     });
@@ -559,7 +559,7 @@ var FMEThemesTab = (() => {
     if (files.length <= INLINE_LIMIT) {
       return files.map(f => `
         <tr>
-          <td><span class="fme-badge" style="background:${color};color:#fff;">${type}</span></td>
+          <td><span class="fme-badge" style="background:${color};color:#fff;border-color:transparent;">${type}</span></td>
           <td>${escHtml(labelFn(f))}</td>
           <td><span style="${statusStyle}">${statusText}</span></td>
         </tr>
@@ -571,18 +571,18 @@ var FMEThemesTab = (() => {
     const modeLabel = countModes(files);
     return [`
       <tr>
-        <td><span class="fme-badge" style="background:${color};color:#fff;">${type}</span></td>
+        <td><span class="fme-badge" style="background:${color};color:#fff;border-color:transparent;">${type}</span></td>
         <td>
           <strong>${files.length} fisiere</strong>
-          ${modeLabel ? `<span style="color:#999;font-size:11px;margin-left:6px;">(${modeLabel})</span>` : ''}
-          &nbsp;<a href="#" style="font-size:11px;" onclick="
+          ${modeLabel ? `<span style="color:var(--fme-muted, #999);font-size:11px;margin-left:6px;">(${modeLabel})</span>` : ''}
+          &nbsp;<a href="#" style="font-size:11px;color:var(--fme-accent, #3c9ebf);" onclick="
             var d=document.getElementById('${detailId}');
             d.style.display=d.style.display==='none'?'':'none';
             this.textContent=d.style.display===''?'&#x25B2; ascunde':'&#x25BC; detalii';
             return false;
           ">&#x25BC; detalii</a>
-          <div id="${detailId}" style="display:none;margin-top:6px;font-size:11px;color:#555;">
-            ${files.map(f => `<div style="padding:2px 0;border-bottom:1px solid #f0f0f0;">${escHtml(labelFn(f))}</div>`).join('')}
+          <div id="${detailId}" style="display:none;margin-top:6px;font-size:11px;color:var(--fme-text, #555);">
+            ${files.map(f => `<div style="padding:2px 0;border-bottom:1px solid var(--fme-border, #f0f0f0);">${escHtml(labelFn(f))}</div>`).join('')}
           </div>
         </td>
         <td><span style="${statusStyle}">${statusText}</span></td>
@@ -603,15 +603,15 @@ var FMEThemesTab = (() => {
       return `
         <div style="display:flex;align-items:center;gap:8px;">
           <input type="color" id="fme-var-${escHtml(v.id)}" value="${escHtml(v.default||'#000000')}"
-            style="width:36px;height:28px;border:1px solid #ccc;border-radius:3px;cursor:pointer;" />
-          <label for="fme-var-${escHtml(v.id)}" style="font-size:12px;">${escHtml(v.label||v.id)}</label>
+            style="width:36px;height:28px;border:1px solid var(--fme-border, #ccc);border-radius:3px;cursor:pointer;background:var(--fme-card, #fff);" />
+          <label for="fme-var-${escHtml(v.id)}" style="font-size:12px;color:var(--fme-text, #333);">${escHtml(v.label||v.id)}</label>
         </div>`;
     }
     return `
       <div style="display:flex;align-items:center;gap:8px;">
         <input type="text" id="fme-var-${escHtml(v.id)}" value="${escHtml(v.default||'')}"
-          style="width:80px;border:1px solid #ccc;border-radius:3px;padding:3px 6px;font-size:12px;" />
-        <label for="fme-var-${escHtml(v.id)}" style="font-size:12px;">${escHtml(v.label||v.id)}</label>
+          style="width:80px;border:1px solid var(--fme-border, #ccc);border-radius:3px;padding:3px 6px;font-size:12px;background:var(--fme-surface, #fff);color:var(--fme-text, #333);" />
+        <label for="fme-var-${escHtml(v.id)}" style="font-size:12px;color:var(--fme-text, #333);">${escHtml(v.label||v.id)}</label>
       </div>`;
   }
 
@@ -764,13 +764,13 @@ var FMEThemesTab = (() => {
     const body = modalEl.querySelector('.fme-modal-body');
     body.innerHTML = `
       <div id="fme-preview-progress-wrap" style="padding:8px 0;">
-        <div id="fme-preview-progress-steps" style="font-size:12px;line-height:1.8;color:#555;min-height:120px;max-height:260px;overflow-y:auto;margin-bottom:12px;"></div>
+        <div id="fme-preview-progress-steps" style="font-size:12px;line-height:1.8;color:var(--fme-text, #555);min-height:120px;max-height:260px;overflow-y:auto;margin-bottom:12px;"></div>
         <div id="fme-preview-progress-bar-wrap"
-             style="background:#e8e8e8;border-radius:4px;height:8px;overflow:hidden;margin-bottom:12px;">
+             style="background:var(--fme-surface, #e8e8e8);border:1px solid var(--fme-border, #dcdcdc);border-radius:4px;height:8px;overflow:hidden;margin-bottom:12px;">
           <div id="fme-preview-progress-bar"
-               style="background:#27ae60;height:100%;width:0%;transition:width 0.3s;"></div>
+               style="background:var(--fme-success, #27ae60);height:100%;width:0%;transition:width 0.3s;"></div>
         </div>
-        <div id="fme-preview-progress-status" style="font-size:12px;color:#27ae60;font-weight:600;min-height:20px;"></div>
+        <div id="fme-preview-progress-status" style="font-size:12px;color:var(--fme-success, #27ae60);font-weight:600;min-height:20px;"></div>
         <div style="margin-top:14px;">
           <input type="button" id="fme-preview-progress-close" value="Inchide" disabled />
         </div>
@@ -792,8 +792,8 @@ var FMEThemesTab = (() => {
     function addStep(msg, isError) {
       const line = document.createElement('div');
       line.style.cssText = isError
-        ? 'color:#e74c3c;padding:1px 0;'
-        : 'color:#555;padding:1px 0;';
+        ? 'color:var(--fme-danger, #e74c3c);padding:1px 0;'
+        : 'color:var(--fme-text, #555);padding:1px 0;';
       line.textContent = msg;
       stepsEl.appendChild(line);
       stepsEl.scrollTop = stepsEl.scrollHeight;
@@ -812,9 +812,9 @@ var FMEThemesTab = (() => {
 
       if (!result.ok) {
         addStep('Eroare: ' + (result.message || 'Necunoscuta'), true);
-        statusEl.style.color = '#e74c3c';
+        statusEl.style.color = 'var(--fme-danger, #e74c3c)';
         statusEl.textContent = 'Preview esuat.';
-        barEl.style.background = '#e74c3c';
+        barEl.style.background = 'var(--fme-danger, #e74c3c)';
         closeBtn.disabled = false;
         return;
       }
@@ -859,13 +859,13 @@ var FMEThemesTab = (() => {
 
     body.innerHTML = `
       <div id="fme-install-progress-wrap" style="padding:8px 0;">
-        <div id="fme-install-progress-steps" style="font-size:12px;line-height:1.8;color:#555;min-height:120px;max-height:300px;overflow-y:auto;margin-bottom:12px;"></div>
+        <div id="fme-install-progress-steps" style="font-size:12px;line-height:1.8;color:var(--fme-text, #555);min-height:120px;max-height:300px;overflow-y:auto;margin-bottom:12px;"></div>
         <div id="fme-install-progress-bar-wrap"
-             style="background:#e8e8e8;border-radius:4px;height:8px;overflow:hidden;margin-bottom:12px;">
+             style="background:var(--fme-surface, #e8e8e8);border:1px solid var(--fme-border, #dcdcdc);border-radius:4px;height:8px;overflow:hidden;margin-bottom:12px;">
           <div id="fme-install-progress-bar"
-               style="background:#27ae60;height:100%;width:0%;transition:width 0.3s;"></div>
+               style="background:var(--fme-success, #27ae60);height:100%;width:0%;transition:width 0.3s;"></div>
         </div>
-        <div id="fme-install-progress-status" style="font-size:12px;color:#27ae60;font-weight:600;min-height:20px;"></div>
+        <div id="fme-install-progress-status" style="font-size:12px;color:var(--fme-success, #27ae60);font-weight:600;min-height:20px;"></div>
         <div style="margin-top:14px;">
           <input type="button" id="fme-install-progress-close" value="Inchide" disabled />
         </div>
@@ -881,7 +881,11 @@ var FMEThemesTab = (() => {
 
     function addStep(msg, type) {
       const line = document.createElement('div');
-      const colors = { error: '#e74c3c', success: '#27ae60', info: '#555' };
+      const colors = {
+        error: 'var(--fme-danger, #e74c3c)',
+        success: 'var(--fme-success, #27ae60)',
+        info: 'var(--fme-text, #555)'
+      };
       line.style.cssText = `color:${colors[type] || colors.info};padding:1px 0;`;
       line.textContent = msg;
       stepsEl.appendChild(line);

@@ -881,28 +881,40 @@ var FMEWidgetsTab = (() => {
     section.innerHTML = `
       <div class="panel-menu">
         <br/>
-        <fieldset style="margin:0 12px 12px 12px;border-color:#f39c12;background:#fffdf5;">
-          <legend style="color:#e67e22;font-weight:600;">&#128155; Susține proiectul FME</legend>
-          <p style="margin:4px 0 10px 0;color:#555;font-size:11px;line-height:1.6;">
+        <fieldset class="fme-support-box">
+          <legend>&#128155; Susține proiectul FME</legend>
+          <p class="fme-support-copy">
             FME (Forumotion Manager Extension) este un proiect open-source gratuit.<br/>
             Dacă îți este util, poți susține dezvoltarea continuă printr-o donație simbolică. Mulțumim!
           </p>
-          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-            <a href="https://ko-fi.com" target="_blank" rel="noopener noreferrer"
-               style="display:inline-flex;align-items:center;gap:6px;background:#FF5E5B;color:#fff;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
-              &#9749; Ko-fi
+          <div class="fme-support-links" style="margin:10px auto 10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;align-items:stretch;">
+            <a href="https://ko-fi.com/fmestaark" target="_blank" rel="noopener noreferrer" class="fme-support-link fme-support-link--kofi"
+               style="display:grid;grid-template-columns:22px minmax(0,1fr);align-items:center;gap:10px;min-height:60px;padding:10px 12px;background:color-mix(in srgb, #ff5e5b 16%, var(--fme-card, var(--fme-ui-card, #1a1f2e)));color:color-mix(in srgb, #ffb3b1 75%, var(--fme-text, var(--fme-ui-text, #e2e8f0)));border:1px solid color-mix(in srgb, #ff5e5b 45%, var(--fme-border, var(--fme-ui-border, #2d3748)));border-radius:10px;text-decoration:none;font-size:11px;font-weight:700;line-height:1.15;">
+              <span class="fme-support-link-icon" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;font-size:15px;line-height:1;">&#9749;</span>
+              <span class="fme-support-link-text" style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+                <span class="fme-support-link-title" style="font-size:11px;font-weight:700;color:inherit;">Ko-fi</span>
+                <span class="fme-support-link-subtitle" style="font-size:10px;font-weight:500;color:var(--fme-muted, var(--fme-ui-muted, #94a3b8));">Donație rapidă</span>
+              </span>
             </a>
-            <a href="https://github.com/sponsors" target="_blank" rel="noopener noreferrer"
-               style="display:inline-flex;align-items:center;gap:6px;background:#24292e;color:#fff;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
-              &#10084;&#65039; GitHub Sponsors
+            <a href="https://github.com/sponsors" target="_blank" rel="noopener noreferrer" class="fme-support-link fme-support-link--sponsor"
+               style="display:grid;grid-template-columns:22px minmax(0,1fr);align-items:center;gap:10px;min-height:60px;padding:10px 12px;background:color-mix(in srgb, #db2777 14%, var(--fme-card, var(--fme-ui-card, #1a1f2e)));color:color-mix(in srgb, #ff8fc6 78%, var(--fme-text, var(--fme-ui-text, #e2e8f0)));border:1px solid color-mix(in srgb, #db2777 42%, var(--fme-border, var(--fme-ui-border, #2d3748)));border-radius:10px;text-decoration:none;font-size:11px;font-weight:700;line-height:1.15;">
+              <span class="fme-support-link-icon" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;font-size:15px;line-height:1;">&#10084;&#65039;</span>
+              <span class="fme-support-link-text" style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+                <span class="fme-support-link-title" style="font-size:11px;font-weight:700;color:inherit;">GitHub Sponsors</span>
+                <span class="fme-support-link-subtitle" style="font-size:10px;font-weight:500;color:var(--fme-muted, var(--fme-ui-muted, #94a3b8));">Susținere lunară</span>
+              </span>
             </a>
-            <a href="https://github.com" target="_blank" rel="noopener noreferrer"
-               style="display:inline-flex;align-items:center;gap:6px;background:#4a7ebf;color:#fff;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
-              &#11088; GitHub
+            <a href="https://github.com/ForumotionExt/forumotion-extension" target="_blank" rel="noopener noreferrer" class="fme-support-link fme-support-link--github"
+               style="display:grid;grid-template-columns:22px minmax(0,1fr);align-items:center;gap:10px;min-height:60px;padding:10px 12px;background:color-mix(in srgb, #4a7ebf 14%, var(--fme-card, var(--fme-ui-card, #1a1f2e)));color:color-mix(in srgb, #8bb6ee 80%, var(--fme-text, var(--fme-ui-text, #e2e8f0)));border:1px solid color-mix(in srgb, #4a7ebf 42%, var(--fme-border, var(--fme-ui-border, #2d3748)));border-radius:10px;text-decoration:none;font-size:11px;font-weight:700;line-height:1.15;">
+              <span class="fme-support-link-icon" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;font-size:15px;line-height:1;">&#11088;</span>
+              <span class="fme-support-link-text" style="display:flex;flex-direction:column;gap:2px;min-width:0;">
+                <span class="fme-support-link-title" style="font-size:11px;font-weight:700;color:inherit;">GitHub</span>
+                <span class="fme-support-link-subtitle" style="font-size:10px;font-weight:500;color:var(--fme-muted, var(--fme-ui-muted, #94a3b8));">Sprijin gratuit</span>
+              </span>
             </a>
           </div>
-          <p style="margin:10px 0 0 0;font-size:10px;color:#aaa;">
-            Ai o sugestie sau ai găsit un bug? Deschide un issue pe GitHub.
+          <p class="fme-support-note">
+            Ai o sugestie sau ai găsit un bug? <a href="https://github.com/ForumotionExt/forumotion-extension/issues" target="_blank" rel="noopener noreferrer">Deschide un issue pe GitHub</a>.
           </p>
         </fieldset>
       </div>

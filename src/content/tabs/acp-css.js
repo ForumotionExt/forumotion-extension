@@ -1,12 +1,13 @@
 /**
  * FME ACP Styles Tab
- * Allows the user to write, upload and apply custom CSS to the Forumotion Admin Panel.
- * CSS is persisted in chrome.storage.local and re-applied automatically on every ACP page load.
+ * Allows the user to write, upload and apply custom CSS and JavaScript to the Forumotion Admin Panel.
+ * CSS/JS are persisted in chrome.storage.local and re-applied automatically on every ACP page load.
  *
  * Features:
- *   - Code editor with live preview
- *   - Upload .css files (appended to current CSS)
+ *   - Code editor with live preview for CSS
+ *   - Upload .css / .js files (appended to current code)
  *   - Built-in "Dark 2026" preset theme
+ *   - Custom JS runner for ACP DOM tweaks and small automations
  *   - Auto-apply on every ACP page load
  */
 
@@ -14,6 +15,7 @@ var FMEAcpCssTab = (() => {
   'use strict';
 
   const STORAGE_KEY      = 'fme_acp_custom_css';
+  const SCRIPT_KEY       = 'fme_acp_custom_js';
   const ACTIVE_THEME_KEY = 'fme_acp_active_theme';
   const STYLE_TAG_ID     = 'fme-acp-custom-style';
 
@@ -38,6 +40,7 @@ var FMEAcpCssTab = (() => {
   --fme-warn:    #f59e0b;
   --fme-radius:  8px;
   --fme-shadow:  0 4px 24px rgba(0,0,0,0.45);
+  --fme-quote-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath fill='%236c63ff' d='M13.2 7.2C8.7 9.8 6 13.6 6 18.8V25h8v-8.4H10c.3-2.7 2-5.1 5-7.2l-1.8-2.2Zm12 0C20.7 9.8 18 13.6 18 18.8V25h8v-8.4h-4c.3-2.7 2-5.1 5-7.2l-1.8-2.2Z'/%3E%3C/svg%3E");
 }
 
 /* === GLOBAL === */
@@ -202,6 +205,64 @@ ul.h2-breadcrumb { color: var(--fme-muted) !important; }
 ul.h2-breadcrumb li a { color: var(--fme-accent) !important; }
 ul.h2-breadcrumb li a:hover { color: var(--fme-cyan) !important; }
 
+/* Quote / explain blocks */
+blockquote.block_left {
+  position: relative !important;
+  color: var(--fme-text) !important;
+  min-height: 20px;
+  margin-bottom: 30px;
+  background: color-mix(in srgb, var(--fme-accent) 7%, var(--fme-card)) !important;
+  border: 1px solid color-mix(in srgb, var(--fme-accent) 22%, var(--fme-border)) !important;
+  border-left: 3px solid var(--fme-accent) !important;
+  border-radius: var(--fme-radius) !important;
+  padding: 10px 30px !important;
+  box-shadow: none !important;
+  overflow: visible;
+}
+blockquote.block_left::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: var(--fme-quote-size, clamp(34px, 4vw, 54px));
+  height: var(--fme-quote-size, clamp(34px, 4vw, 54px));
+  background: var(--fme-quote-image) center / var(--fme-quote-size, clamp(34px, 4vw, 54px)) var(--fme-quote-size, clamp(34px, 4vw, 54px)) no-repeat;
+  transform: translate(-28%, -28%);
+  pointer-events: none;
+  opacity: var(--fme-quote-opacity, 0.5);
+}
+blockquote.block_left p,
+blockquote.block_left .explain {
+  position: relative;
+  color: inherit !important;
+  background: transparent !important;
+  margin: 0 !important;
+}
+blockquote.block_left p::after,
+blockquote.block_left .explain::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: var(--fme-quote-size, clamp(34px, 4vw, 54px));
+  height: var(--fme-quote-size, clamp(34px, 4vw, 54px));
+  background: var(--fme-quote-image) center / var(--fme-quote-size, clamp(34px, 4vw, 54px)) var(--fme-quote-size, clamp(34px, 4vw, 54px)) no-repeat;
+  transform: translate(42%, 32%) scaleX(-1);
+  pointer-events: none;
+  opacity: var(--fme-quote-opacity, 0.5);
+}
+p.explain {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+p.explain {
+  color: var(--fme-text) !important;
+  min-height: 20px;
+  padding: 10px 20px 10px 20px !important;
+}
+
 /* Links */
 a:link, a:active, a:visited { color: var(--fme-accent) !important; }
 a:hover { color: var(--fme-cyan) !important; }
@@ -355,9 +416,79 @@ a.btn:hover { color: var(--fme-accent) !important; }
 .messagebox h3 { color: var(--fme-warn) !important; }
 
 /* === SUB NAV TABS === */
-#tabs_menu a span { color: var(--fme-muted) !important; }
-#tabs_menu #activetab a span { color: var(--fme-success) !important; }
-#tabs_menu a:hover span { color: var(--fme-accent) !important; }
+#tabs_menu {
+  background: transparent !important;
+  padding: 0 !important;
+  margin-left: 25px;
+}
+#tabs_menu ul {
+  display: flex !important;
+  flex-wrap: wrap !important;
+  align-items: flex-end !important;
+  gap: 4px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  list-style: none !important;
+  background: transparent !important;
+}
+#tabs_menu li {
+  float: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+}
+#tabs_menu a,
+#tabs_menu a span {
+  float: none !important;
+  display: block !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+#tabs_menu a {
+  background: color-mix(in srgb, var(--fme-surface) 92%, var(--fme-card)) !important;
+  background-position: 0 0 !important;
+  border: 1px solid var(--fme-border) !important;
+  border-bottom: 0 !important;
+  color: var(--fme-text) !important;
+  padding: 0 10px !important;
+  text-decoration: none !important;
+  position: relative !important;
+  min-height: 32px !important;
+  line-height: 30px !important;
+  cursor: pointer !important;
+  border-radius: 6px 6px 0 0 !important;
+  margin-bottom: 1px !important;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease !important;
+}
+#tabs_menu a span {
+  background: transparent !important;
+  background-position: 100% 0 !important;
+  color: var(--fme-muted) !important;
+  padding: 0 !important;
+  height: auto !important;
+  line-height: inherit !important;
+}
+#tabs_menu #activetab a {
+  background: color-mix(in srgb, var(--fme-accent) 14%, var(--fme-card)) !important;
+  background-position: 0 0 !important;
+  border-color: color-mix(in srgb, var(--fme-accent) 70%, var(--fme-border)) !important;
+  margin-bottom: 1px !important;
+}
+#tabs_menu #activetab a span {
+  background: transparent !important;
+  color: var(--fme-accent) !important;
+  font-weight: 600 !important;
+  box-shadow: none !important;
+}
+#tabs_menu a:hover {
+  background: color-mix(in srgb, var(--fme-accent) 10%, var(--fme-card)) !important;
+  background-position: 0 0 !important;
+  border-color: color-mix(in srgb, var(--fme-accent) 55%, var(--fme-border)) !important;
+}
+#tabs_menu a:hover span {
+  background: transparent !important;
+  color: var(--fme-accent) !important;
+}
 
 /* === FOOTER === */
 #page-footer {
@@ -449,9 +580,12 @@ div.avatar {
 /* === SELECTION === */
 ::selection { background: rgba(108,99,255,0.35); color: #fff; }`;
 
-  let _container  = null;
-  let _currentCss  = '';
-  let _guardActive = false;
+  let _container     = null;
+  let _currentCss    = '';
+  let _currentJs     = '';
+  let _guardActive   = false;
+  let _cssSaveTimer  = 0;
+  let _jsSaveTimer   = 0;
 
   // ─── Theme catalog ────────────────────────────────────────────────────────────
 
@@ -459,6 +593,12 @@ div.avatar {
     const marker = '\n/* === GLOBAL === */';
     const idx = PRESET_2026.indexOf(marker);
     return idx >= 0 ? PRESET_2026.slice(idx) : '';
+  }
+
+  function buildQuoteImageCssValue(color) {
+    const fill = color || '#6c63ff';
+    const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><path fill="${fill}" d="M13.2 7.2C8.7 9.8 6 13.6 6 18.8V25h8v-8.4H10c.3-2.7 2-5.1 5-7.2l-1.8-2.2Zm12 0C20.7 9.8 18 13.6 18 18.8V25h8v-8.4h-4c.3-2.7 2-5.1 5-7.2l-1.8-2.2Z"/></svg>`;
+    return 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")';
   }
 
   function buildThemeCss(vars, name) {
@@ -476,6 +616,7 @@ div.avatar {
       '  --fme-warn:    ' + vars.warn    + ';\n' +
       '  --fme-radius:  ' + (vars.radius || '8px') + ';\n' +
       '  --fme-shadow:  ' + (vars.shadow || '0 4px 24px rgba(0,0,0,0.45)') + ';\n' +
+      '  --fme-quote-image: ' + buildQuoteImageCssValue(vars.accent) + ';\n' +
       '}\n' + _getBaseRules();
   }
 
@@ -579,7 +720,7 @@ div.avatar {
         <legend>CSS personalizat ACP</legend>
         <dl>
             <textarea id="fme-acp-css-editor"
-            style="height:380px;font-family:Consolas,'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6;padding:12px;border:1px solid #cdcdcd;border-radius:6px;resize:vertical;background:#efefef;color:#2a2a2a;tab-size:2;box-sizing:border-box;"
+            style="height:380px;font-family:Consolas,'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6;padding:12px;border:1px solid var(--fme-border, #cdcdcd);border-radius:6px;resize:vertical;background:var(--fme-surface, #efefef);color:var(--fme-text, #2a2a2a);tab-size:2;box-sizing:border-box;"
             placeholder="/* Scrie CSS personalizat sau foloseste butonul de mai sus */&#10;#page-header { background: #cecece !important; }"></textarea>
         </dl>
 
@@ -594,6 +735,30 @@ div.avatar {
           <span id="fme-css-info"   style="font-size:11px;font-family:Consolas,monospace;color:#64748b;"></span>
         </div>
       </fieldset>
+
+      <fieldset style="margin-top:12px;">
+        <legend>JavaScript personalizat ACP</legend>
+        <p style="margin:4px 0 8px;font-size:11px;color:var(--fme-muted, #64748b);line-height:1.6;">
+          Adaugă JavaScript custom pentru ACP, util la manipularea DOM-ului și automatizări mici.
+          Codul este împachetat automat într-un wrapper sigur de tip <code>(function(){ /* cod user */ })();</code>.
+        </p>
+        <dl>
+            <textarea id="fme-acp-js-editor"
+            style="height:240px;font-family:Consolas,'Cascadia Code','Fira Code',monospace;font-size:12px;line-height:1.6;padding:12px;border:1px solid var(--fme-border, #cdcdcd);border-radius:6px;resize:vertical;background:var(--fme-surface, #efefef);color:var(--fme-text, #2a2a2a);tab-size:2;box-sizing:border-box;"
+            placeholder="// Exemplu&#10;const el = document.querySelector('#page-header');&#10;if (el) el.style.boxShadow = '0 0 0 1px var(--fme-accent)';"></textarea>
+        </dl>
+
+        <div class="div_btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;justify-content:flex-start;margin-bottom:10px;">
+          <input type="button" id="fme-js-save"   value="Salveaza &amp; Ruleaza JS" class="icon_ok" />
+          <input type="button" id="fme-js-upload" value="Incarca fisier .js"       class="btn" />
+          <input type="button" id="fme-js-clear"  value="Sterge JS"                class="icon_cancel" />
+          <input type="file"   id="fme-js-file-input" accept=".js,text/javascript,application/javascript" style="display:none;" />
+        </div>
+        <div style="display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;">
+          <span id="fme-js-status" style="font-size:11px;font-weight:600;min-width:130px;"></span>
+          <span id="fme-js-info"   style="font-size:11px;font-family:Consolas,monospace;color:#64748b;"></span>
+        </div>
+      </fieldset>
     `;
 
     container.appendChild(wrapper);
@@ -605,10 +770,15 @@ div.avatar {
   // ─── Load saved CSS ───────────────────────────────────────────────────────────
 
   function loadSaved(wrapper) {
-    chrome.storage.local.get({ [STORAGE_KEY]: '', [ACTIVE_THEME_KEY]: '' }, (result) => {
+    chrome.storage.local.get({ [STORAGE_KEY]: '', [SCRIPT_KEY]: '', [ACTIVE_THEME_KEY]: '' }, (result) => {
       const css = result[STORAGE_KEY] || '';
-      wrapper.querySelector('#fme-acp-css-editor').value = css;
+      const js  = result[SCRIPT_KEY]  || '';
+      const cssEditor = wrapper.querySelector('#fme-acp-css-editor');
+      const jsEditor  = wrapper.querySelector('#fme-acp-js-editor');
+      if (cssEditor) cssEditor.value = css;
+      if (jsEditor)  jsEditor.value  = js;
       updateInfo(wrapper, css);
+      updateScriptInfo(wrapper, js);
       highlightActiveTheme(wrapper, result[ACTIVE_THEME_KEY] || '');
     });
   }
@@ -616,36 +786,56 @@ div.avatar {
   // ─── Events ───────────────────────────────────────────────────────────────────
 
   function bindEvents(wrapper) {
-    const editor    = wrapper.querySelector('#fme-acp-css-editor');
-    const saveBtn   = wrapper.querySelector('#fme-css-save');
-    const uploadBtn = wrapper.querySelector('#fme-css-upload');
-    const clearBtn  = wrapper.querySelector('#fme-css-clear');
-    const fileInput = wrapper.querySelector('#fme-css-file-input');
-    const statusEl  = wrapper.querySelector('#fme-css-status');
+    const editor      = wrapper.querySelector('#fme-acp-css-editor');
+    const saveBtn     = wrapper.querySelector('#fme-css-save');
+    const uploadBtn   = wrapper.querySelector('#fme-css-upload');
+    const clearBtn    = wrapper.querySelector('#fme-css-clear');
+    const fileInput   = wrapper.querySelector('#fme-css-file-input');
+    const statusEl    = wrapper.querySelector('#fme-css-status');
 
-    // Live preview + clear active theme when user edits manually
+    const jsEditor    = wrapper.querySelector('#fme-acp-js-editor');
+    const jsSaveBtn   = wrapper.querySelector('#fme-js-save');
+    const jsUploadBtn = wrapper.querySelector('#fme-js-upload');
+    const jsClearBtn  = wrapper.querySelector('#fme-js-clear');
+    const jsFileInput = wrapper.querySelector('#fme-js-file-input');
+    const jsStatusEl  = wrapper.querySelector('#fme-js-status');
+
+    // Live preview + autosave when the user edits manually
     editor.addEventListener('input', () => {
-      applyToPage(editor.value);
-      chrome.storage.local.set({ [ACTIVE_THEME_KEY]: '' });
+      const css = editor.value || '';
+      applyToPage(css);
+      updateInfo(wrapper, css);
       highlightActiveTheme(wrapper, '');
+      scheduleCssSave(wrapper, css);
+    });
+
+    jsEditor?.addEventListener('input', () => {
+      const js = jsEditor.value || '';
+      updateScriptInfo(wrapper, js);
+      scheduleJsSave(wrapper, js);
     });
 
     // Tab key → 2 spaces
-    editor.addEventListener('keydown', (e) => {
-      if (e.key === 'Tab') {
-        e.preventDefault();
-        const s = editor.selectionStart, en = editor.selectionEnd;
-        editor.value = editor.value.substring(0, s) + '  ' + editor.value.substring(en);
-        editor.selectionStart = editor.selectionEnd = s + 2;
-      }
+    [editor, jsEditor].forEach(targetEditor => {
+      targetEditor?.addEventListener('keydown', (e) => {
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          const s = targetEditor.selectionStart;
+          const en = targetEditor.selectionEnd;
+          targetEditor.value = targetEditor.value.substring(0, s) + '  ' + targetEditor.value.substring(en);
+          targetEditor.selectionStart = targetEditor.selectionEnd = s + 2;
+        }
+      });
     });
 
-    // Save
+    // Save CSS
     saveBtn.addEventListener('click', () => {
-      const css = editor.value.trim();
-      chrome.storage.local.set({ [STORAGE_KEY]: css }, () => {
+      const css = editor.value || '';
+      window.clearTimeout(_cssSaveTimer);
+      chrome.storage.local.set({ [STORAGE_KEY]: css, [ACTIVE_THEME_KEY]: '' }, () => {
         applyToPage(css);
         updateInfo(wrapper, css);
+        highlightActiveTheme(wrapper, '');
         setStatus(statusEl, 'Salvat si aplicat!', '#10b981');
         if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('css-acp-save', 'CSS ACP salvat (' + css.split('\n').length + ' linii)');
       });
@@ -663,24 +853,69 @@ div.avatar {
           ? `\n\n/* \u2500\u2500\u2500 ${file.name} \u2500\u2500\u2500 */\n`
           : `/* ${file.name} */\n`;
         editor.value = existing ? existing + separator + ev.target.result : ev.target.result;
-        applyToPage(editor.value);
-        updateInfo(wrapper, editor.value);
-        setStatus(statusEl, `${file.name} incarcat!`, '#6c63ff');
+        const css = editor.value || '';
+        applyToPage(css);
+        updateInfo(wrapper, css);
+        scheduleCssSave(wrapper, css, `${file.name} incarcat si salvat automat!`);
       };
       reader.readAsText(file);
       fileInput.value = '';
     });
 
-    // Clear
+    // Clear CSS
     clearBtn.addEventListener('click', () => {
       if (!editor.value.trim()) return;
       if (!confirm('Stergi tot CSS-ul custom din ACP?')) return;
       editor.value = '';
+      window.clearTimeout(_cssSaveTimer);
       chrome.storage.local.set({ [STORAGE_KEY]: '', [ACTIVE_THEME_KEY]: '' }, () => {
         applyToPage('');
         updateInfo(wrapper, '');
         highlightActiveTheme(wrapper, '');
         setStatus(statusEl, 'Sters.', '#f43f5e');
+      });
+    });
+
+    // Save JS
+    jsSaveBtn?.addEventListener('click', () => {
+      const js = jsEditor?.value || '';
+      window.clearTimeout(_jsSaveTimer);
+      chrome.storage.local.set({ [SCRIPT_KEY]: js }, () => {
+        executeAcpScript(js);
+        updateScriptInfo(wrapper, js);
+        setStatus(jsStatusEl, js.trim() ? 'JS salvat si rulat!' : 'JS gol.', '#10b981');
+        if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('js-acp-save', 'JS ACP salvat (' + (js.trim() ? js.split('\n').length : 0) + ' linii)');
+      });
+    });
+
+    // Upload .js file
+    jsUploadBtn?.addEventListener('click', () => jsFileInput?.click());
+    jsFileInput?.addEventListener('change', () => {
+      const file = jsFileInput.files[0];
+      if (!file || !jsEditor) return;
+      const reader = new FileReader();
+      reader.onload = (ev) => {
+        const existing  = jsEditor.value.trim();
+        const separator = existing
+          ? `\n\n// \u2500\u2500\u2500 ${file.name} \u2500\u2500\u2500\n`
+          : `// ${file.name}\n`;
+        jsEditor.value = existing ? existing + separator + ev.target.result : ev.target.result;
+        updateScriptInfo(wrapper, jsEditor.value);
+        scheduleJsSave(wrapper, jsEditor.value, `${file.name} incarcat si salvat automat!`);
+      };
+      reader.readAsText(file);
+      jsFileInput.value = '';
+    });
+
+    // Clear JS
+    jsClearBtn?.addEventListener('click', () => {
+      if (!jsEditor || !jsEditor.value.trim()) return;
+      if (!confirm('Stergi tot JavaScript-ul custom din ACP?')) return;
+      jsEditor.value = '';
+      window.clearTimeout(_jsSaveTimer);
+      chrome.storage.local.set({ [SCRIPT_KEY]: '' }, () => {
+        updateScriptInfo(wrapper, '');
+        setStatus(jsStatusEl, 'JS sters. Reincarca pagina pentru a elimina efectele deja aplicate.', '#f43f5e');
       });
     });
   }
@@ -697,6 +932,49 @@ div.avatar {
     tag.textContent = css;
     // Always append last so we win over any ACP stylesheet in the cascade
     document.head.appendChild(tag);
+  }
+
+  function hashString(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+      h = ((h << 5) - h) + str.charCodeAt(i);
+      h |= 0;
+    }
+    return String(h >>> 0);
+  }
+
+  function wrapUserScript(js) {
+    const key = 'fme_acp_custom_js_' + hashString(js || '');
+    return `(function () {
+  'use strict';
+  try {
+    window.__fmeAcpCustomJsRuns = window.__fmeAcpCustomJsRuns || {};
+    if (window.__fmeAcpCustomJsRuns['${key}']) return;
+    window.__fmeAcpCustomJsRuns['${key}'] = true;
+
+${js}
+
+  } catch (e) {
+    console.warn('[FME ACP Custom JS]', e && e.message ? e.message : e);
+  }
+})();`;
+  }
+
+  function executeAcpScript(js) {
+    _currentJs = js || '';
+    if (!_currentJs.trim()) return;
+
+    chrome.runtime.sendMessage({
+      type: 'EXEC_WIDGET',
+      payload: {
+        code: wrapUserScript(_currentJs),
+        name: 'ACP Custom JS'
+      }
+    }, () => {
+      if (chrome.runtime.lastError) {
+        console.warn('[FME ACP JS]', chrome.runtime.lastError.message);
+      }
+    });
   }
 
   // ─── Persistent style guard ───────────────────────────────────────────────
@@ -735,13 +1013,44 @@ div.avatar {
     const kb    = (new Blob([css]).size / 1024).toFixed(1);
     info.textContent = `${lines} linii \u00b7 ${kb} KB \u00b7 aplicat automat`;
   }
-
+  function updateScriptInfo(wrapper, js) {
+    const info = wrapper.querySelector('#fme-js-info');
+    if (!info) return;
+    if (!js.trim()) {
+      info.textContent = 'Niciun JS salvat.';
+      return;
+    }
+    const lines = js.split('\n').length;
+    const kb    = (new Blob([js]).size / 1024).toFixed(1);
+    info.textContent = `${lines} linii · ${kb} KB · ruleaza automat in ACP`;
+  }
   // ─── Status helper ────────────────────────────────────────────────────────────
 
   function setStatus(el, msg, color) {
     el.style.color = color || '#10b981';
     el.textContent = msg;
     setTimeout(() => { el.textContent = ''; }, 3000);
+  }
+
+  function scheduleCssSave(wrapper, css, message) {
+    window.clearTimeout(_cssSaveTimer);
+    _cssSaveTimer = window.setTimeout(() => {
+      chrome.storage.local.set({ [STORAGE_KEY]: css, [ACTIVE_THEME_KEY]: '' }, () => {
+        updateInfo(wrapper, css);
+        highlightActiveTheme(wrapper, '');
+        if (message) setStatus(wrapper.querySelector('#fme-css-status'), message, '#6c63ff');
+      });
+    }, 350);
+  }
+
+  function scheduleJsSave(wrapper, js, message) {
+    window.clearTimeout(_jsSaveTimer);
+    _jsSaveTimer = window.setTimeout(() => {
+      chrome.storage.local.set({ [SCRIPT_KEY]: js }, () => {
+        updateScriptInfo(wrapper, js);
+        if (message) setStatus(wrapper.querySelector('#fme-js-status'), message, '#6c63ff');
+      });
+    }, 350);
   }
 
   function escHtml(str) {
@@ -758,9 +1067,9 @@ div.avatar {
     section.className = 'panel-menu';
     //section.style.cssText = 'margin:0 0 10px 0!important;background:#fff!important;border:1px solid #cdcdcd!important;padding:0 0 10px 0!important;';
     section.innerHTML = `
-      <br/><fieldset style="margin:0 12px 12px 12px;border-color:#4a7ebf;">
-        <legend style="color:#4a7ebf;font-weight:600;">&#127912; Teme ACP predefinite</legend>
-        <p style="margin:4px 0 12px 0;color:#666;font-size:11px;">
+      <br/><fieldset style="margin:0 12px 12px 12px;border-color:var(--fme-accent, #4a7ebf);">
+        <legend style="color:var(--fme-accent, #4a7ebf);font-weight:600;">&#127912; Teme ACP predefinite</legend>
+        <p style="margin:4px 0 12px 0;color:var(--fme-muted, #666);font-size:11px;">
           Selectează o temă ready-to-use pentru panoul de administrare. CSS-ul este aplicat live și salvat automat.<br/>
           Poți edita CSS-ul manual mai jos pentru personalizări suplimentare.
         </p>
@@ -773,7 +1082,7 @@ div.avatar {
       const card = document.createElement('div');
       card.className = 'fme-theme-card';
       card.dataset.themeId = theme.id;
-      card.style.cssText = 'width:140px;padding:10px;border:2px solid #ddd;border-radius:6px;background:#f9f9f9;cursor:default;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;';
+      card.style.cssText = 'width:140px;padding:10px;border:2px solid var(--fme-border, #ddd);border-radius:6px;background:var(--fme-card, #f9f9f9);color:var(--fme-text, #333);cursor:default;transition:border-color 0.2s,box-shadow 0.2s,background 0.2s;';
 
       const swatches = (theme.swatches || ['#333', '#555', '#777', '#999'])
         .map(c => `<span style="flex:1;height:18px;background:${escHtml(c)};border-radius:3px;"></span>`)
@@ -781,8 +1090,8 @@ div.avatar {
 
       card.innerHTML = `
         <div style="display:flex;gap:2px;margin-bottom:8px;">${swatches}</div>
-        <div style="font-weight:600;font-size:12px;color:#333;margin-bottom:4px;">${escHtml(theme.name)}</div>
-        <div style="font-size:10px;color:#666;margin-bottom:8px;line-height:1.4;">${escHtml(theme.description)}</div>
+        <div style="font-weight:600;font-size:12px;color:var(--fme-text, #333);margin-bottom:4px;">${escHtml(theme.name)}</div>
+        <div style="font-size:10px;color:var(--fme-muted, #666);margin-bottom:8px;line-height:1.4;">${escHtml(theme.description)}</div>
         <input type="button" class="fme-apply-theme-btn icon_ok" data-theme-id="${escHtml(theme.id)}"
                value="Activează" style="width:100%;font-size:11px;padding:3px 0;" />
       `;
@@ -807,7 +1116,7 @@ div.avatar {
     updateInfo(wrapper, css);
 
     chrome.storage.local.set({ [STORAGE_KEY]: css, [ACTIVE_THEME_KEY]: theme.id }, () => {
-      setStatus(statusEl, theme.name + ' activat!', '#4a7ebf');
+      setStatus(statusEl, theme.name + ' activat!', 'var(--fme-accent, #4a7ebf)');
       highlightActiveTheme(wrapper, theme.id);
       if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('css-acp-save', 'Temă ACP aplicată: ' + theme.name);
     });
@@ -818,13 +1127,13 @@ div.avatar {
       const id  = card.dataset.themeId;
       const btn = card.querySelector('.fme-apply-theme-btn');
       if (id === activeId) {
-        card.style.borderColor = '#4a7ebf';
-        card.style.background  = '#f0f7ff';
-        card.style.boxShadow   = '0 0 0 2px rgba(74,126,191,0.4)';
+        card.style.borderColor = 'var(--fme-accent, #4a7ebf)';
+        card.style.background  = 'color-mix(in srgb, var(--fme-accent, #4a7ebf) 10%, var(--fme-card, #f9f9f9))';
+        card.style.boxShadow   = '0 0 0 2px color-mix(in srgb, var(--fme-accent, #4a7ebf) 35%, transparent)';
         if (btn) { btn.value = '\u2713 Activ'; btn.disabled = true; }
       } else {
-        card.style.borderColor = '#ddd';
-        card.style.background  = '#f9f9f9';
+        card.style.borderColor = 'var(--fme-border, #ddd)';
+        card.style.background  = 'var(--fme-card, #f9f9f9)';
         card.style.boxShadow   = '';
         if (btn) { btn.value = 'Activează'; btn.disabled = false; }
       }
@@ -834,9 +1143,11 @@ div.avatar {
   // ─── Auto-apply on load / navigation (called from content.js) ──────────────
 
   function autoApply() {
-    chrome.storage.local.get({ [STORAGE_KEY]: '' }, (result) => {
+    chrome.storage.local.get({ [STORAGE_KEY]: '', [SCRIPT_KEY]: '' }, (result) => {
       const css = result[STORAGE_KEY] || '';
+      const js  = result[SCRIPT_KEY] || '';
       if (css) applyToPage(css);
+      if (js)  executeAcpScript(js);
       startStyleGuard();
     });
   }

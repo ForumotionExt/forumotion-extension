@@ -22,26 +22,28 @@ var FMETemplatesTab = (() => {
 
   // ─── State ───────────────────────────────────────────────────────────────────
 
-  let _container      = null;
-  let _currentMode    = CATEGORIES[0].key;
-  let _templates      = [];   // array of { name, description, status, editUrl, value }
-  let _searchTimer    = null;
-  let _modal          = null; // the modal DOM element (appended to document.body)
-  let _installedThemes = {};  // loaded from chrome.storage.local for FME badge detection
-  let _fmeTemplateIds = new Set(); // template IDs known to be installed by FME themes
+  let _container       = null;
+  let _currentMode     = CATEGORIES[0].key;
+  let _templates       = [];   // array of { name, description, status, editUrl, value }
+  let _bulkResults     = [];   // array of bulk search results across categories
+  let _searchTimer     = null;
+  let _modal           = null; // the modal DOM element (appended to document.body)
+  let _installedThemes = {};   // loaded from chrome.storage.local for FME badge detection
+  let _fmeTemplateIds  = new Set(); // template IDs known to be installed by FME themes
 
   // ─── Public API ──────────────────────────────────────────────────────────────
   function stylePanel() {
     // Additional styles specific to this tab can be injected here if needed.
     document.head.insertAdjacentHTML('beforeend', `
       <style>
-        /* Override default table styles for better readability */ 
+        /* Keep the templates panel in sync with the active ACP theme */
         .panel_menu {
-            margin: 0px !important;
-            background-color: #fff !important;
-            border: 1px solid #cdcdcd !important;;
-            padding: 0 0 10px 0 !important;
-            border-width: 1px !important;
+          margin: 0px !important;
+          background-color: var(--fme-card, #fff) !important;
+          border: 1px solid var(--fme-border, #cdcdcd) !important;
+          color: var(--fme-text, #333) !important;
+          padding: 0 0 10px 0 !important;
+          border-width: 1px !important;
         }
       </style>
     `);
@@ -50,6 +52,7 @@ var FMETemplatesTab = (() => {
 
   async function render(container) {
     _container = container;
+    _bulkResults = [];
     container.innerHTML = '';
     stylePanel();
 
@@ -69,7 +72,7 @@ var FMETemplatesTab = (() => {
         <strong> Înainte de orice modificare </strong>, vă recomandăm să <strong> faceți o copie de rezervă </strong> a template-ului dvs.!</p>
       </blockquote>
       <div class="fme-filter-tabs" id="fme-tpl-categories"></div>
-      <div class="panel-menu" style="margin: 0px !important; background-color: #fff !important; border: 1px solid #cdcdcd !important; padding: 0 0 10px 0 !important; border-width: 1px !important;">
+      <div class="panel-menu" style="margin: 0px !important; background-color: var(--fme-card, #fff) !important; border: 1px solid var(--fme-border, #cdcdcd) !important; color: var(--fme-text, #333) !important; padding: 0 0 10px 0 !important; border-width: 1px !important;">
         <br />
         <fieldset style="margin:0 12px 12px 12px;">
           <legend>Lista template-urilor</legend>
@@ -82,6 +85,48 @@ var FMETemplatesTab = (() => {
               <div class="fme-spinner"></div>
               <span>Se incarca lista de template-uri...</span>
             </div>
+          </div>
+        </fieldset>
+
+        <fieldset style="margin:0 12px 12px 12px;">
+          <legend>Bulk Search &amp; Replace</legend>
+          <p style="margin:4px 0 10px;color:var(--fme-text-muted, #666);font-size:11px;line-height:1.6;">
+            Caută un fragment în mai multe template-uri și aplică înlocuirea doar pe selecția dorită.
+            Lasă câmpul de înlocuire gol dacă vrei doar scanare și preview.
+          </p>
+
+          <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(260px, 1fr));gap:10px;margin-bottom:10px;">
+            <div>
+              <label for="fme-br-search" style="display:block;font-size:11px;font-weight:600;margin-bottom:4px;">Caută</label>
+              <textarea id="fme-br-search" spellcheck="false" style="width:100%;min-height:82px;resize:vertical;font-family:Consolas,'Courier New',monospace;font-size:12px;padding:8px;border:1px solid var(--fme-border, #cdcdcd);border-radius:4px;box-sizing:border-box;background:var(--fme-surface, #fff);color:var(--fme-text, #333);" placeholder="ex: old-cdn.example.com"></textarea>
+            </div>
+            <div>
+              <label for="fme-br-replace" style="display:block;font-size:11px;font-weight:600;margin-bottom:4px;">Înlocuiește cu</label>
+              <textarea id="fme-br-replace" spellcheck="false" style="width:100%;min-height:82px;resize:vertical;font-family:Consolas,'Courier New',monospace;font-size:12px;padding:8px;border:1px solid var(--fme-border, #cdcdcd);border-radius:4px;box-sizing:border-box;background:var(--fme-surface, #fff);color:var(--fme-text, #333);" placeholder="ex: new-cdn.example.com"></textarea>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:10px;font-size:11px;">
+            <label style="cursor:pointer;"><input type="checkbox" id="fme-br-case" /> Case-sensitive</label>
+            <label style="cursor:pointer;"><input type="checkbox" id="fme-br-regex" /> Regex</label>
+            <label style="cursor:pointer;"><input type="checkbox" id="fme-br-all" checked /> Toate categoriile</label>
+          </div>
+
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <input type="button" id="fme-br-scan-btn" value="🔍 Scanează template-urile" class="icon_ok" />
+            <span id="fme-br-scan-status" style="font-size:11px;color:var(--fme-text-muted, #888);"></span>
+          </div>
+
+          <div id="fme-br-results-section" style="display:none;margin-top:12px;">
+            <div id="fme-br-summary" class="fme-alert fme-alert-info" style="margin:0 0 10px 0;"></div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:8px;">
+              <input type="button" id="fme-br-select-all" value="Selectează tot" />
+              <input type="button" id="fme-br-select-none" value="Deselectează tot" />
+              <span style="flex:1 1 auto;"></span>
+              <input type="button" id="fme-br-replace-btn" value="✎ Înlocuiește selecția" class="icon_ok" style="display:none;" />
+            </div>
+            <div id="fme-br-results-list"></div>
+            <div id="fme-br-replace-status" style="margin-top:8px;"></div>
           </div>
         </fieldset>
       </div>
@@ -759,6 +804,335 @@ var FMETemplatesTab = (() => {
 
     // Refresh
     wrapper.querySelector('#fme-tpl-refresh').addEventListener('click', () => loadTemplateList(wrapper));
+
+    // Bulk search & replace
+    wrapper.querySelector('#fme-br-scan-btn')?.addEventListener('click', () => runBulkScan(wrapper));
+    wrapper.querySelector('#fme-br-select-all')?.addEventListener('click', () => {
+      wrapper.querySelectorAll('.fme-br-check, .fme-br-cat-check').forEach(cb => { cb.checked = true; });
+      updateBulkReplaceButton(wrapper);
+    });
+    wrapper.querySelector('#fme-br-select-none')?.addEventListener('click', () => {
+      wrapper.querySelectorAll('.fme-br-check, .fme-br-cat-check').forEach(cb => { cb.checked = false; });
+      updateBulkReplaceButton(wrapper);
+    });
+    wrapper.querySelector('#fme-br-replace-btn')?.addEventListener('click', () => runBulkReplace(wrapper));
+    wrapper.querySelector('#fme-br-replace')?.addEventListener('input', () => updateBulkReplaceButton(wrapper));
+
+    ['#fme-br-search', '#fme-br-replace'].forEach(selector => {
+      wrapper.querySelector(selector)?.addEventListener('keydown', event => {
+        if (event.key === 'Enter' && (event.ctrlKey || event.metaKey)) {
+          event.preventDefault();
+          runBulkScan(wrapper);
+        }
+      });
+    });
+  }
+
+  // ─── Bulk search & replace ───────────────────────────────────────────────────
+
+  async function runBulkScan(wrapper) {
+    const searchVal = (wrapper.querySelector('#fme-br-search')?.value || '').trim();
+    const replaceVal = wrapper.querySelector('#fme-br-replace')?.value || '';
+    const scanBtn = wrapper.querySelector('#fme-br-scan-btn');
+    const statusEl = wrapper.querySelector('#fme-br-scan-status');
+    const resSection = wrapper.querySelector('#fme-br-results-section');
+    const resultsList = wrapper.querySelector('#fme-br-results-list');
+    const replaceStatus = wrapper.querySelector('#fme-br-replace-status');
+
+    if (!searchVal) {
+      setTextStatus(statusEl, 'error', 'Introdu un text sau regex de căutat.');
+      return;
+    }
+
+    const tid = getTid();
+    if (!tid) {
+      setTextStatus(statusEl, 'error', 'Nu s-a putut determina tid-ul temei curente.');
+      return;
+    }
+
+    const isRegex = !!wrapper.querySelector('#fme-br-regex')?.checked;
+    const isCase  = !!wrapper.querySelector('#fme-br-case')?.checked;
+    const scanAll = !!wrapper.querySelector('#fme-br-all')?.checked;
+    const categoriesToScan = (!scanAll && _currentMode && _currentMode !== '__fme__')
+      ? CATEGORIES.filter(cat => cat.key === _currentMode)
+      : CATEGORIES.slice();
+
+    let previewRegex;
+    let countRegex;
+    try {
+      previewRegex = buildSearchRegex(searchVal, isRegex, isCase);
+      countRegex   = buildSearchRegex(searchVal, isRegex, isCase, 'g');
+    } catch (err) {
+      setTextStatus(statusEl, 'error', 'Regex invalid: ' + err.message);
+      return;
+    }
+
+    scanBtn.disabled = true;
+    scanBtn.value = 'Se scanează...';
+    setTextStatus(statusEl, 'info', 'Se pregătește scanarea...');
+    _bulkResults = [];
+    resSection.style.display = 'none';
+    resultsList.innerHTML = '';
+    replaceStatus.innerHTML = '';
+
+    let totalScanned = 0;
+    let totalMatched = 0;
+    let totalOccurrences = 0;
+
+    try {
+      for (let ci = 0; ci < categoriesToScan.length; ci++) {
+        const cat = categoriesToScan[ci];
+        setTextStatus(statusEl, 'info', `Categoria ${ci + 1}/${categoriesToScan.length}: ${cat.label}…`);
+
+        let templates = [];
+        try {
+          const doc = await fetchPage(buildListUrl(tid, cat.key));
+          templates = parseTemplateList(doc);
+        } catch (err) {
+          console.warn('[FME Templates] Bulk scan category failed:', cat.key, err);
+          continue;
+        }
+
+        for (const tpl of templates) {
+          totalScanned++;
+          setTextStatus(statusEl, 'info', `${cat.label}: ${tpl.name}…`);
+
+          try {
+            const data = await loadTemplateContent(tpl.editUrl);
+            const content = data.content || '';
+            const matches = content.match(countRegex);
+            const occurrences = matches ? matches.length : 0;
+            if (!occurrences) continue;
+
+            totalMatched++;
+            totalOccurrences += occurrences;
+            _bulkResults.push({
+              category: cat.key,
+              categoryLabel: cat.label,
+              name: tpl.name,
+              editUrl: tpl.editUrl,
+              occurrences,
+              snippet: buildBulkSnippet(content, previewRegex),
+            });
+          } catch (err) {
+            console.warn('[FME Templates] Bulk scan template failed:', tpl.name, err);
+          }
+        }
+      }
+
+      setTextStatus(statusEl, 'success', `Gata — ${totalScanned} template-uri scanate.`);
+      renderBulkResults(wrapper, totalScanned, totalMatched, totalOccurrences, replaceVal);
+    } finally {
+      scanBtn.disabled = false;
+      scanBtn.value = '🔍 Scanează template-urile';
+    }
+  }
+
+  async function runBulkReplace(wrapper) {
+    const searchVal = (wrapper.querySelector('#fme-br-search')?.value || '').trim();
+    const replaceVal = wrapper.querySelector('#fme-br-replace')?.value || '';
+    const isRegex = !!wrapper.querySelector('#fme-br-regex')?.checked;
+    const isCase  = !!wrapper.querySelector('#fme-br-case')?.checked;
+    const replaceBtn = wrapper.querySelector('#fme-br-replace-btn');
+    const statusEl = wrapper.querySelector('#fme-br-replace-status');
+
+    if (!replaceVal) {
+      statusEl.innerHTML = '<div class="fme-alert fme-alert-warning">Introdu textul de înlocuire pentru a aplica modificările.</div>';
+      return;
+    }
+
+    const selected = Array.from(wrapper.querySelectorAll('.fme-br-check:checked'))
+      .map(cb => _bulkResults[parseInt(cb.dataset.idx, 10)])
+      .filter(Boolean);
+
+    if (selected.length === 0) {
+      statusEl.innerHTML = '<div class="fme-alert fme-alert-warning">Niciun template selectat.</div>';
+      return;
+    }
+
+    let regex;
+    try {
+      regex = buildSearchRegex(searchVal, isRegex, isCase, 'g');
+    } catch (err) {
+      statusEl.innerHTML = `<div class="fme-alert fme-alert-error">Regex invalid: ${escHtml(err.message)}</div>`;
+      return;
+    }
+
+    const confirmed = confirm(
+      `Ești sigur că vrei să înlocuiești aparițiile găsite în ${selected.length} template-uri?\n\nAceastă acțiune modifică direct template-urile selectate.`
+    );
+    if (!confirmed) return;
+
+    replaceBtn.disabled = true;
+    replaceBtn.value = 'Se înlocuiește...';
+
+    let done = 0;
+    let skipped = 0;
+    const errors = [];
+
+    for (const result of selected) {
+      statusEl.innerHTML = `<div class="fme-alert fme-alert-info">Se actualizează <strong>${escHtml(result.name)}</strong> (${done + skipped + 1}/${selected.length})…</div>`;
+
+      try {
+        const data = await loadTemplateContent(result.editUrl);
+        const currentContent = data.content || '';
+        const newContent = currentContent.replace(regex, replaceVal);
+
+        if (newContent === currentContent) {
+          skipped++;
+          continue;
+        }
+
+        await saveTemplate(data.formAction, data.hiddenFields, data.textareaName, newContent, data.submitField);
+        done++;
+      } catch (err) {
+        errors.push(`${result.name}: ${err.message}`);
+      }
+    }
+
+    replaceBtn.disabled = false;
+    updateBulkReplaceButton(wrapper);
+
+    if (errors.length === 0) {
+      statusEl.innerHTML = `<div class="fme-alert fme-alert-success">✓ ${done} template-uri actualizate cu succes${skipped ? `, ${skipped} fără modificări` : ''}.</div>`;
+    } else {
+      statusEl.innerHTML = `
+        <div class="fme-alert fme-alert-warning">
+          ${done} actualizate${skipped ? `, ${skipped} fără modificări` : ''}, ${errors.length} erori:
+          <ul style="margin:4px 0 0 16px;">${errors.map(err => `<li>${escHtml(err)}</li>`).join('')}</ul>
+        </div>`;
+    }
+
+    replaceBtn.value = '✎ Înlocuiește selecția';
+
+    if (typeof FMEActivityLog !== 'undefined' && done > 0) {
+      FMEActivityLog.log('tpl-bulk-replace', `Bulk replace în template-uri: ${done} actualizate`);
+    }
+
+    if (done > 0) {
+      await loadTemplateList(wrapper);
+    }
+  }
+
+  function renderBulkResults(wrapper, totalScanned, totalMatched, totalOccurrences, replaceVal) {
+    const resSection = wrapper.querySelector('#fme-br-results-section');
+    const resultsList = wrapper.querySelector('#fme-br-results-list');
+    const summary = wrapper.querySelector('#fme-br-summary');
+
+    resSection.style.display = '';
+
+    summary.innerHTML = totalMatched > 0
+      ? `<strong>${totalMatched} template-uri</strong> conțin textul căutat din ${totalScanned} scanate <span style="opacity:.8;">(${totalOccurrences} apariții totale)</span>.`
+      : `<strong>Niciun rezultat</strong> — textul nu a fost găsit în niciun template (${totalScanned} scanate).`;
+
+    if (totalMatched === 0) {
+      resultsList.innerHTML = '';
+      updateBulkReplaceButton(wrapper);
+      return;
+    }
+
+    const byCategory = {};
+    _bulkResults.forEach((result, idx) => {
+      if (!byCategory[result.category]) byCategory[result.category] = [];
+      byCategory[result.category].push({ ...result, idx });
+    });
+
+    let html = '';
+    Object.entries(byCategory).forEach(([catKey, items]) => {
+      const catLabel = items[0].categoryLabel;
+      html += `
+        <table class="fme-table" style="margin-bottom:10px;">
+          <thead>
+            <tr>
+              <th style="width:34px;text-align:center;"><input type="checkbox" class="fme-br-cat-check" data-cat="${escHtml(catKey)}" checked /></th>
+              <th>Template</th>
+              <th style="width:90px;">Apariții</th>
+              <th>Context</th>
+            </tr>
+            <tr>
+              <th colspan="4" style="text-align:left;background:var(--fme-surface, #f7f8fb);color:var(--fme-text, #333);">📁 ${escHtml(catLabel)} (${items.length})</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map((item, i) => `
+              <tr>
+                <td style="text-align:center;"><input type="checkbox" class="fme-br-check" data-idx="${item.idx}" data-cat="${escHtml(catKey)}" checked /></td>
+                <td>
+                  <strong>${escHtml(item.name)}</strong><br>
+                  <a href="${escHtml(item.editUrl)}" target="_blank" style="font-size:11px;color:var(--fme-accent, #4a7ebf);">Deschide în editor</a>
+                </td>
+                <td style="text-align:center;"><span class="fme-badge fme-badge-update">${item.occurrences}</span></td>
+                <td style="font-family:Consolas,'Courier New',monospace;font-size:11px;color:var(--fme-text-muted, #555);word-break:break-word;">${escHtml(item.snippet)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>`;
+    });
+
+    resultsList.innerHTML = html;
+
+    resultsList.querySelectorAll('.fme-br-cat-check').forEach(catCb => {
+      catCb.addEventListener('change', () => {
+        resultsList.querySelectorAll(`.fme-br-check[data-cat="${catCb.dataset.cat}"]`).forEach(cb => {
+          cb.checked = catCb.checked;
+        });
+        updateBulkReplaceButton(wrapper);
+      });
+    });
+
+    resultsList.querySelectorAll('.fme-br-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        const sameCat = Array.from(resultsList.querySelectorAll(`.fme-br-check[data-cat="${cb.dataset.cat}"]`));
+        const catToggle = resultsList.querySelector(`.fme-br-cat-check[data-cat="${cb.dataset.cat}"]`);
+        if (catToggle) catToggle.checked = sameCat.every(item => item.checked);
+        updateBulkReplaceButton(wrapper);
+      });
+    });
+
+    updateBulkReplaceButton(wrapper, replaceVal);
+  }
+
+  function updateBulkReplaceButton(wrapper, replaceValOverride) {
+    const replaceBtn = wrapper.querySelector('#fme-br-replace-btn');
+    if (!replaceBtn) return;
+
+    const replaceVal = typeof replaceValOverride === 'string'
+      ? replaceValOverride
+      : (wrapper.querySelector('#fme-br-replace')?.value || '');
+    const selectedCount = wrapper.querySelectorAll('.fme-br-check:checked').length;
+
+    replaceBtn.style.display = _bulkResults.length > 0 && replaceVal !== '' ? '' : 'none';
+    replaceBtn.value = selectedCount > 0
+      ? `✎ Înlocuiește selecția (${selectedCount})`
+      : '✎ Înlocuiește selecția';
+    replaceBtn.disabled = selectedCount === 0;
+  }
+
+  function buildSearchRegex(search, isRegex, isCase, extraFlags = '') {
+    const pattern = isRegex ? search : escapeRegExp(search);
+    const flags = Array.from(new Set(((isCase ? '' : 'i') + extraFlags).split(''))).join('');
+    return new RegExp(pattern, flags);
+  }
+
+  function buildBulkSnippet(content, regex, contextLen = 80) {
+    const previewRegex = new RegExp(regex.source, regex.flags.replace(/g/g, ''));
+    const match = previewRegex.exec(content);
+    if (!match) return '';
+    const start = Math.max(0, match.index - contextLen);
+    const end = Math.min(content.length, match.index + match[0].length + contextLen);
+    const before = start > 0 ? '…' : '';
+    const after = end < content.length ? '…' : '';
+    return before + content.slice(start, end).replace(/\s+/g, ' ').trim() + after;
+  }
+
+  function setTextStatus(el, type, msg) {
+    if (!el) return;
+    el.style.color = type === 'error'
+      ? 'var(--fme-error, #e74c3c)'
+      : type === 'success'
+        ? 'var(--fme-success, #27ae60)'
+        : 'var(--fme-text-muted, #888)';
+    el.textContent = msg || '';
   }
 
   // ─── Installed themes (FME marker detection) ─────────────────────────────────
@@ -806,6 +1180,10 @@ var FMETemplatesTab = (() => {
   }
 
   // ─── Utilities ────────────────────────────────────────────────────────────────
+
+  function escapeRegExp(str) {
+    return String(str || '').replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
 
   function escHtml(str) {
     return String(str || '')

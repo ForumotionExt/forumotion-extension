@@ -320,7 +320,6 @@ var FMEForumAPI = (() => {
         const href = a.getAttribute('href') || '';
         return href.includes('js_edit') || (href.includes('mode=edit') && href.includes('sub=html'));
       });
-      console.log('[FME] findJsEditUrl: searching "' + title + '", found ' + editLinks.length + ' edit links');
 
       // Strategy 1: Link in same row as title
       for (const link of editLinks) {

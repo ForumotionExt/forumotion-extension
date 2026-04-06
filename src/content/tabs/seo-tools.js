@@ -37,8 +37,14 @@ var FMESeoTab = (() => {
       <fieldset style="margin:0 12px 12px 12px;">
         <legend><i class="fa fa-search"></i> Analiză SEO completă</legend>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
-          <input type="button" id="fme-seo-scan" value="&#128269; Scanează forumul" class="icon_ok" />
-          <span id="fme-seo-status" style="font-size:11px;color:#888;"></span>
+          <input type="url" id="fme-seo-url" value="${window.location.origin}/" placeholder="https://forumul-tău.ro/" style="min-width:260px;flex:1 1 340px;padding:6px 8px;border:1px solid var(--fme-border, #d9dce3);border-radius:4px;background:var(--fme-surface, #fff);color:var(--fme-text, #333);" />
+          <input type="button" id="fme-seo-scan" value="&#128269; Scanează URL" class="icon_ok" />
+          <input type="button" id="fme-seo-copy" value="&#128203; Copiază rezumat" class="button2" disabled />
+          <input type="button" id="fme-seo-export" value="&#128190; Export JSON" class="button2" disabled />
+          <span id="fme-seo-status" style="font-size:11px;color:var(--fme-muted, #888);"></span>
+        </div>
+        <div style="margin:-2px 0 10px 0;font-size:11px;color:var(--fme-muted, #888);">
+          Poți scana pagina principală sau orice URL public din forumul tău.
         </div>
         <div id="fme-seo-results"></div>
       </fieldset>
@@ -53,6 +59,11 @@ var FMESeoTab = (() => {
         <div id="fme-seo-links"></div>
       </fieldset>
 
+      <fieldset id="fme-seo-preview-section" style="margin:0 12px 12px 12px;display:none;">
+        <legend><i class="fa fa-share-alt"></i> Preview social &amp; insight-uri</legend>
+        <div id="fme-seo-preview"></div>
+      </fieldset>
+
       <fieldset id="fme-seo-recommendations-section" style="margin:0 12px 12px 12px;display:none;">
         <legend><i class="fa fa-lightbulb-o"></i> Recomandări &amp; Ghid SEO</legend>
         <div id="fme-seo-recommendations"></div>
@@ -61,36 +72,64 @@ var FMESeoTab = (() => {
 
     container.appendChild(wrapper);
 
-    wrapper.querySelector('#fme-seo-scan').addEventListener('click', () => runScan(wrapper));
+    const urlInput  = wrapper.querySelector('#fme-seo-url');
+    const scanBtn   = wrapper.querySelector('#fme-seo-scan');
+    const copyBtn   = wrapper.querySelector('#fme-seo-copy');
+    const exportBtn = wrapper.querySelector('#fme-seo-export');
+
+    scanBtn.addEventListener('click', () => runScan(wrapper));
+    copyBtn.addEventListener('click', () => copySummary(wrapper));
+    exportBtn.addEventListener('click', () => exportReport());
+    urlInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        runScan(wrapper);
+      }
+    });
   }
 
   // ─── Scanner ──────────────────────────────────────────────────────────────────
 
   async function runScan(wrapper) {
-    const btn    = wrapper.querySelector('#fme-seo-scan');
-    const status = wrapper.querySelector('#fme-seo-status');
-    const area   = wrapper.querySelector('#fme-seo-results');
+    const btn       = wrapper.querySelector('#fme-seo-scan');
+    const copyBtn   = wrapper.querySelector('#fme-seo-copy');
+    const exportBtn = wrapper.querySelector('#fme-seo-export');
+    const urlInput  = wrapper.querySelector('#fme-seo-url');
+    const status    = wrapper.querySelector('#fme-seo-status');
+    const area      = wrapper.querySelector('#fme-seo-results');
 
-    btn.disabled    = true;
-    btn.value       = 'Se scanează...';
+    let scanUrl = '';
+    try {
+      scanUrl = normalizeScanUrl((urlInput && urlInput.value) || '');
+    } catch (err) {
+      area.innerHTML = '<p style="color:var(--fme-error, #e74c3c);">' + esc(err.message) + '</p>';
+      status.textContent = 'URL invalid.';
+      status.style.color = 'var(--fme-error, #e74c3c)';
+      return;
+    }
+
+    btn.disabled       = true;
+    copyBtn.disabled   = true;
+    exportBtn.disabled = true;
+    btn.value          = 'Se scanează...';
     status.textContent = '';
-    area.innerHTML  = '<p style="color:#888;"><i class="fa fa-spinner fa-spin"></i> Se încarcă pagina de index...</p>';
+    status.style.color = 'var(--fme-muted, #888)';
+    area.innerHTML     = '<p style="color:var(--fme-muted, #888);"><i class="fa fa-spinner fa-spin"></i> Se încarcă: ' + esc(truncate(scanUrl, 90)) + '</p>';
 
-    const baseUrl = window.location.origin;
+    if (urlInput) urlInput.value = scanUrl;
+
+    const { origin } = new URL(scanUrl);
 
     try {
-      // Fetch forum index page
-      status.textContent = 'Se descarcă pagina principală...';
-      const indexHtml = await fetchPage(baseUrl + '/');
+      status.textContent = 'Se descarcă pagina selectată...';
+      const pageHtml = await fetchPage(scanUrl);
 
-      // Fetch robots.txt
       status.textContent = 'Se verifică robots.txt...';
-      const robotsTxt = await fetchText(baseUrl + '/robots.txt');
+      const robotsTxt = await fetchText(origin + '/robots.txt');
 
-      // Fetch sitemap
       status.textContent = 'Se verifică sitemap...';
       let sitemapStatus = 'absent';
-      const sitemapUrl = extractSitemapUrl(robotsTxt) || (baseUrl + '/sitemap.xml');
+      const sitemapUrl = extractSitemapUrl(robotsTxt) || (origin + '/sitemap.xml');
       try {
         const sRes = await fetch(sitemapUrl, { credentials: 'include', redirect: 'follow' });
         if (sRes.ok) {
@@ -100,12 +139,11 @@ var FMESeoTab = (() => {
       } catch (_) {}
 
       status.textContent = 'Se analizează...';
-      const results = analyse(indexHtml, robotsTxt, sitemapStatus);
+      const results = analyse(pageHtml, robotsTxt, sitemapStatus, scanUrl);
       _results = results;
 
       renderResults(area, results);
 
-      // Meta tags inventory
       const metaSection = wrapper.querySelector('#fme-seo-metatags-section');
       const metaArea    = wrapper.querySelector('#fme-seo-metatags');
       if (metaSection && metaArea) {
@@ -113,7 +151,6 @@ var FMESeoTab = (() => {
         renderMetaTagsInventory(metaArea, results.metaTags || []);
       }
 
-      // Link analysis
       const linksSection = wrapper.querySelector('#fme-seo-links-section');
       const linksArea    = wrapper.querySelector('#fme-seo-links');
       if (linksSection && linksArea) {
@@ -121,7 +158,13 @@ var FMESeoTab = (() => {
         renderLinksAnalysis(linksArea, results.links || {});
       }
 
-      // Recommendations
+      const previewSection = wrapper.querySelector('#fme-seo-preview-section');
+      const previewArea    = wrapper.querySelector('#fme-seo-preview');
+      if (previewSection && previewArea) {
+        previewSection.style.display = '';
+        renderPreview(previewArea, results);
+      }
+
       const recsSection = wrapper.querySelector('#fme-seo-recommendations-section');
       const recsArea    = wrapper.querySelector('#fme-seo-recommendations');
       if (recsSection && recsArea) {
@@ -129,23 +172,26 @@ var FMESeoTab = (() => {
         renderRecommendations(recsArea, results);
       }
 
-      status.textContent = 'Scanare completă — ' + results.checks.length + ' verificări.';
-      status.style.color = '#10b981';
+      copyBtn.disabled   = false;
+      exportBtn.disabled = false;
+      status.textContent = 'Scanare completă — ' + results.checks.length + ' verificări pentru ' + truncate(results.scannedUrl, 60) + '.';
+      status.style.color = 'var(--fme-success, #10b981)';
     } catch (e) {
       console.warn('[FME SEO] Scan failed:', e);
-      area.innerHTML = '<p style="color:#e74c3c;">Scanarea a eșuat: ' + esc(e.message) + '</p>';
+      area.innerHTML = '<p style="color:var(--fme-error, #e74c3c);">Scanarea a eșuat: ' + esc(e.message) + '</p>';
       status.textContent = 'Eroare.';
-      status.style.color = '#e74c3c';
+      status.style.color = 'var(--fme-error, #e74c3c)';
     }
 
     btn.disabled = false;
-    btn.value    = '🔍 Scanează forumul';
+    btn.value    = '🔍 Scanează URL';
   }
 
   // ─── Analysis engine ──────────────────────────────────────────────────────────
 
-  function analyse(html, robotsTxt, sitemapStatus) {
+  function analyse(html, robotsTxt, sitemapStatus, scannedUrl) {
     const doc = new DOMParser().parseFromString(html, 'text/html');
+    const pageUrl = new URL(scannedUrl || (window.location.origin + '/'), window.location.origin);
     const checks = [];
 
     // 1. Title
@@ -265,6 +311,14 @@ var FMESeoTab = (() => {
                 'Absent (opțional, dar recomandat pentru share-uri Twitter)',
     });
 
+    const socialPreview = extractSocialPreview(
+      doc,
+      titleText,
+      descText,
+      canonical ? (canonical.getAttribute('href') || pageUrl.href) : pageUrl.href,
+      pageUrl.href
+    );
+
     // 11. Heading structure
     const h1s = doc.querySelectorAll('h1');
     const h2s = doc.querySelectorAll('h2');
@@ -300,6 +354,7 @@ var FMESeoTab = (() => {
     // 13. Content length (word count)
     const bodyText = doc.body ? doc.body.textContent || '' : '';
     const wordCount = bodyText.trim().split(/\s+/).filter(w => w.length > 0).length;
+    const keywords  = extractTopKeywords(bodyText);
     checks.push({
       category: 'Conținut',
       item:     'Cuvinte pe pagină',
@@ -378,7 +433,7 @@ var FMESeoTab = (() => {
     });
 
     // 20. HTTPS
-    const isHttps = window.location.protocol === 'https:';
+    const isHttps = pageUrl.protocol === 'https:';
     checks.push({
       category: 'Securitate',
       item:     'HTTPS',
@@ -489,11 +544,11 @@ var FMESeoTab = (() => {
     });
 
     // 28. URL structure
-    const urlClean = !/[?&].*[?&]/.test(window.location.href) && !/[\s%20]/.test(window.location.pathname);
+    const urlClean = !/[?&].*[?&]/.test(pageUrl.href) && !/[\s%20]/.test(pageUrl.pathname);
     checks.push({
       category: 'URL',
       item:     'Structură URL',
-      value:    truncate(window.location.href, 70),
+      value:    truncate(pageUrl.href, 70),
       status:   urlClean ? 'pass' : 'warn',
       tip:      urlClean ? 'OK — URL curat' : 'URL-ul conține parametri multipli sau spații',
     });
@@ -512,7 +567,7 @@ var FMESeoTab = (() => {
     // ─── Collect link analysis data ────────────────────────────────────────
 
     const allLinks   = doc.querySelectorAll('a[href]');
-    const origin     = window.location.origin;
+    const origin     = pageUrl.origin;
     const internal   = [];
     const external   = [];
     const nofollow   = [];
@@ -576,29 +631,42 @@ var FMESeoTab = (() => {
       ? Math.round((scorable.reduce((sum, c) => sum + (weights[c.status] || 0), 0) / scorable.length) * 100)
       : 0;
 
-    return { checks, score, metaTags, links };
+    return {
+      checks,
+      score,
+      metaTags,
+      links,
+      scannedUrl: pageUrl.href,
+      keywords,
+      socialPreview,
+      schemaTypes: Array.from(new Set(ldTypes)),
+    };
   }
 
   // ─── Render results ──────────────────────────────────────────────────────────
 
   function renderResults(area, results) {
     const STATUS_STYLE = {
-      pass: { bg: '#10b981', text: '✓ OK',      color: '#fff' },
-      warn: { bg: '#f39c12', text: '⚠ Atenție',  color: '#fff' },
-      fail: { bg: '#e74c3c', text: '✕ Problema', color: '#fff' },
-      info: { bg: '#3498db', text: 'ℹ Info',     color: '#fff' },
+      pass: { bg: 'var(--fme-success, #10b981)', text: '✓ OK',       color: '#fff' },
+      warn: { bg: 'var(--fme-warn, #f39c12)',    text: '⚠ Atenție', color: '#fff' },
+      fail: { bg: 'var(--fme-error, #e74c3c)',   text: '✕ Problema', color: '#fff' },
+      info: { bg: 'var(--fme-accent, #3498db)',  text: 'ℹ Info',    color: '#fff' },
     };
 
     // Score badge
-    const scoreColor = results.score >= 80 ? '#10b981' : results.score >= 50 ? '#f39c12' : '#e74c3c';
+    const scoreColor = results.score >= 80
+      ? 'var(--fme-success, #10b981)'
+      : results.score >= 50
+        ? 'var(--fme-warn, #f39c12)'
+        : 'var(--fme-error, #e74c3c)';
     let html = '<div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;padding:10px;' +
-      'background:#f9f9fb;border:1px solid #e0e0e0;border-radius:6px;">' +
+      'background:var(--fme-card, #f9f9fb);border:1px solid var(--fme-border, #e0e0e0);border-radius:6px;color:var(--fme-text, #333);">' +
       '<div style="text-align:center;">' +
         '<div style="font-size:32px;font-weight:bold;color:' + scoreColor + ';">' + results.score + '</div>' +
-        '<div style="font-size:10px;color:#888;text-transform:uppercase;letter-spacing:0.05em;">Scor SEO</div>' +
+        '<div style="font-size:10px;color:var(--fme-muted, #888);text-transform:uppercase;letter-spacing:0.05em;">Scor SEO</div>' +
       '</div>' +
       '<div style="flex:1;">' +
-        '<div style="font-size:11px;color:#555;">' +
+        '<div style="font-size:11px;color:var(--fme-muted, #555);">' +
           '<strong style="color:' + scoreColor + ';">' +
             (results.score >= 80 ? 'Bine!' : results.score >= 50 ? 'Acceptabil' : 'Necesită îmbunătățiri') +
           '</strong> — ' + results.checks.filter(c => c.status === 'pass').length + ' OK, ' +
@@ -606,6 +674,7 @@ var FMESeoTab = (() => {
           results.checks.filter(c => c.status === 'fail').length + ' probleme din ' +
           results.checks.length + ' verificări.' +
         '</div>' +
+        '<div style="margin-top:6px;font-size:11px;color:var(--fme-muted, #666);">URL scanat: <code style="color:var(--fme-text, #333);">' + esc(results.scannedUrl || '') + '</code></div>' +
       '</div>' +
     '</div>';
 
@@ -642,7 +711,7 @@ var FMESeoTab = (() => {
               ';padding:2px 8px;border-radius:3px;font-size:10px;font-weight:600;white-space:nowrap;">' +
               s.text + '</span>' +
           '</td>' +
-          '<td class="' + rowClass + '" style="font-size:11px;color:#555;">' + esc(c.tip) + '</td>' +
+          '<td class="' + rowClass + '" style="font-size:11px;color:var(--fme-muted, #555);">' + esc(c.tip) + '</td>' +
         '</tr>';
       });
 
@@ -656,7 +725,7 @@ var FMESeoTab = (() => {
 
   function renderMetaTagsInventory(area, metaTags) {
     if (metaTags.length === 0) {
-      area.innerHTML = '<p style="color:#888;">Nu s-au găsit meta tags pe pagina de index.</p>';
+      area.innerHTML = '<p style="color:var(--fme-muted, #888);">Nu s-au găsit meta tags pe pagina de index.</p>';
       return;
     }
 
@@ -675,7 +744,7 @@ var FMESeoTab = (() => {
       'other':       'Altele',
     };
 
-    let html = '<div style="margin-bottom:8px;font-size:11px;color:#888;">' +
+    let html = '<div style="margin-bottom:8px;font-size:11px;color:var(--fme-muted, #888);">' +
       'Total: <strong>' + metaTags.length + '</strong> meta tags detectate pe pagina de index.' +
     '</div>';
 
@@ -692,7 +761,7 @@ var FMESeoTab = (() => {
       tags.forEach((m, i) => {
         const rowClass = i % 2 === 0 ? 'row1' : 'row2';
         const isImportant = important.some(k => m.name.toLowerCase().includes(k));
-        const statusBg = isImportant ? '#10b981' : '#3498db';
+        const statusBg = isImportant ? 'var(--fme-success, #10b981)' : 'var(--fme-accent, #3498db)';
         const statusLabel = isImportant ? 'Important' : 'Info';
         html += '<tr>' +
           '<td class="' + rowClass + '" style="font-weight:600;font-family:monospace;font-size:11px;">' + esc(m.name) + '</td>' +
@@ -721,7 +790,7 @@ var FMESeoTab = (() => {
       { tag: 'theme-color',      label: 'Theme Color',         rec: 'Culoarea barei de adresă pe mobile' },
     ];
 
-    html += '<h4 style="margin:12px 0 6px;font-size:12px;">📋 Checklist meta tags esențiale</h4>';
+    html += '<h4 style="margin:12px 0 6px;font-size:12px;color:var(--fme-text, #333);">📋 Checklist meta tags esențiale</h4>';
     html += '<table class="table1 forumline" cellspacing="1">' +
       '<thead><tr><th class="thbg" style="width:40px;">✓</th>' +
         '<th class="thbg" style="width:180px;">Meta Tag</th>' +
@@ -732,9 +801,9 @@ var FMESeoTab = (() => {
       const rowClass = i % 2 === 0 ? 'row1' : 'row2';
       html += '<tr>' +
         '<td class="' + rowClass + '" style="text-align:center;font-size:16px;">' +
-          (found ? '<span style="color:#10b981;">✓</span>' : '<span style="color:#e74c3c;">✗</span>') + '</td>' +
+          (found ? '<span style="color:var(--fme-success, #10b981);">✓</span>' : '<span style="color:var(--fme-error, #e74c3c);">✗</span>') + '</td>' +
         '<td class="' + rowClass + '" style="font-weight:600;">' + esc(e.label) + '</td>' +
-        '<td class="' + rowClass + '" style="font-size:11px;color:#555;">' + esc(e.rec) + '</td></tr>';
+        '<td class="' + rowClass + '" style="font-size:11px;color:var(--fme-muted, #555);">' + esc(e.rec) + '</td></tr>';
     });
 
     html += '</tbody></table>';
@@ -746,22 +815,22 @@ var FMESeoTab = (() => {
 
   function renderLinksAnalysis(area, links) {
     let html = '<div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:12px;padding:10px;' +
-      'background:#f9f9fb;border:1px solid #e0e0e0;border-radius:6px;">' +
+      'background:var(--fme-card, #f9f9fb);border:1px solid var(--fme-border, #e0e0e0);border-radius:6px;color:var(--fme-text, #333);">' +
       '<div style="text-align:center;min-width:80px;">' +
-        '<div style="font-size:24px;font-weight:bold;color:#3498db;">' + links.total + '</div>' +
-        '<div style="font-size:10px;color:#888;">Total</div></div>' +
+        '<div style="font-size:24px;font-weight:bold;color:var(--fme-accent, #3498db);">' + links.total + '</div>' +
+        '<div style="font-size:10px;color:var(--fme-muted, #888);">Total</div></div>' +
       '<div style="text-align:center;min-width:80px;">' +
-        '<div style="font-size:24px;font-weight:bold;color:#10b981;">' + links.internal.length + '</div>' +
-        '<div style="font-size:10px;color:#888;">Interne</div></div>' +
+        '<div style="font-size:24px;font-weight:bold;color:var(--fme-success, #10b981);">' + links.internal.length + '</div>' +
+        '<div style="font-size:10px;color:var(--fme-muted, #888);">Interne</div></div>' +
       '<div style="text-align:center;min-width:80px;">' +
-        '<div style="font-size:24px;font-weight:bold;color:#e8703a;">' + links.external.length + '</div>' +
-        '<div style="font-size:10px;color:#888;">Externe</div></div>' +
+        '<div style="font-size:24px;font-weight:bold;color:var(--fme-warn, #e8703a);">' + links.external.length + '</div>' +
+        '<div style="font-size:10px;color:var(--fme-muted, #888);">Externe</div></div>' +
       '<div style="text-align:center;min-width:80px;">' +
-        '<div style="font-size:24px;font-weight:bold;color:#e74c3c;">' + links.emptyAnchors.length + '</div>' +
-        '<div style="font-size:10px;color:#888;">Fără text</div></div>' +
+        '<div style="font-size:24px;font-weight:bold;color:var(--fme-error, #e74c3c);">' + links.emptyAnchors.length + '</div>' +
+        '<div style="font-size:10px;color:var(--fme-muted, #888);">Fără text</div></div>' +
       '<div style="text-align:center;min-width:80px;">' +
-        '<div style="font-size:24px;font-weight:bold;color:#999;">' + links.nofollow.length + '</div>' +
-        '<div style="font-size:10px;color:#888;">Nofollow</div></div>' +
+        '<div style="font-size:24px;font-weight:bold;color:var(--fme-muted, #999);">' + links.nofollow.length + '</div>' +
+        '<div style="font-size:10px;color:var(--fme-muted, #888);">Nofollow</div></div>' +
     '</div>';
 
     // External links table
@@ -774,22 +843,71 @@ var FMESeoTab = (() => {
         const rowClass = i % 2 === 0 ? 'row1' : 'row2';
         html += '<tr>' +
           '<td class="' + rowClass + '" style="font-size:11px;word-break:break-all;">' + esc(l.href) + '</td>' +
-          '<td class="' + rowClass + '" style="font-size:11px;">' + (l.text ? esc(l.text) : '<em style="color:#ccc;">gol</em>') + '</td></tr>';
+          '<td class="' + rowClass + '" style="font-size:11px;">' + (l.text ? esc(l.text) : '<em style="color:var(--fme-muted, #ccc);">gol</em>') + '</td></tr>';
       });
       if (links.external.length > 30) {
-        html += '<tr><td class="row1" colspan="2" style="color:#888;text-align:center;">…și încă ' +
+        html += '<tr><td class="row1" colspan="2" style="color:var(--fme-muted, #888);text-align:center;">…și încă ' +
           (links.external.length - 30) + ' link-uri</td></tr>';
       }
       html += '</tbody></table>';
     }
 
-    // Empty anchors warning
     if (links.emptyAnchors.length > 0) {
       html += '<div class="fme-alert fme-alert-warning" style="margin-top:8px;">' +
         '<strong>⚠ ' + links.emptyAnchors.length + ' link-uri fără text ancoră</strong><br>' +
         '<span style="font-size:11px;">Link-urile fără text sunt greu de indexat. Adaugă text descriptiv sau aria-label.</span></div>';
     }
 
+    area.innerHTML = html;
+  }
+
+  function renderPreview(area, results) {
+    const preview = results.socialPreview || {};
+    const keywords = Array.isArray(results.keywords) ? results.keywords : [];
+    const schemaTypes = Array.isArray(results.schemaTypes) ? results.schemaTypes : [];
+    const missing = [];
+
+    if (!preview.title) missing.push('og:title');
+    if (!preview.description) missing.push('og:description');
+    if (!preview.image) missing.push('og:image');
+    if (!preview.twitterCard) missing.push('twitter:card');
+
+    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(280px, 1fr));gap:12px;align-items:start;">';
+
+    html += '<div style="background:var(--fme-card, #fff);border:1px solid var(--fme-border, #e0e0e0);border-radius:8px;overflow:hidden;box-shadow:0 4px 16px rgba(0,0,0,0.06);">';
+    if (preview.image) {
+      html += '<div style="aspect-ratio:1.91/1;background:#eef3f8;overflow:hidden;">' +
+        '<img src="' + escAttr(preview.image) + '" alt="OG preview" style="display:block;width:100%;height:100%;object-fit:cover;" />' +
+      '</div>';
+    } else {
+      html += '<div style="aspect-ratio:1.91/1;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg, var(--fme-card, #f7f9fc), var(--fme-surface, #fff));color:var(--fme-muted, #888);font-size:12px;">Fără imagine Open Graph</div>';
+    }
+    html += '<div style="padding:12px;">' +
+      '<div style="font-size:11px;color:var(--fme-muted, #888);margin-bottom:4px;">Preview social</div>' +
+      '<div style="font-size:16px;font-weight:700;line-height:1.35;color:var(--fme-text, #222);">' + esc(preview.title || 'Titlul va apărea aici') + '</div>' +
+      '<div style="margin-top:6px;font-size:12px;line-height:1.55;color:var(--fme-muted, #555);">' + esc(preview.description || 'Descrierea OG / meta description lipsește sau este goală.') + '</div>' +
+      '<div style="margin-top:8px;font-size:11px;color:var(--fme-accent, #3498db);word-break:break-all;">' + esc(preview.url || results.scannedUrl || '') + '</div>' +
+    '</div></div>';
+
+    html += '<div style="display:grid;gap:10px;">';
+    html += '<div style="padding:10px 12px;background:var(--fme-card, #fff);border:1px solid var(--fme-border, #e0e0e0);border-radius:6px;">' +
+      '<div style="font-size:12px;font-weight:700;color:var(--fme-text, #333);margin-bottom:8px;">🔎 Top cuvinte cheie</div>' +
+      (keywords.length
+        ? keywords.map(k => '<span style="display:inline-flex;align-items:center;gap:6px;margin:0 6px 6px 0;padding:4px 8px;border-radius:999px;background:var(--fme-surface, #f3f6fb);border:1px solid var(--fme-border, #dce3ef);font-size:11px;color:var(--fme-text, #333);">' + esc(k.word) + ' <strong style="color:var(--fme-accent, #3498db);">' + k.count + '</strong></span>').join('')
+        : '<span style="font-size:11px;color:var(--fme-muted, #888);">Nu s-au extras suficiente cuvinte relevante.</span>') +
+    '</div>';
+
+    html += '<div style="padding:10px 12px;background:var(--fme-card, #fff);border:1px solid var(--fme-border, #e0e0e0);border-radius:6px;">' +
+      '<div style="font-size:12px;font-weight:700;color:var(--fme-text, #333);margin-bottom:8px;">📌 Semnale rapide</div>' +
+      '<ul style="margin:0;padding-left:18px;font-size:11px;line-height:1.75;color:var(--fme-text, #444);">' +
+        '<li><strong>Canonical / URL:</strong> ' + esc(preview.url || results.scannedUrl || '—') + '</li>' +
+        '<li><strong>Twitter card:</strong> ' + esc(preview.twitterCard || 'Lipsește') + '</li>' +
+        '<li><strong>Schema detectată:</strong> ' + esc(schemaTypes.length ? schemaTypes.join(', ') : 'Niciun tip detectat') + '</li>' +
+        '<li><strong>Tag-uri lipsă:</strong> ' + esc(missing.length ? missing.join(', ') : 'Nimic critic pentru share preview') + '</li>' +
+      '</ul>' +
+    '</div>';
+
+    html += '</div></div>';
     area.innerHTML = html;
   }
 
@@ -818,7 +936,7 @@ var FMESeoTab = (() => {
           'Setează <strong>og:title</strong>, <strong>og:description</strong>, <strong>og:image</strong> pentru share-uri frumoase pe Facebook',
           'Imagine OG recomandată: <strong>1200×630 px</strong> (raport 1.91:1)',
           'Adaugă <strong>twitter:card</strong> = "summary_large_image" pentru Twitter/X',
-          'Verifică cum arată share-urile cu <a href="https://developers.facebook.com/tools/debug/" target="_blank" style="color:#3498db;">Facebook Debugger</a>',
+          'Verifică cum arată share-urile cu <a href="https://developers.facebook.com/tools/debug/" target="_blank" style="color:var(--fme-accent, #3498db);">Facebook Debugger</a>',
         ]
       },
       {
@@ -828,7 +946,7 @@ var FMESeoTab = (() => {
           'Generează un <strong>sitemap.xml</strong> și menționează-l în robots.txt',
           'Adaugă <strong>link canonical</strong> pe fiecare pagină pentru a evita duplicate content',
           'Verifică regulat dacă paginile sunt indexate cu <code>site:domeniul-tau.com</code> în Google',
-          'Trimite sitemap-ul în <a href="https://search.google.com/search-console" target="_blank" style="color:#3498db;">Google Search Console</a>',
+          'Trimite sitemap-ul în <a href="https://search.google.com/search-console" target="_blank" style="color:var(--fme-accent, #3498db);">Google Search Console</a>',
         ]
       },
       {
@@ -838,7 +956,7 @@ var FMESeoTab = (() => {
           'Specifică <strong>width/height</strong> pe imagini pentru a evita Cumulative Layout Shift (CLS)',
           'Evită iframe-urile inutile — încetinesc încărcarea',
           'Mută stilurile inline în fișiere CSS externe pentru caching mai bun',
-          'Testează performanța cu <a href="https://pagespeed.web.dev/" target="_blank" style="color:#3498db;">PageSpeed Insights</a>',
+          'Testează performanța cu <a href="https://pagespeed.web.dev/" target="_blank" style="color:var(--fme-accent, #3498db);">PageSpeed Insights</a>',
         ]
       },
       {
@@ -855,7 +973,7 @@ var FMESeoTab = (() => {
           'Adaugă <strong>JSON-LD</strong> cu tipul WebSite / Organization pe pagina de index',
           'Folosește <strong>BreadcrumbList</strong> pentru navigare (ajută la sitelinks în Google)',
           'Pentru forumuri: adaugă <strong>DiscussionForumPosting</strong> pe topic-uri',
-          'Testează cu <a href="https://search.google.com/test/rich-results" target="_blank" style="color:#3498db;">Rich Results Test</a>',
+          'Testează cu <a href="https://search.google.com/test/rich-results" target="_blank" style="color:var(--fme-accent, #3498db);">Rich Results Test</a>',
         ]
       },
       {
@@ -896,16 +1014,16 @@ var FMESeoTab = (() => {
 
     // Guide sections
     guides.forEach(g => {
-      html += '<fieldset style="margin:0 0 10px;padding:8px 12px;border:1px solid #e0e0e0;border-radius:4px;">' +
-        '<legend style="font-weight:600;font-size:12px;">' + g.icon + ' ' + g.title + '</legend>' +
-        '<ul style="margin:4px 0;padding:0 0 0 18px;font-size:11px;line-height:1.8;color:#444;">';
+      html += '<fieldset style="margin:0 0 10px;padding:8px 12px;border:1px solid var(--fme-border, #e0e0e0);border-radius:4px;background:var(--fme-card, #fff);color:var(--fme-text, #333);">' +
+        '<legend style="font-weight:600;font-size:12px;color:var(--fme-accent, #3498db);">' + g.icon + ' ' + g.title + '</legend>' +
+        '<ul style="margin:4px 0;padding:0 0 0 18px;font-size:11px;line-height:1.8;color:var(--fme-text, #444);">';
       g.items.forEach(item => { html += '<li>' + item + '</li>'; });
       html += '</ul></fieldset>';
     });
 
     // Useful tools
-    html += '<fieldset style="margin:0 0 10px;padding:8px 12px;border:1px solid #e0e0e0;border-radius:4px;">' +
-      '<legend style="font-weight:600;font-size:12px;">🔧 Instrumente utile</legend>' +
+    html += '<fieldset style="margin:0 0 10px;padding:8px 12px;border:1px solid var(--fme-border, #e0e0e0);border-radius:4px;background:var(--fme-card, #fff);color:var(--fme-text, #333);">' +
+      '<legend style="font-weight:600;font-size:12px;color:var(--fme-accent, #3498db);">🔧 Instrumente utile</legend>' +
       '<table style="width:100%;font-size:11px;border-collapse:collapse;">' +
       [
         ['Google Search Console', 'https://search.google.com/search-console', 'Monitorizare indexare, erori, query-uri'],
@@ -915,10 +1033,10 @@ var FMESeoTab = (() => {
         ['Mobile-Friendly Test', 'https://search.google.com/test/mobile-friendly', 'Testare compatibilitate mobil'],
         ['Bing Webmaster Tools', 'https://www.bing.com/webmasters/', 'Monitorizare Bing + importă date din GSC'],
       ].map((r, i) =>
-        '<tr style="border-bottom:1px solid #eee;">' +
+        '<tr style="border-bottom:1px solid var(--fme-border, #eee);">' +
           '<td style="padding:4px 8px 4px 0;font-weight:600;">' +
-            '<a href="' + r[1] + '" target="_blank" style="color:#3498db;">' + r[0] + '</a></td>' +
-          '<td style="padding:4px 0;color:#666;">' + r[2] + '</td></tr>'
+            '<a href="' + r[1] + '" target="_blank" style="color:var(--fme-accent, #3498db);">' + r[0] + '</a></td>' +
+          '<td style="padding:4px 0;color:var(--fme-muted, #666);">' + r[2] + '</td></tr>'
       ).join('') +
       '</table></fieldset>';
 
@@ -947,6 +1065,135 @@ var FMESeoTab = (() => {
     return m ? m[1].trim() : null;
   }
 
+  function normalizeScanUrl(rawUrl) {
+    const fallback = window.location.origin + '/';
+
+    try {
+      const url = new URL(String(rawUrl || '').trim() || fallback, fallback);
+      if (url.origin !== window.location.origin) {
+        throw new Error('Poți scana doar URL-uri din același forum/domeniu.');
+      }
+      return url.href;
+    } catch (_) {
+      throw new Error('Introdu un URL valid din forumul tău.');
+    }
+  }
+
+  async function copySummary(wrapper) {
+    if (!_results) return;
+
+    const btn = wrapper.querySelector('#fme-seo-copy');
+    const status = wrapper.querySelector('#fme-seo-status');
+    const initial = btn.value;
+
+    try {
+      await navigator.clipboard.writeText(buildPlainSummary(_results));
+      btn.value = '✅ Copiat';
+      status.textContent = 'Rezumatul SEO a fost copiat în clipboard.';
+      status.style.color = 'var(--fme-success, #10b981)';
+    } catch (err) {
+      status.textContent = 'Copiere eșuată: ' + err.message;
+      status.style.color = 'var(--fme-error, #e74c3c)';
+    }
+
+    window.setTimeout(() => { btn.value = initial; }, 1400);
+  }
+
+  function exportReport() {
+    if (!_results) return;
+
+    const host = (() => {
+      try { return new URL(_results.scannedUrl).hostname.replace(/[^a-z0-9.-]+/gi, '-'); }
+      catch (_) { return 'forum'; }
+    })();
+
+    const report = {
+      scannedAt: new Date().toISOString(),
+      scannedUrl: _results.scannedUrl,
+      score: _results.score,
+      summary: {
+        pass: _results.checks.filter(c => c.status === 'pass').length,
+        warn: _results.checks.filter(c => c.status === 'warn').length,
+        fail: _results.checks.filter(c => c.status === 'fail').length,
+        info: _results.checks.filter(c => c.status === 'info').length,
+      },
+      keywords: _results.keywords,
+      socialPreview: _results.socialPreview,
+      schemaTypes: _results.schemaTypes,
+      checks: _results.checks,
+      metaTags: _results.metaTags,
+      links: {
+        total: _results.links.total,
+        internalCount: _results.links.internal.length,
+        externalCount: _results.links.external.length,
+        nofollowCount: _results.links.nofollow.length,
+        emptyAnchorCount: _results.links.emptyAnchors.length,
+        sampleExternal: _results.links.external.slice(0, 20),
+      },
+    };
+
+    const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `fme-seo-report-${host}.json`;
+    a.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+  }
+
+  function buildPlainSummary(results) {
+    const pass = results.checks.filter(c => c.status === 'pass').length;
+    const warn = results.checks.filter(c => c.status === 'warn').length;
+    const fail = results.checks.filter(c => c.status === 'fail').length;
+    const critical = results.checks.filter(c => c.status === 'fail').slice(0, 6);
+    const warnings = results.checks.filter(c => c.status === 'warn').slice(0, 6);
+
+    return [
+      'FME SEO Report',
+      'URL: ' + (results.scannedUrl || '—'),
+      'Scor SEO: ' + results.score + '/100',
+      'OK: ' + pass + ' | Atenționări: ' + warn + ' | Probleme: ' + fail,
+      '',
+      critical.length ? 'Probleme critice:' : 'Atenționări principale:',
+      ...(critical.length ? critical : warnings).map(item => '- ' + item.item + ': ' + item.tip),
+    ].join('\n');
+  }
+
+  function extractTopKeywords(text) {
+    const stopwords = new Set([
+      'si', 'sau', 'sunt', 'este', 'pentru', 'care', 'din', 'ale', 'iar', 'fara', 'foarte', 'mai', 'prin', 'aceasta', 'acest',
+      'the', 'and', 'for', 'with', 'from', 'that', 'this', 'your', 'forum', 'page', 'http', 'https', 'www', 'com'
+    ]);
+
+    const counts = Object.create(null);
+    String(text || '')
+      .toLowerCase()
+      .replace(/[^\p{L}\p{N}\s-]+/gu, ' ')
+      .split(/\s+/)
+      .filter(word => word.length >= 4 && !stopwords.has(word) && !/^\d+$/.test(word))
+      .forEach(word => { counts[word] = (counts[word] || 0) + 1; });
+
+    return Object.entries(counts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10)
+      .map(([word, count]) => ({ word, count }));
+  }
+
+  function extractSocialPreview(doc, fallbackTitle, fallbackDescription, canonicalUrl, scannedUrl) {
+    const pickMeta = (selector) => {
+      const node = doc.querySelector(selector);
+      return node ? (node.getAttribute('content') || '').trim() : '';
+    };
+
+    return {
+      title: pickMeta('meta[property="og:title"]') || pickMeta('meta[name="twitter:title"]') || fallbackTitle || '',
+      description: pickMeta('meta[property="og:description"]') || pickMeta('meta[name="twitter:description"]') || fallbackDescription || '',
+      image: pickMeta('meta[property="og:image"]') || pickMeta('meta[name="twitter:image"]') || '',
+      url: pickMeta('meta[property="og:url"]') || canonicalUrl || scannedUrl || '',
+      twitterCard: pickMeta('meta[name="twitter:card"]') || '',
+    };
+  }
+
   function truncate(str, max) {
     str = String(str || '').trim();
     return str.length > max ? str.substring(0, max) + '…' : str;
@@ -954,6 +1201,10 @@ var FMESeoTab = (() => {
 
   function esc(str) {
     return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function escAttr(str) {
+    return esc(str).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
   }
 
   return { render };

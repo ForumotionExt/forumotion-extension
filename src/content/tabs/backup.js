@@ -10,6 +10,7 @@ var FMEBackupTab = (() => {
   const LOCAL_KEYS = [
     'fme_installed_themes',
     'fme_acp_custom_css',
+    'fme_acp_custom_js',
     'fme_forum_custom_css',
     'fme_widgets',
     'fme_notes',
@@ -42,7 +43,7 @@ var FMEBackupTab = (() => {
         <h2 class="fme-section-title">FME</h2>
         <ul class="h2-breadcrumb clearfix"><li class="first">Backup &amp; Restaurare</li></ul>
         <blockquote class="block_left">
-          <p class="explain">Exportă sau importă toate datele extensiei: teme instalate, CSS personalizat, widget-uri, notițe și setări. Token-ul GitHub nu este inclus în export.</p>
+          <p class="explain">Exportă sau importă toate datele extensiei: teme instalate, CSS/JS personalizat, widget-uri, notițe și setări. Token-ul GitHub nu este inclus în export.</p>
         </blockquote>
       </div>
 
@@ -101,6 +102,12 @@ var FMEBackupTab = (() => {
         label: 'CSS ACP',
         stor:  'local',
         value: sizeStr(local.fme_acp_custom_css),
+      },
+      {
+        key:   'fme_acp_custom_js',
+        label: 'JS ACP',
+        stor:  'local',
+        value: sizeStr(local.fme_acp_custom_js),
       },
       {
         key:   'fme_forum_custom_css',

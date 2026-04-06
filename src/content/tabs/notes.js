@@ -83,7 +83,7 @@ var FMENotesTab = (() => {
           ${canAdd ? `<li class="fme-filter-tab"><a href="#" id="fme-note-add-btn"><span>+ Adaugă</span></a></li>` : ''}
         </ul></div></div>
       </div>
-      <div class="panel-menu" style="margin:0!important;background:#fff!important;border:1px solid #cdcdcd!important;padding:0 0 10px 0!important;">
+      <div class="panel-menu" style="margin:0!important;background:var(--fme-card, #fff)!important;border:1px solid var(--fme-border, #cdcdcd)!important;padding:0 0 10px 0!important;color:var(--fme-text, #333)!important;">
         <br/>
         <fieldset style="margin:0 12px 12px 12px;">
           <dl>
@@ -96,7 +96,7 @@ var FMENotesTab = (() => {
           <dl>
             <dd>
               <textarea id="fme-note-content"
-                style="width:100%;height:320px;font-family:Consolas,'Cascadia Code',monospace;font-size:12px;line-height:1.6;padding:10px;border:1px solid #cdcdcd;border-radius:3px;resize:vertical;tab-size:2;"
+                style="width:100%;height:320px;font-family:Consolas,'Cascadia Code',monospace;font-size:12px;line-height:1.6;padding:10px;border:1px solid var(--fme-border, #cdcdcd);border-radius:3px;resize:vertical;tab-size:2;background:var(--fme-surface, #fff);color:var(--fme-text, #222);"
                 placeholder="Scrie notița ta aici..."
               >${escHtml(note.content)}</textarea>
             </dd>

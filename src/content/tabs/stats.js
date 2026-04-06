@@ -53,6 +53,7 @@ var FMEStatsTab = (() => {
 
     const installedThemes = Object.keys(local.fme_installed_themes || {});
     const acpCss          = local.fme_acp_custom_css   || '';
+    const acpJs           = local.fme_acp_custom_js    || '';
     const forumCss        = local.fme_forum_custom_css || '';
     const widgets         = local.fme_widgets || [];
     const notes           = local.fme_notes   || [];
@@ -61,6 +62,7 @@ var FMEStatsTab = (() => {
     const extCards = [
       { icon: '🎨', label: 'Teme instalate',   value: installedThemes.length,                          sub: installedThemes.map(id => id).slice(0, 3).join(', ') + (installedThemes.length > 3 ? '…' : '') },
       { icon: '✏️',  label: 'CSS ACP',          value: acpCss.trim() ? `${acpCss.split('\n').length} linii` : 'Gol', sub: acpCss.trim() ? `${(new Blob([acpCss]).size / 1024).toFixed(1)} KB` : '' },
+      { icon: '🧩',  label: 'JS ACP',           value: acpJs.trim() ? `${acpJs.split('\n').length} linii` : 'Gol', sub: acpJs.trim() ? `${(new Blob([acpJs]).size / 1024).toFixed(1)} KB` : '' },
       { icon: '🌐', label: 'CSS Forum',         value: forumCss.trim() ? `${forumCss.split('\n').length} linii` : 'Gol', sub: forumCss.trim() ? `${(new Blob([forumCss]).size / 1024).toFixed(1)} KB` : '' },
       { icon: '⚡', label: 'Widget-uri',        value: `${widgets.filter(w => w.enabled).length} active`, sub: `${widgets.length} total` },
       { icon: '📝', label: 'Notițe',            value: `${notes.filter(n => (n.content || '').trim()).length} cu conținut`, sub: `${notes.length} total` },
@@ -243,11 +245,11 @@ var FMEStatsTab = (() => {
 
   function statCard({ icon, label, value, sub }) {
     return `
-      <div style="background:#f7f7f7;border:1px solid #ddd;border-radius:6px;padding:10px 16px;text-align:center;min-width:110px;max-width:160px;flex:1;">
+      <div style="background:var(--fme-card, #f7f7f7);border:1px solid var(--fme-border, #ddd);border-radius:6px;padding:10px 16px;text-align:center;min-width:110px;max-width:160px;flex:1;color:var(--fme-text, #333);">
         <div style="font-size:20px;margin-bottom:2px;">${icon || ''}</div>
-        <div style="font-size:18px;font-weight:700;color:#369fcf;">${escHtml(String(value))}</div>
-        <div style="font-size:11px;color:#666;margin-top:3px;">${escHtml(label)}</div>
-        ${sub ? `<div style="font-size:10px;color:#aaa;margin-top:2px;">${escHtml(sub)}</div>` : ''}
+        <div style="font-size:18px;font-weight:700;color:var(--fme-accent, #369fcf);">${escHtml(String(value))}</div>
+        <div style="font-size:11px;color:var(--fme-muted, #666);margin-top:3px;">${escHtml(label)}</div>
+        ${sub ? `<div style="font-size:10px;color:var(--fme-muted, #aaa);margin-top:2px;">${escHtml(sub)}</div>` : ''}
       </div>
     `;
   }
