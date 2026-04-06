@@ -607,7 +607,52 @@ var FMEPanel = (() => {
       </div>
     `;
 
-    // About section
+    // ── Quick Stats + Download/Update cards ─────────────────────────────────
+    const statsSection = document.createElement('div');
+    statsSection.innerHTML = `
+      <fieldset style="margin:0 12px 12px 12px;">
+        <legend><i class="fa fa-dashboard"></i> Privire de ansamblu</legend>
+        <div id="fme-home-stats" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin-bottom:10px;">
+          <div class="fme-stat-card" style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:6px;padding:12px;text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:#16a34a;" id="fme-stat-widgets">—</div>
+            <div style="font-size:11px;color:#666;margin-top:2px;"><i class="fa fa-code"></i> Widgets instalate</div>
+          </div>
+          <div class="fme-stat-card" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:12px;text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:#2563eb;" id="fme-stat-published">—</div>
+            <div style="font-size:11px;color:#666;margin-top:2px;"><i class="fa fa-globe"></i> Publicate pe forum</div>
+          </div>
+          <div class="fme-stat-card" style="background:#fefce8;border:1px solid #fde68a;border-radius:6px;padding:12px;text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:#ca8a04;" id="fme-stat-themes">—</div>
+            <div style="font-size:11px;color:#666;margin-top:2px;"><i class="fa fa-paint-brush"></i> Teme disponibile</div>
+          </div>
+          <div class="fme-stat-card" style="background:#fdf2f8;border:1px solid #fbcfe8;border-radius:6px;padding:12px;text-align:center;">
+            <div style="font-size:22px;font-weight:700;color:#db2777;" id="fme-stat-version">—</div>
+            <div style="font-size:11px;color:#666;margin-top:2px;"><i class="fa fa-tag"></i> Versiune FME</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:6px;">
+          <a href="https://github.com/ForumotionExt/forumotion-extension/releases/latest" target="_blank" rel="noopener noreferrer"
+             style="display:inline-flex;align-items:center;gap:6px;background:#2563eb;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
+            <i class="fa fa-download"></i> Download ultima versiune
+          </a>
+          <a href="https://github.com/ForumotionExt/forumotion-extension/releases" target="_blank" rel="noopener noreferrer"
+             style="display:inline-flex;align-items:center;gap:6px;background:#16a34a;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
+            <i class="fa fa-refresh"></i> Verifică actualizări
+          </a>
+          <a href="https://github.com/ForumotionExt/forumotion-extension" target="_blank" rel="noopener noreferrer"
+             style="display:inline-flex;align-items:center;gap:6px;background:#24292e;color:#fff;padding:8px 16px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
+            <i class="fa fa-github"></i> GitHub repo
+          </a>
+        </div>
+      </fieldset>
+    `;
+    wrapper.appendChild(statsSection);
+
+    // Load quick stats async
+    loadQuickStats();
+
+    // ── Features overview ────────────────────────────────────────────────────
     const aboutSection = document.createElement('div');
     aboutSection.innerHTML = `
       <fieldset style="margin:0 12px 12px 12px;">
@@ -635,7 +680,7 @@ var FMEPanel = (() => {
                 <span class="gen" style="font-weight:bold;"><i class="fa fa-code"></i> Widgets JS</span>
               </td>
               <td class="row2">
-                <span class="gen">Manager de snippet-uri JavaScript custom cu execuție pe ACP și/sau Forum. Catalog built-in inclus.</span>
+                <span class="gen">Manager de snippet-uri JavaScript custom cu execuție pe ACP și/sau Forum. Catalog built-in inclus. Publicare directă pe forum.</span>
               </td>
             </tr>
             <tr>
@@ -648,10 +693,18 @@ var FMEPanel = (() => {
             </tr>
             <tr>
               <td class="row1" style="vertical-align:top;">
-                <span class="gen" style="font-weight:bold;"><i class="fa fa-wrench"></i> Utile</span>
+                <span class="gen" style="font-weight:bold;"><i class="fa fa-bar-chart"></i> Statistici & SEO</span>
               </td>
               <td class="row2">
-                <span class="gen">Statistici forum, notițe locale, backup/restore complet al configurației FME în format JSON.</span>
+                <span class="gen">Dashboard statistici forum, analiză SEO cu meta tags, heading-uri, sitemap și audit complet.</span>
+              </td>
+            </tr>
+            <tr>
+              <td class="row1" style="vertical-align:top;">
+                <span class="gen" style="font-weight:bold;"><i class="fa fa-database"></i> Backup & Jurnal</span>
+              </td>
+              <td class="row2">
+                <span class="gen">Backup/restore complet al configurației FME în format JSON. Jurnal automat al tuturor acțiunilor.</span>
               </td>
             </tr>
           </tbody>
@@ -659,46 +712,6 @@ var FMEPanel = (() => {
       </fieldset>
     `;
     wrapper.appendChild(aboutSection);
-
-    // ACP Quick Links section
-    const linksSection = document.createElement('div');
-    linksSection.style.marginTop = '4px';
-    const tid = _tid ? '&tid=' + encodeURIComponent(_tid) : '';
-    const ACP_LINKS = [
-      { icon: 'fa-sitemap',      label: 'Categorii & Forumuri', href: '/admin/?part=general&sub=forum_01' + tid },
-      { icon: 'fa-users',        label: 'Utilizatori',          href: '/admin/?part=users&sub=users' + tid },
-      { icon: 'fa-shield',       label: 'Permisiuni',           href: '/admin/?part=general&sub=groups' + tid },
-      { icon: 'fa-puzzle-piece', label: 'Module',               href: '/admin/?part=modules' + tid },
-      { icon: 'fa-picture-o',    label: 'Imagini & Culori',     href: '/admin/?part=themes&sub=logos' + tid },
-      { icon: 'fa-css3',         label: 'CSS (Colors)',         href: '/admin/?part=themes&sub=css' + tid },
-      { icon: 'fa-smile-o',      label: 'Smilies',              href: '/admin/?part=general&sub=smilies' + tid },
-      { icon: 'fa-star',         label: 'Ranguri',              href: '/admin/?part=general&sub=ranks' + tid },
-      { icon: 'fa-ban',          label: 'Ban / IP',             href: '/admin/?part=users&sub=ban' + tid },
-      { icon: 'fa-envelope',     label: 'Mesaje private',       href: '/admin/?part=general&sub=pm' + tid },
-      { icon: 'fa-globe',        label: 'Pagina de index',      href: '/', target: '_blank' },
-      { icon: 'fa-bookmark',     label: 'Chatbox',              href: '/chatbox/', target: '_blank' },
-    ];
-    let linksRows = '';
-    ACP_LINKS.forEach((lnk, i) => {
-      const rowClass = i % 2 === 0 ? 'row1' : 'row2';
-      const tgt = lnk.target ? ' target="' + lnk.target + '"' : '';
-      linksRows += '<tr>' +
-        '<td class="' + rowClass + '" style="width:30px;text-align:center;">' +
-          '<i class="fa ' + lnk.icon + '" style="color:#3c9ebf;"></i></td>' +
-        '<td class="' + rowClass + '">' +
-          '<a href="' + escAttr(lnk.href) + '"' + tgt + ' class="gen" style="font-weight:bold;">' +
-          escHtml(lnk.label) + '</a></td>' +
-      '</tr>';
-    });
-    linksSection.innerHTML = `
-      <fieldset style="margin:0 12px 12px 12px;">
-        <legend><i class="fa fa-link"></i> Linkuri rapide ACP</legend>
-        <table class="table1 forumline" cellspacing="1" style="margin-bottom:0;">
-          <tbody>${linksRows}</tbody>
-        </table>
-      </fieldset>
-    `;
-    wrapper.appendChild(linksSection);
 
     // Changelog section — fetch version.json
     const changelogSection = document.createElement('div');
@@ -713,6 +726,19 @@ var FMEPanel = (() => {
     `;
     wrapper.appendChild(changelogSection);
 
+    // Roadmap section
+    const roadmapSection = document.createElement('div');
+    roadmapSection.style.marginTop = '4px';
+    roadmapSection.innerHTML = `
+      <fieldset style="margin:0 12px 12px 12px;">
+        <legend><i class="fa fa-road"></i> Roadmap — Funcționalități viitoare</legend>
+        <div id="fme-home-roadmap">
+          <p style="color:#888;font-size:11px;"><i class="fa fa-spinner fa-spin"></i> Se încarcă roadmap-ul...</p>
+        </div>
+      </fieldset>
+    `;
+    wrapper.appendChild(roadmapSection);
+
     // Support section
     const supportSection = document.createElement('div');
     supportSection.style.marginTop = '4px';
@@ -724,7 +750,7 @@ var FMEPanel = (() => {
           Dacă îți este util, poți susține dezvoltarea continuă printr-o donație simbolică. Mulțumim!
         </p>
         <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center;">
-          <a href="https://ko-fi.com" target="_blank" rel="noopener noreferrer"
+          <a href="https://ko-fi.com/fmestaark" target="_blank" rel="noopener noreferrer"
              style="display:inline-flex;align-items:center;gap:6px;background:#FF5E5B;color:#fff;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
             &#9749; Ko-fi
           </a>
@@ -732,13 +758,13 @@ var FMEPanel = (() => {
              style="display:inline-flex;align-items:center;gap:6px;background:#24292e;color:#fff;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
             &#10084;&#65039; GitHub Sponsors
           </a>
-          <a href="https://github.com" target="_blank" rel="noopener noreferrer"
+          <a href="https://github.com/ForumotionExt/forumotion-extension" target="_blank" rel="noopener noreferrer"
              style="display:inline-flex;align-items:center;gap:6px;background:#4a7ebf;color:#fff;padding:7px 14px;border-radius:6px;text-decoration:none;font-size:12px;font-weight:600;">
-            &#11088; GitHub
+            &#11088; Star pe GitHub
           </a>
         </div>
         <p style="margin:10px 0 0 0;font-size:10px;color:#aaa;">
-          Ai o sugestie sau ai găsit un bug? Deschide un issue pe GitHub.
+          Ai o sugestie sau ai găsit un bug? <a href="https://github.com/ForumotionExt/forumotion-extension/issues" target="_blank" rel="noopener" style="color:#3c9ebf;">Deschide un issue pe GitHub</a>.
         </p>
       </fieldset>
     `;
@@ -748,6 +774,116 @@ var FMEPanel = (() => {
 
     // Load changelog from version.json bundled with the extension
     loadChangelog(changelogSection.querySelector('#fme-home-changelog'));
+    loadRoadmap(roadmapSection.querySelector('#fme-home-roadmap'));
+  }
+
+  async function loadQuickStats() {
+    // Version
+    try {
+      const verUrl = chrome.runtime.getURL('version.json');
+      const verRes = await fetch(verUrl);
+      if (verRes.ok) {
+        const verData = await verRes.json();
+        const el = document.getElementById('fme-stat-version');
+        if (el) el.textContent = 'v' + (verData.version || '?');
+      }
+    } catch (_) {}
+
+    // Widgets count
+    try {
+      chrome.storage.local.get({ fme_widgets: [] }, result => {
+        const widgets = Array.isArray(result.fme_widgets) ? result.fme_widgets : [];
+        const total = widgets.length;
+        const published = widgets.filter(w => w.published).length;
+        const elW = document.getElementById('fme-stat-widgets');
+        const elP = document.getElementById('fme-stat-published');
+        if (elW) elW.textContent = total;
+        if (elP) elP.textContent = published;
+      });
+    } catch (_) {}
+
+    // Themes count (load from the actual GitHub catalog)
+    try {
+      const el = document.getElementById('fme-stat-themes');
+      if (el) el.textContent = '...';
+
+      let count = null;
+      if (typeof FMEGitHub !== 'undefined' && FMEGitHub.getSettings && FMEGitHub.fetchJSON) {
+        const settings = await FMEGitHub.getSettings();
+        const catalog = await FMEGitHub.fetchJSON(
+          settings.themesOwner,
+          settings.themesRepo,
+          'index.json',
+          'main',
+          settings.githubToken || null
+        );
+        if (catalog && Array.isArray(catalog.themes)) {
+          count = catalog.themes.length;
+        }
+      }
+
+      if (count == null) {
+        chrome.storage.local.get({ fme_installed_themes: {} }, result => {
+          const installed = result.fme_installed_themes && typeof result.fme_installed_themes === 'object'
+            ? Object.keys(result.fme_installed_themes).length
+            : 0;
+          if (el) el.textContent = installed;
+        });
+      } else if (el) {
+        el.textContent = count;
+      }
+    } catch (_) {
+      const el = document.getElementById('fme-stat-themes');
+      if (el) el.textContent = '0';
+    }
+  }
+
+  async function loadRoadmap(target) {
+    try {
+      const url = chrome.runtime.getURL('version.json');
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
+      const data = await res.json();
+
+      const items = data.roadmap || data.futures || [];
+      if (!items.length) {
+        target.innerHTML = '<p style="color:#888;font-size:11px;">Niciun element în roadmap.</p>';
+        return;
+      }
+
+      const STATUS_STYLE = {
+        planned:     { icon: '&#128203;', color: '#3498db', label: 'Planificat' },
+        'in-progress': { icon: '&#9881;&#65039;', color: '#e67e22', label: 'În lucru' },
+        done:        { icon: '&#9989;', color: '#27ae60', label: 'Finalizat' },
+      };
+
+      let html = '<table class="table1 forumline" cellspacing="1" style="margin:0;">' +
+        '<thead><tr>' +
+          '<th class="thbg" style="width:150px;">Status</th>' +
+          '<th class="thbg">Funcționalitate</th>' +
+        '</tr></thead><tbody>';
+
+      items.forEach((item, i) => {
+        const s = STATUS_STYLE[item.status] || STATUS_STYLE.planned;
+        const rowClass = i % 2 === 0 ? 'row1' : 'row2';
+        html += '<tr>' +
+          '<td class="' + rowClass + '" style="text-align:center;">' +
+            '<span style="background:' + s.color + ';color:#fff;padding:3px 6px;border-radius:3px;font-size:10px;font-weight:600;">' +
+              s.icon + ' ' + s.label + '</span>' +
+          '</td>' +
+          '<td class="' + rowClass + '">' +
+            '<span class="gen" style="font-weight:600;">' + escHtml(item.title) + '</span>' +
+            '<br/><span class="gen" style="font-size:11px;color:#666;">' + escHtml(item.description) + '</span>' +
+          '</td>' +
+        '</tr>';
+      });
+
+      html += '</tbody></table>';
+      target.innerHTML = html;
+    } catch (e) {
+      console.warn('[FME] Failed to load roadmap:', e);
+      target.innerHTML = '<p style="color:#e74c3c;font-size:11px;">Nu s-a putut încărca roadmap-ul.</p>';
+    }
   }
 
   async function loadChangelog(target) {
@@ -780,7 +916,7 @@ var FMEPanel = (() => {
 
       html += '<table class="table1 forumline" cellspacing="1" style="margin:0;">' +
         '<thead><tr>' +
-          '<th class="thbg" style="width:60px;">Tip</th>' +
+          '<th class="thbg" style="width:120px;">Tip</th>' +
           '<th class="thbg">Descriere</th>' +
         '</tr></thead><tbody>';
 

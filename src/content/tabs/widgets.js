@@ -15,6 +15,10 @@ var FMEWidgetsTab = (() => {
 
   const STORAGE_KEY = 'fme_widgets';
 
+  // Markers used to wrap published widget code in the Forumotion JS page
+  const MARKER_START = id => `/* [FME-WIDGET:${id}] START */`;
+  const MARKER_END   = id => `/* [FME-WIDGET:${id}] END */`;
+
   const TARGET_LABELS = {
     acp:   { text: 'ACP',         badge: 'fme-badge-version'   },
     forum: { text: 'Forum',       badge: 'fme-badge-installed' },
@@ -201,8 +205,8 @@ var FMEWidgetsTab = (() => {
       name:        'Forum Welcome Banner',
       description: 'Banner de bun venit pentru vizitatori neînregistrați',
       target:      'forum',
-      code: `(function () {
-  'use strict';
+      code: `(function _fmeWidget() {
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', _fmeWidget); return; }
   const STORAGE_KEY = 'fme_welcome_banner_dismissed';
   const BANNER_TEXT = 'Bun venit pe forum! \\ud83d\\udc4b \\u00cenregistreaz\\u0103-te pentru a participa la discu\\u021bii.';
   const BUTTON_TEXT = '\\u00cenregistreaz\\u0103-te';
@@ -225,7 +229,7 @@ var FMEWidgetsTab = (() => {
     '<span style="flex:1;min-width:200px;">' + BANNER_TEXT + '</span>' +
     '<a href="' + BUTTON_URL + '" style="background:#fff;color:' + BG_COLOR + ';padding:5px 14px;border-radius:4px;font-weight:600;text-decoration:none;font-size:12px;white-space:nowrap;">' + BUTTON_TEXT + '</a>' +
     '<button id="fme-welcome-close" style="background:transparent;border:none;color:rgba(255,255,255,0.8);font-size:18px;line-height:1;cursor:pointer;padding:0 4px;" title="\\u00cenchide">&times;</button>';
-  document.body.insertBefore(banner, document.body.firstChild);
+  document.body.prepend(banner);
   banner.querySelector('#fme-welcome-close').addEventListener('click', () => {
     banner.remove();
     localStorage.setItem(STORAGE_KEY, '1');
@@ -237,8 +241,8 @@ var FMEWidgetsTab = (() => {
       name:        'Forum Back to Top',
       description: 'Buton flotant animat de scroll la îinceputul paginii pe forum',
       target:      'forum',
-      code: `(function () {
-  'use strict';
+      code: `(function _fmeWidget() {
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', _fmeWidget); return; }
   const BTN_ID = 'fme-forum-back-to-top';
   if (document.getElementById(BTN_ID)) return;
   const btn = document.createElement('button');
@@ -269,8 +273,8 @@ var FMEWidgetsTab = (() => {
       name:        'Forum External Links',
       description: 'Deschide linkurile externe în tab nou și adaugă rel=noopener',
       target:      'forum',
-      code: `(function () {
-  'use strict';
+      code: `(function _fmeWidget() {
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', _fmeWidget); return; }
   const host = window.location.hostname;
   function processLinks(root) {
     root.querySelectorAll('a[href]').forEach(a => {
@@ -299,8 +303,8 @@ var FMEWidgetsTab = (() => {
       name:        'Forum Announce Ticker',
       description: 'Ticker cu mesaje de anunț defilante pe pagina principală',
       target:      'forum',
-      code: `(function () {
-  'use strict';
+      code: `(function _fmeWidget() {
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', _fmeWidget); return; }
   const MESSAGES = [
     '\\ud83d\\udce2 Bun venit pe forum! Citi\\u021bi regulamentul \\u00eenainte de a posta.',
     '\\ud83c\\udf89 Eveniment nou: Concurs de var\\u0103 \\u2014 participa\\u021bi p\\u00e2n\\u0103 pe 30 iulie!',
@@ -324,7 +328,7 @@ var FMEWidgetsTab = (() => {
   inner.textContent = joined;
   inner.style.cssText = 'display:inline-block;padding-left:100%;will-change:transform;';
   ticker.appendChild(inner);
-  document.body.insertBefore(ticker, document.body.firstChild);
+  document.body.prepend(ticker);
   function startAnimation() {
     const totalWidth = inner.scrollWidth + ticker.clientWidth;
     const duration = totalWidth / SPEED_PX_PER_SEC;
@@ -345,8 +349,8 @@ var FMEWidgetsTab = (() => {
       name:        'Forum Post Word Count',
       description: 'Contor de caractere/cuvinte sub editorul de postare',
       target:      'forum',
-      code: `(function () {
-  'use strict';
+      code: `(function _fmeWidget() {
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', _fmeWidget); return; }
   const MAX_CHARS = 5000;
   function attachCounter(ta) {
     if (ta.dataset.fmePostCounter) return;
@@ -388,8 +392,8 @@ var FMEWidgetsTab = (() => {
       name:        'Forum Reading Progress',
       description: 'Bară de progres de citire fixată în topul paginii',
       target:      'forum',
-      code: `(function () {
-  'use strict';
+      code: `(function _fmeWidget() {
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', _fmeWidget); return; }
   const BAR_HEIGHT = '3px';
   const BAR_COLOR  = '#3b82f6';
   const BAR_ID = 'fme-reading-progress';
@@ -420,8 +424,8 @@ var FMEWidgetsTab = (() => {
       name:        'Forum Dark Mode Toggle',
       description: 'Buton flotant pentru comutare Dark/Light mode pe forum',
       target:      'forum',
-      code: `(function () {
-  'use strict';
+      code: `(function _fmeWidget() {
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', _fmeWidget); return; }
   const STORAGE_KEY = 'fme_dark_mode';
   const STYLE_ID    = 'fme-dark-mode-style';
   const BTN_ID      = 'fme-dark-toggle-btn';
@@ -470,8 +474,8 @@ var FMEWidgetsTab = (() => {
       name:        'FME Toast Notifications',
       description: 'API global window.FMEToast.show() pentru notificări toast',
       target:      'both',
-      code: `(function () {
-  'use strict';
+      code: `(function _fmeWidget() {
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', _fmeWidget); return; }
   if (window.FMEToast) return;
   const COLORS = {
     success: { bg: '#16a34a', icon: '\\u2713' },
@@ -522,8 +526,8 @@ var FMEWidgetsTab = (() => {
       name:        'Keyboard Shortcuts',
       description: 'Scurtături tastatură globale cu help overlay (? = help)',
       target:      'both',
-      code: `(function () {
-  'use strict';
+      code: `(function _fmeWidget() {
+  if (document.readyState === 'loading') { document.addEventListener('DOMContentLoaded', _fmeWidget); return; }
   if (window.__fmeShortcuts) return;
   window.__fmeShortcuts = true;
   const SHORTCUTS = [
@@ -721,26 +725,62 @@ var FMEWidgetsTab = (() => {
     return section;
   }
 
-  function installBuiltin(bw, wrapper) {
+  async function installBuiltin(bw, wrapper) {
     if (_widgets.find(w => w.id === bw.id)) return;
-    _widgets.push({
+    const widget = {
       id:          bw.id,
       name:        bw.name,
       description: bw.description,
       target:      bw.target,
       enabled:     true,
       code:        bw.code,
+      published:   false,
       createdAt:   new Date().toISOString(),
       updatedAt:   new Date().toISOString(),
-    });
+    };
+    _widgets.push(widget);
     if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('widget-create', 'Widget builtin instalat: ' + bw.name);
+
+    // Auto-publish forum/both widgets to the Forumotion JS page
+    if (bw.target === 'forum' || bw.target === 'both') {
+      const tid = typeof FMEForumAPI !== 'undefined' && FMEForumAPI.getTid();
+      const jsTitle = 'FME: ' + bw.name;
+      if (tid) {
+        try {
+          const saved = await FMEForumAPI.saveJsPlugin(tid, widget.code, 'all', true, jsTitle);
+          if (saved) {
+            widget.published = true;
+            if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('widget-publish', 'Auto-publicat pe forum: ' + bw.name);
+          }
+        } catch (e) {
+          console.warn('[FME Widgets] Auto-publish failed:', e);
+        }
+      }
+    }
+
     saveWidgets(() => renderAll(wrapper));
   }
 
-  function removeBuiltin(id, wrapper) {
+  async function removeBuiltin(id, wrapper) {
     const bw = BUILTIN_WIDGETS.find(b => b.id === id);
     const name = bw ? bw.name : id;
     if (!confirm(`Dezinstalezi widget-ul "${name}"?\nAcesta va fi eliminat din lista ta de widget-uri.`)) return;
+
+    // Auto-unpublish from Forumotion JS page if published — disable the entry
+    const existing = _widgets.find(w => w.id === id);
+    if (existing && existing.published) {
+      const tid = typeof FMEForumAPI !== 'undefined' && FMEForumAPI.getTid();
+      if (tid) {
+        try {
+          const jsTitle = 'FME: ' + name;
+          await FMEForumAPI.saveJsPlugin(tid, existing.code, 'all', false, jsTitle);
+          if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('widget-publish', 'Dezactivat pe forum: ' + name);
+        } catch (e) {
+          console.warn('[FME Widgets] Auto-unpublish failed:', e);
+        }
+      }
+    }
+
     _widgets = _widgets.filter(w => w.id !== id);
     if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('widget-delete', 'Widget builtin dezinstalat: ' + name);
     saveWidgets(() => renderAll(wrapper));
@@ -779,10 +819,14 @@ var FMEWidgetsTab = (() => {
                     ${isBuiltin ? '<span class="fme-badge fme-badge-version" style="margin-left:4px;font-size:10px;">built-in</span>' : ''}
                   </td>
                   <td style="color:#666;">${escHtml(w.description || '—')}</td>
-                  <td><span class="fme-badge ${tm.badge}">${tm.text}</span></td>
+                  <td><span class="fme-badge ${tm.badge}">${tm.text}</span>${w.published ? ' <span class="fme-badge fme-badge-installed" style="font-size:10px;">🌐 publicat</span>' : ''}</td>
                   <td>
                     <input type="button" class="fme-widget-edit"   data-idx="${i}" value="Editează" />
                     <input type="button" class="fme-widget-delete" data-idx="${i}" value="Șterge" style="margin-left:4px;" />
+                    ${(w.target === 'forum' || w.target === 'both')
+                      ? `<input type="button" class="fme-widget-publish" data-idx="${i}" value="${w.published ? '↩ Retrage' : '🌐 Publică'}" style="margin-left:4px;" title="${w.published ? 'Retrage din pagina JS a forumului' : 'Publică în pagina JS a forumului (vizibil pentru toți)'}" />`
+                      : ''
+                    }
                   </td>
                 </tr>
               `;
@@ -820,6 +864,10 @@ var FMEWidgetsTab = (() => {
 
     area.querySelectorAll('.fme-widget-delete').forEach(btn => {
       btn.addEventListener('click', () => deleteWidget(wrapper, +btn.dataset.idx));
+    });
+
+    area.querySelectorAll('.fme-widget-publish').forEach(btn => {
+      btn.addEventListener('click', () => togglePublish(wrapper, +btn.dataset.idx));
     });
 
     area.querySelector('#fme-widget-add').addEventListener('click', () => openEditor(wrapper, null));
@@ -980,9 +1028,71 @@ var FMEWidgetsTab = (() => {
     });
   }
 
+  // ─── Publish / Unpublish to Forumotion JS page ─────────────────────────────
+
+  /**
+   * Publishes or unpublishes a widget to the Forumotion JS management page.
+   * Published widgets are wrapped with FME markers so they can be identified and removed.
+   */
+  async function togglePublish(wrapper, idx) {
+    const w = _widgets[idx];
+    if (!w) return;
+
+    const tid = typeof FMEForumAPI !== 'undefined' && FMEForumAPI.getTid();
+    if (!tid) {
+      alert('Nu s-a putut determina Theme ID (tid). Navighează pe o pagină ACP cu tid în URL.');
+      return;
+    }
+
+    const action = w.published ? 'retrage' : 'publică';
+    if (!confirm(`${w.published ? 'Retragi' : 'Publici'} widget-ul "${w.name}" ${w.published ? 'de pe' : 'pe'} pagina de JavaScript a forumului?\n\n${w.published ? 'Codul va fi eliminat din pagina JS globală.' : 'Codul va fi vizibil și va rula pentru toți vizitatorii forumului.'}`)) return;
+
+    // Show status
+    const area = wrapper.querySelector('#fme-custom-section');
+    const statusEl = document.createElement('div');
+    statusEl.style.cssText = 'padding:8px 12px;margin:8px 12px;background:#f0f7ff;border:1px solid #b3d4fc;border-radius:4px;font-size:11px;color:#333;';
+    statusEl.innerHTML = `<i class="fa fa-spinner fa-spin"></i> Se ${action} widget-ul "${escHtml(w.name)}"...`;
+    area.prepend(statusEl);
+
+    try {
+      const jsTitle = 'FME: ' + w.name;
+
+      if (w.published) {
+        // ─── UNPUBLISH: disable the widget's JS entry ───
+        const saved = await FMEForumAPI.saveJsPlugin(tid, w.code, 'all', false, jsTitle);
+        if (!saved) throw new Error('Dezactivarea a eșuat');
+      } else {
+        // ─── PUBLISH: save/enable the widget's JS entry ───
+        const saved = await FMEForumAPI.saveJsPlugin(tid, w.code, 'all', true, jsTitle);
+        if (!saved) throw new Error('Salvarea a eșuat');
+      }
+
+      // Update widget state
+      _widgets[idx].published = !w.published;
+      if (typeof FMEActivityLog !== 'undefined') {
+        FMEActivityLog.log('widget-publish', (w.published ? 'Retras de pe forum' : 'Publicat pe forum') + ': ' + w.name);
+      }
+
+      saveWidgets(() => {
+        statusEl.remove();
+        renderAll(wrapper);
+      });
+    } catch (e) {
+      console.warn('[FME Widgets] Publish error:', e);
+      statusEl.style.background = '#fff0f0';
+      statusEl.style.borderColor = '#f5c6cb';
+      statusEl.innerHTML = `<span style="color:#c00;">✕ Eroare la ${action}: ${escHtml(e.message)}</span>`;
+      setTimeout(() => statusEl.remove(), 5000);
+    }
+  }
+
   function deleteWidget(wrapper, idx) {
     const w = _widgets[idx];
     if (!w) return;
+    if (w.published) {
+      alert('Retrage mai întâi widget-ul de pe forum înainte de a-l șterge.');
+      return;
+    }
     if (!confirm(`Ștergi widget-ul "${w.name}"?`)) return;
     if (typeof FMEActivityLog !== 'undefined') FMEActivityLog.log('widget-delete', 'Șters widget: ' + w.name);
     _widgets.splice(idx, 1);
@@ -1004,6 +1114,10 @@ var FMEWidgetsTab = (() => {
 
   function escHtml(str) {
     return String(str ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function escRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
   return { render, runAcpWidgets };

@@ -290,76 +290,199 @@ var FMEForumAPI = (() => {
     return false;
   }
 
-  // ─── saveJsPlugin ─────────────────────────────────────────────────────────
+  // ─── JS Management (Coduri JavaScript) ──────────────────────────────────
+
+  /**
+   * Finds the edit URL of an existing JS entry by title on the JS list page.
+   * If not found, returns the "create new" URL.
+   * @param {string} tid   — forum theme ID
+   * @param {string} title — entry title to search for (e.g. "FME Widgets")
+   * @returns {Promise<string>} edit URL
+   */
+  async function findJsEditUrl(tid, title) {
+    const origin = window.location.origin;
+
+    try {
+      // Step 1: Fetch dashboard to get correct TID from page links
+      const dashUrl = `${origin}/admin/?mode=js&part=modules&sub=html`;
+      const dashDoc = await fetchPage(dashUrl);
+      const tidLink = dashDoc.querySelector('a[href*="tid="]');
+      const tidMatch = tidLink ? tidLink.getAttribute('href').match(/[?&]tid=([a-f0-9]+)/i) : null;
+      const correctTid = tidMatch ? tidMatch[1] : tid;
+
+      // Step 2: Fetch the ACTUAL JS list page with correct TID
+      const listUrl = `${origin}/admin/?mode=js&part=modules&sub=html&tid=${correctTid}`;
+      const doc = await fetchPage(listUrl);
+
+      // Find edit links on the JS list page
+      const allLinks = Array.from(doc.querySelectorAll('a[href]'));
+      const editLinks = allLinks.filter(a => {
+        const href = a.getAttribute('href') || '';
+        return href.includes('js_edit') || (href.includes('mode=edit') && href.includes('sub=html'));
+      });
+      console.log('[FME] findJsEditUrl: searching "' + title + '", found ' + editLinks.length + ' edit links');
+
+      // Strategy 1: Link in same row as title
+      for (const link of editLinks) {
+        const container = link.closest('tr') || link.closest('li') || link.parentElement;
+        const containerText = container ? container.textContent : '';
+        if (containerText.includes(title)) {
+          return resolveUrl(link.getAttribute('href'), listUrl);
+        }
+      }
+
+      // Strategy 2: Search raw HTML for title near an edit link
+      const bodyHtml = doc.body ? doc.body.innerHTML : '';
+      const titleInHtml = bodyHtml.includes(title);
+
+      if (titleInHtml) {
+        const titleIdx = bodyHtml.indexOf(title);
+        const regionStart = Math.max(0, titleIdx - 1500);
+        const region = bodyHtml.substring(regionStart, titleIdx + 1500);
+
+        let editMatch = region.match(/href=["']([^"']*js_edit[^"']*)/);
+        if (!editMatch) {
+          editMatch = region.match(/href=["']([^"']*[?&]id=\d+[^"']*)/);
+        }
+        if (editMatch) {
+          return resolveUrl(editMatch[1].replace(/&amp;/g, '&'), listUrl);
+        }
+
+        // Strategy 3: Find the .js URL near the title and derive edit URL from numeric ID
+        const escapedTitle = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const jsUrlRegex = new RegExp(escapedTitle + '[\\s\\S]{0,500}?(https?://[^\\s"\'<>]+\\.js)', 'i');
+        const jsUrlMatch = bodyHtml.match(jsUrlRegex);
+        if (jsUrlMatch) {
+          const jsIdMatch = jsUrlMatch[1].match(/\/(\d+)\.js/);
+          if (jsIdMatch) {
+            const entryId = jsIdMatch[1];
+            return `${origin}/admin/?part=modules&sub=html&mode=js_edit&id=${entryId}&extended_admin=1&tid=${correctTid}`;
+          }
+        }
+      }
+
+      // Not found — return create-new URL with correct TID
+      return `${origin}/admin/?part=modules&sub=html&mode=js_edit&extended_admin=1&tid=${encodeURIComponent(correctTid)}`;
+    } catch (e) {
+      console.warn('[FME ForumAPI] findJsEditUrl error:', e);
+    }
+
+    return `${origin}/admin/?part=modules&sub=html&mode=js_edit&extended_admin=1&tid=${encodeURIComponent(tid)}`;
+  }
+
+  /**
+   * Loads the current JavaScript content from a Forumotion JS entry.
+   * First tries to find an existing "FME Widgets" entry; falls back to blank form.
+   * Uses raw HTML regex to extract textarea content (DOMParser can't read display:none textarea values).
+   * @param {string} tid — forum theme ID
+   * @param {string} [entryTitle] — title to search for (default: "FME Widgets")
+   * @returns {Promise<{code: string, title: string, editUrl: string}>}
+   */
+  async function loadForumJs(tid, entryTitle) {
+    entryTitle = entryTitle || 'FME Widgets';
+    const editUrl = await findJsEditUrl(tid, entryTitle);
+
+    // Fetch raw HTML to extract textarea content (DOMParser doesn't populate display:none textarea)
+    const res = await fetch(editUrl, { credentials: 'include' });
+    if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${editUrl}`);
+    const html = await res.text();
+
+    // Extract textarea content via regex — handles <textarea ...>CONTENT</textarea>
+    const taMatch = html.match(/<textarea[^>]*name=["']content["'][^>]*>([\s\S]*?)<\/textarea>/i);
+    const code = taMatch ? taMatch[1].replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#039;/g, "'") : '';
+
+    // Parse title
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const titleInput = doc.querySelector('input[name="title"]');
+    const title = titleInput ? (titleInput.value || '') : '';
+
+    return { code, title, editUrl };
+  }
 
   /**
    * Saves a JavaScript plugin/widget via the Forumotion JS management page.
-   * URL: /admin/?part=modules&sub=html&mode=js_edit&extended_admin=1&tid={tid}
+   * First finds the existing "FME Widgets" entry (or creates new).
    *
-   * @param {string} tid       — forum theme ID
-   * @param {string} jsCode    — the JavaScript code to save
-   * @param {string} placement — "all" (all pages), "index", "topics", etc.
-   * @param {boolean} enabled  — whether the JS block is active
+   * @param {string}          tid        — forum theme ID
+   * @param {string}          jsCode     — the JavaScript code to save
+   * @param {string}          placement  — "all", "index", "topics", "chatbox", etc. or comma-separated
+   * @param {boolean}         enabled    — whether the JS block is active
+   * @param {string}          [title]    — optional script title
+   * @param {Array<string>}   [auths]    — user groups: ['1','2','3','4'] (admin, mods, members, anon). Default: all.
    * @returns {Promise<boolean>} true if saved successfully
    */
-  async function saveJsPlugin(tid, jsCode, placement, enabled) {
+  async function saveJsPlugin(tid, jsCode, placement, enabled, title, auths) {
     const origin = window.location.origin;
     placement = placement || 'all';
-    const editUrl = `${origin}/admin/?part=modules&sub=html&mode=js_edit&extended_admin=1&tid=${encodeURIComponent(tid)}`;
+    title = title || 'FME Widgets';
+
+    // Find existing entry or use create-new URL
+    const editUrl = await findJsEditUrl(tid, title);
 
     try {
       const doc = await fetchPage(editUrl);
 
       // Find the main form
-      const form = doc.querySelector('form');
+      const form = doc.querySelector('form#formenvoi') || doc.querySelector('form');
       if (!form) throw new Error('Form not found on JS edit page');
 
-      const formAction = resolveUrl(form.getAttribute('action') || editUrl, editUrl);
+      let formAction = resolveUrl(form.getAttribute('action') || editUrl, editUrl);
+      // Keep mode=js_edit in URL (identifies the handler), mode=save goes in POST body only
 
-      // Collect hidden fields
+      // Collect hidden fields (e.g. _t token, mode, etc.)
       const hiddenFields = Array.from(form.querySelectorAll('input[type="hidden"]')).map(inp => ({
         name:  inp.name  || '',
         value: inp.value || '',
       }));
-
-      // Find the textarea for JS code
-      const textarea = form.querySelector('textarea');
-      if (!textarea) throw new Error('Textarea not found on JS edit page');
-      const textareaName = textarea.name || textarea.getAttribute('name') || '';
 
       // Build POST body
       const params = new URLSearchParams();
       for (const f of hiddenFields) {
         if (f.name) params.append(f.name, f.value || '');
       }
-      if (textareaName) params.append(textareaName, jsCode || '');
 
-      // Placement field
-      const placementSel = form.querySelector('select[name*="placement"]');
-      if (placementSel) {
-        params.append(placementSel.name, 'js_placement_' + placement);
+      // Title field
+      const titleInput = form.querySelector('input[name="title"]');
+      const currentTitle = titleInput ? (titleInput.value || '') : '';
+      params.append('title', title || currentTitle || 'FME Widgets');
+
+      // JavaScript content (textarea name="content")
+      params.append('content', jsCode || '');
+
+      // Enabled/Disabled (js_disabled: 0 = enabled/active, 1 = disabled)
+      params.append('js_disabled', enabled ? '0' : '1');
+
+      // Placement checkboxes (js_placement[]) — values: "allpages", "index", "topics", "chatbox", etc.
+      const placements = placement.split(',').map(p => p.trim()).filter(Boolean);
+      for (const p of placements) {
+        params.append('js_placement[]', p === 'all' ? 'allpages' : p);
       }
 
-      // Disabled field
-      const disabledInput = form.querySelector('input[name*="disabled"], select[name*="disabled"]');
-      if (disabledInput) {
-        params.append(disabledInput.name, enabled ? 'false' : 'true');
+      // Auth checkboxes (js_auths[]) — which user groups see the JS
+      // Default: all groups (1=admin, 2=mods, 3=members, 4=anon)
+      const authValues = auths && auths.length ? auths : ['1', '2', '3', '4'];
+      for (const a of authValues) {
+        params.append('js_auths[]', a);
       }
 
-      // Mode field
+      // Mode field — MUST be "save" for the server to persist the entry
+      params.delete('mode');
       params.append('mode', 'save');
 
-      // Submit
-      const submitBtn = form.querySelector('input[type="submit"]');
+      // Submit button
+      const submitBtn = form.querySelector('input[type="submit"][name="submit"]') ||
+                        form.querySelector('input[type="submit"]');
       if (submitBtn && submitBtn.name) {
-        params.append(submitBtn.name, submitBtn.value || '');
+        params.append(submitBtn.name, submitBtn.value || 'Validează');
       }
+
 
       const res = await fetch(formAction, {
         method:      'POST',
         headers:     { 'Content-Type': 'application/x-www-form-urlencoded' },
         body:        params.toString(),
         credentials: 'include',
+        redirect:    'follow',
       });
 
       return res.ok;
@@ -387,5 +510,5 @@ var FMEForumAPI = (() => {
 
   // ─── Public API ────────────────────────────────────────────────────────────
 
-  return { getTid, fetchPage, loadTemplateContent, saveTemplate, findTemplateEditUrl, resetTemplate, saveJsPlugin };
+  return { getTid, fetchPage, loadTemplateContent, saveTemplate, findTemplateEditUrl, resetTemplate, findJsEditUrl, loadForumJs, saveJsPlugin };
 })();

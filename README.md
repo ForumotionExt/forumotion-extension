@@ -2,7 +2,7 @@
 
 > A Chrome extension that enhances the Forumotion / ForumGratuit admin control panel (ACP) with professional theme management, template editing, and automatic update notifications.
 
-![Version](https://img.shields.io/badge/version-1.4.0-blue)
+![Version](https://img.shields.io/badge/version-1.4.1-blue)
 ![Manifest](https://img.shields.io/badge/manifest-v3-green)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
 
@@ -31,7 +31,7 @@
 | **Template-uri** | Conținut | Edit native Forumotion templates directly from the ACP. Reset to default with one click. |
 | **ACP Styles** | CSS & JS | Inject custom CSS into the ACP. Built-in Dark 2026 preset, CSS file upload, and live style guard (auto-reinjection on SPA navigation). |
 | **Forum CSS** | CSS & JS | Inject custom CSS into forum (non-admin) pages via the Forum Injector. Forum Dark 2026 preset and file upload included. |
-| **Widgets JS** | CSS & JS | Manage named JavaScript snippets that auto-run on ACP and/or forum pages. Executed via `chrome.scripting.executeScript` — bypasses both extension and page CSP. |
+| **Widgets JS** | CSS & JS | Manage named JavaScript snippets that auto-run on ACP and/or forum pages. Includes direct publish/unpublish to Forumotion JS management and execution via `chrome.scripting.executeScript`. |
 | **Statistici** | Utile | Overview of installed themes, CSS file sizes, widget and note counts, storage usage, and on-demand forum statistics. |
 | **Notițe** | Utile | Multi-tab personal notepad (up to 5 notes) with 1.5-second auto-save. |
 | **Backup & Restore** | Utile | Export all FME data (themes, CSS, widgets, notes, settings) to a dated JSON file. Restore from any previous backup. |
@@ -184,6 +184,15 @@ The extension follows a **distributed, message-passing architecture** across thr
 ---
 
 ## Changelog
+
+### v1.4.1 — 2026-04-06
+- **Dashboard Home redesign:** Quick Stats, link-uri de download/update și secțiune Roadmap în pagina principală
+- **Widgets JS publish/unpublish:** publicare directă pe forum cu entry dedicat per widget și toggle enable/disable
+- **Quick Stats:** număr pentru widgets instalate/publicate, teme disponibile și versiunea curentă FME
+- **Roadmap actualizat:** Plugins, auto-hashtags pentru teme, auto-validare template-uri și fixuri pentru ACP dark mode
+- Fix: contorul **Teme disponibile** citește acum catalogul real GitHub, cu fallback la temele instalate
+- Fix: layout-ul pentru **Roadmap / Changelog** a fost lărgit și clarificat
+- Fix: **Activity Log** protejat împotriva erorii `Extension context invalidated`
 
 ### v1.4.0 — 2026-04-06
 - **Tab SEO Tools:** analiză SEO completă cu 28 verificări, inventar meta tags, analiză link-uri, și recomandări

@@ -155,15 +155,19 @@ var FMEActivityLog = (() => {
 
   function loadLog() {
     return new Promise(resolve => {
-      chrome.storage.local.get({ [STORAGE_KEY]: [] }, result => {
-        resolve(Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : []);
-      });
+      try {
+        chrome.storage.local.get({ [STORAGE_KEY]: [] }, result => {
+          resolve(Array.isArray(result[STORAGE_KEY]) ? result[STORAGE_KEY] : []);
+        });
+      } catch (_) { resolve([]); }
     });
   }
 
   function saveLog(entries) {
     return new Promise(resolve => {
-      chrome.storage.local.set({ [STORAGE_KEY]: entries }, resolve);
+      try {
+        chrome.storage.local.set({ [STORAGE_KEY]: entries }, resolve);
+      } catch (_) { resolve(); }
     });
   }
 

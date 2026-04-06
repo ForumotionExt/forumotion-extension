@@ -1,8 +1,21 @@
 {
-  "version": "1.4.0",
+  "version": "1.4.1",
   "releaseDate": "2026-04-06",
-  "releaseUrl": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.4.0",
+  "releaseUrl": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.4.1",
   "changelog": [
+    {
+      "version": "1.4.1",
+      "date": "2026-04-06",
+      "notes": [
+        { "type": "feature", "text": "Dashboard Home redesign: Quick Stats, link-uri pentru download/update și secțiune Roadmap în pagina principală" },
+        { "type": "feature", "text": "Widgets JS publish/unpublish: publicare directă pe forum cu entry dedicat per widget și toggle enable/disable" },
+        { "type": "feature", "text": "Quick Stats: contor pentru widgets instalate/publicate, teme disponibile și versiunea curentă FME" },
+        { "type": "other",   "text": "Roadmap actualizat cu Plugins, auto-hashtags pentru teme, auto-validare template-uri și ACP dark mode fixes" },
+        { "type": "bugfix",  "text": "Fix: contorul «Teme disponibile» citește acum catalogul real GitHub, cu fallback la temele instalate" },
+        { "type": "bugfix",  "text": "Fix: layout Roadmap/Changelog ajustat pentru badge-uri mai late și afișare mai clară" },
+        { "type": "bugfix",  "text": "Fix: Activity Log protejat împotriva erorii «Extension context invalidated»" }
+      ]
+    },
     {
       "version": "1.4.0",
       "date": "2026-04-06",
@@ -15,10 +28,11 @@
         { "type": "feature", "text": "Instalare teme: modal progres pas-cu-pas pentru CSS, template-uri și plugin-uri JS" },
         { "type": "feature", "text": "Dezinstalare teme: resetare automată template-uri la implicit înainte de ștergere" },
         { "type": "feature", "text": "Plugin JS install: descărcare și salvare automată JS din GitHub via saveJsPlugin()" },
-        { "type": "feature", "text": "Quick ACP Links: link-uri rapide către secțiunile importante ale panoului de administrare" },
+        { "type": "feature", "text": "Quick Stats: dashboard cu statistici rapide — widgets instalate, publicate pe forum, teme disponibile, versiune FME" },
+        { "type": "feature", "text": "Publicare widget-uri: publicare directă pe forum cu toggle enable/disable per widget via saveJsPlugin()" },
         { "type": "feature", "text": "CSS Snippet Catalog: colecție de snippet-uri CSS predefinite aplicabile cu un click" },
         { "type": "feature", "text": "Template Marker System: sistem de marcaje pentru template-uri modificate" },
-        { "type": "feature", "text": "Panel Home page: pagină principală cu sumar rapid și acces direct la funcționalități" },
+        { "type": "feature", "text": "Panel Home page: pagină principală redesigned cu Quick Stats, Roadmap, link-uri download/update" },
         { "type": "bugfix",  "text": "Fix: findTemplateEditUrl rescris complet — URL-uri corecte Forumotion (mode=edit_{category}&t={id}&l={category})" },
         { "type": "bugfix",  "text": "Fix: instalare template-uri folosea manifest.path (undefined) în loc de theme.path" },
         { "type": "bugfix",  "text": "Fix: butonul de instalare afișa 'Instalează CSS' în loc de 'Instalează tema'" }
@@ -84,46 +98,46 @@
       ]
     }
   ],
-  "futures": [
+  "roadmap": [
+    {
+      "title": "Plugins",
+      "description": "Manager de plugin-uri cu aceeași bază ca la widgets — instalare, activare/dezactivare, publicare pe forum.",
+      "status": "planned"
+    },
+    {
+      "title": "Auto-hashtags teme",
+      "description": "Adăugare automată a hashtag-urilor (tags) pentru temele instalate pe forum.",
+      "status": "planned"
+    },
+    {
+      "title": "Auto-validare template-uri",
+      "description": "Validare automată a template-urilor după instalarea temelor — verificare și publicare fără pași manuali.",
+      "status": "planned"
+    },
+    {
+      "title": "Teme noi ACP & fix Dark Mode",
+      "description": "Noi teme pentru panoul de administrare. Bug fix la dark mode — unele elemente rămân albe.",
+      "status": "planned"
+    },
     {
       "title": "Suport Firefox & Edge",
-      "description": "Portarea extensiei pentru Mozilla Firefox si Microsoft Edge (Manifest V3)."
+      "description": "Portarea extensiei pentru Mozilla Firefox și Microsoft Edge (Manifest V3).",
+      "status": "planned"
     },
     {
       "title": "Marketplace widget-uri",
-      "description": "Catalog online de widget-uri JS contribuite de comunitate, instalabile direct din tab-ul Widgets JS."
+      "description": "Catalog online de widget-uri JS contribuite de comunitate, instalabile direct din tab-ul Widgets.",
+      "status": "planned"
     },
     {
-      "title": "Suport multi-forum",
-      "description": "Gestionarea mai multor forumuri din acelasi dashboard, cu profiluri separate de setari."
+      "title": "Export temă completă (.fmetheme)",
+      "description": "Pachetare completă temă + template-uri într-un singur fișier .fmetheme pentru distribuire.",
+      "status": "planned"
     },
     {
-      "title": "Notificari teme noi",
-      "description": "Alerta automata cand sunt adaugate teme noi in catalogul ForumotionExt/forumotion-themes."
-    },
-    {
-      "title": "Dark mode pentru Dashboard",
-      "description": "Tema intunecata pentru pagina Dashboard, cu salvare preferinta per browser."
-    },
-    {
-      "title": "Filtrare avansata teme",
-      "description": "Filtrare dupa motor de forum, culoare dominanta, autor si data publicarii."
-    },
-    {
-      "title": "Export tema completa (.fmetheme)",
-      "description": "Pachetare completa tema + template-uri intr-un singur fisier .fmetheme pentru distribuire si reinstalare."
-    },
-    {
-      "title": "Live CSS preview in ACP",
-      "description": "Preview CSS in timp real direct in ACP, fara a deschide un tab nou — modificarile apar instant."
-    },
-    {
-      "title": "Scheduler widget-uri",
-      "description": "Activarea/dezactivarea automata a widget-urilor dupa un program configurabil (ex: banner eveniment activ doar in weekend)."
-    },
-    {
-      "title": "Syntax highlighting in editorii CSS/JS",
-      "description": "Editor de cod cu colorare sintactica pentru tab-urile ACP Styles, Forum CSS si Widgets JS."
+      "title": "Syntax highlighting",
+      "description": "Editor de cod cu colorare sintactică pentru tab-urile CSS și Widgets JS.",
+      "status": "planned"
     }
   ]
 }
