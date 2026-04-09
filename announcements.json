@@ -1,0 +1,18 @@
+[
+  {
+    "id": "1",
+    "title": "FME v1.5.0 — Theme Pack System",
+    "body": "Sistem complet de instalare teme cu CSS, templates și widgets.",
+    "date": "2026-04-10",
+    "type": "feature",
+    "url": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.5.0"
+  },
+  {
+    "id": "2", 
+    "title": "Plugin System avansat disponibil",
+    "body": "Hook-uri, sandbox, conflict detection.",
+    "date": "2026-04-08",
+    "type": "update",
+    "url": ""
+  }
+]
