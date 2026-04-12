@@ -1,18 +1,31 @@
 [
   {
     "id": "1",
-    "title": "FME v1.5.0 — Theme Pack System",
-    "body": "Sistem complet de instalare teme cu CSS, templates și widgets.",
-    "date": "2026-04-10",
-    "type": "feature",
-    "url": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.5.0"
-  },
-  {
-    "id": "2", 
+    "title": "FME v1.4.35 - In dezvoltare",
+    "body": "Hook-uri, sandbox, conflict detection. Detalii în curând.",
+    "date": "2026-04-12",
+    "type": "development",
+    "url": "https://github.com/ForumotionExt/forumotion-extension/wiki/Roadmap#v1435---in-dezvoltare"
+  }, {
+    "id": "2",
+    "title": "FME v1.4.2 - Publicat si disponibil pentru descărcare",
+    "body": "Hook-uri, sandbox, conflict detection. Detalii în curând.",
+    "date": "2026-04-06",
+    "type": "development",
+    "url": "https://github.com/ForumotionExt/forumotion-extension/wiki/Roadmap#v142---published"
+  }, {
+    "id": "3", 
     "title": "Plugin System avansat disponibil",
     "body": "Hook-uri, sandbox, conflict detection.",
     "date": "2026-04-08",
     "type": "update",
-    "url": ""
+    "url": "https://github.com/ForumotionExt/forumotion-extension/wiki/Roadmap#plugin-system-avansat-disponibil"
+  }, {
+    "id": "4", 
+    "title": "FME v1.4.0 - Lansat",
+    "body": "Lansarea oficială a FME v1.4.0 cu funcționalități de bază și îmbunătățiri de performanță.",
+    "date": "2026-03-30",
+    "type": "release",
+    "url": "https://github.com/ForumotionExt/forumotion-extension/wiki/Roadmap#v140---published"
   }
 ]
