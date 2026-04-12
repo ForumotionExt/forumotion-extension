@@ -1,27 +1,41 @@
 [
   {
-    "id": "1",
+    "id": 1,
+    "title": "FME v1.4.35 - Lansare iminentă",
+    "body": "Ultimele pregătiri pentru lansarea FME v1.4.35. Aceasta va include hook-uri, sandbox și conflict detection. Rămâneți aproape pentru detalii!",
+    "date": "2026-04-10",
+    "type": "announcement",
+    "url": "https://github.com/ForumotionExt/forumotion-extension/wiki/Roadmap#v1435---lansare-imminenta"
+  }, {
+    "id": "2",
+    "title": "FME v1.4.35 - RC1 disponibil pentru testare",
+    "body": "Primul release candidate pentru FME v1.4.35 este acum disponibil pentru testare. Include hook-uri, sandbox și conflict detection. Feedback-ul comunității este binevenit!",
+    "date": "2026-04-11",
+    "type": "release-candidate",
+    "url": "https://github.com/ForumotionExt/forumotion-extension/wiki/Roadmap#v1435---rc1-disponibil-pentru-testare"
+  }, {
+    "id": "3",
     "title": "FME v1.4.35 - In dezvoltare",
     "body": "Hook-uri, sandbox, conflict detection. Detalii în curând.",
     "date": "2026-04-12",
     "type": "development",
     "url": "https://github.com/ForumotionExt/forumotion-extension/wiki/Roadmap#v1435---in-dezvoltare"
   }, {
-    "id": "2",
+    "id": "3",
     "title": "FME v1.4.2 - Publicat si disponibil pentru descărcare",
     "body": "Hook-uri, sandbox, conflict detection. Detalii în curând.",
     "date": "2026-04-06",
-    "type": "development",
+    "type": "production",
     "url": "https://github.com/ForumotionExt/forumotion-extension/wiki/Roadmap#v142---published"
   }, {
-    "id": "3", 
+    "id": "4", 
     "title": "Plugin System avansat disponibil",
     "body": "Hook-uri, sandbox, conflict detection.",
     "date": "2026-04-08",
     "type": "update",
     "url": "https://github.com/ForumotionExt/forumotion-extension/wiki/Roadmap#plugin-system-avansat-disponibil"
   }, {
-    "id": "4", 
+    "id": "5", 
     "title": "FME v1.4.0 - Lansat",
     "body": "Lansarea oficială a FME v1.4.0 cu funcționalități de bază și îmbunătățiri de performanță.",
     "date": "2026-03-30",
