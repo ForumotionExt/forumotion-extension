@@ -2,9 +2,12 @@
 
 > A Chrome extension that enhances the Forumotion / ForumGratuit admin control panel (ACP) with professional theme management, template editing, and automatic update notifications.
 
-![Version](https://img.shields.io/badge/version-1.4.1-blue)
-![Manifest](https://img.shields.io/badge/manifest-v3-green)
-![License](https://img.shields.io/badge/license-MIT-lightgrey)
+[![Version](https://img.shields.io/github/v/release/ForumotionExt/forumotion-extension?label=version&color=blue)](https://github.com/ForumotionExt/forumotion-extension/releases)
+[![Downloads](https://img.shields.io/github/downloads/ForumotionExt/forumotion-extension/total?label=downloads&color=brightgreen)](https://github.com/ForumotionExt/forumotion-extension/releases)
+[![License](https://img.shields.io/github/license/ForumotionExt/forumotion-extension?color=lightgrey)](https://github.com/ForumotionExt/forumotion-extension/blob/main/LICENSE)
+[![Last Commit](https://img.shields.io/github/last-commit/ForumotionExt/forumotion-extension?color=orange)](https://github.com/ForumotionExt/forumotion-extension/commits)
+[![Issues](https://img.shields.io/github/issues/ForumotionExt/forumotion-extension?color=red)](https://github.com/ForumotionExt/forumotion-extension/issues)
+[![Stars](https://img.shields.io/github/stars/ForumotionExt/forumotion-extension?color=yellow)](https://github.com/ForumotionExt/forumotion-extension/stargazers)
 
 ---
 
