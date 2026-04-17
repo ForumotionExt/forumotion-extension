@@ -4,11 +4,11 @@
 
 [![Version](https://img.shields.io/github/v/release/ForumotionExt/forumotion-extension?label=version&color=blue)](https://github.com/ForumotionExt/forumotion-extension/releases)
 [![Downloads](https://img.shields.io/github/downloads/ForumotionExt/forumotion-extension/total?label=downloads&color=brightgreen)](https://github.com/ForumotionExt/forumotion-extension/releases)
+[![Forumotion Compatible](https://img.shields.io/badge/Forumotion-Compatible-blueviolet)](https://www.forumotion.com/)
 [![License](https://img.shields.io/github/license/ForumotionExt/forumotion-extension?color=lightgrey)](https://github.com/ForumotionExt/forumotion-extension/blob/main/LICENSE)
 [![Last Commit](https://img.shields.io/github/last-commit/ForumotionExt/forumotion-extension?color=orange)](https://github.com/ForumotionExt/forumotion-extension/commits)
 [![Issues](https://img.shields.io/github/issues/ForumotionExt/forumotion-extension?color=red)](https://github.com/ForumotionExt/forumotion-extension/issues)
 [![Stars](https://img.shields.io/github/stars/ForumotionExt/forumotion-extension?color=yellow)](https://github.com/ForumotionExt/forumotion-extension/stargazers)
-[![Forumotion Compatible](https://img.shields.io/badge/Forumotion-Compatible-blueviolet)](https://www.forumotion.com/)
 
 ---
 
