@@ -8,6 +8,7 @@
 [![Last Commit](https://img.shields.io/github/last-commit/ForumotionExt/forumotion-extension?color=orange)](https://github.com/ForumotionExt/forumotion-extension/commits)
 [![Issues](https://img.shields.io/github/issues/ForumotionExt/forumotion-extension?color=red)](https://github.com/ForumotionExt/forumotion-extension/issues)
 [![Stars](https://img.shields.io/github/stars/ForumotionExt/forumotion-extension?color=yellow)](https://github.com/ForumotionExt/forumotion-extension/stargazers)
+[![Forumotion Compatible](https://img.shields.io/badge/Forumotion-Compatible-blueviolet)](https://www.forumotion.com/)
 
 ---
 
