@@ -1,9 +1,26 @@
 # Changelog
 
+[![Version](https://img.shields.io/github/v/release/ForumotionExt/forumotion-extension)](https://github.com/ForumotionExt/forumotion-extension/releases)
+[![Downloads](https://img.shields.io/github/downloads/ForumotionExt/forumotion-extension/total)](https://github.com/ForumotionExt/forumotion-extension/releases)
+[![License](https://img.shields.io/github/license/ForumotionExt/forumotion-extension)](https://github.com/ForumotionExt/forumotion-extension/blob/main/LICENSE)
+
 All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)  
 and this project adheres to [Semantic Versioning](https://semver.org/).
+
+---
+
+## [Unreleased]
+
+### Added
+- _Nothing yet_
+
+### Changed
+- _Nothing yet_
+
+### Fixed
+- _Nothing yet_
 
 ---
 
@@ -216,6 +233,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## Version Links
 
+[Unreleased]: https://github.com/ForumotionExt/forumotion-extension/compare/v1.4.2...HEAD  
 [1.4.2]: https://github.com/ForumotionExt/forumotion-extension/compare/v1.4.1...v1.4.2  
 [1.4.1]: https://github.com/ForumotionExt/forumotion-extension/compare/v1.4.0...v1.4.1  
 [1.4.0]: https://github.com/ForumotionExt/forumotion-extension/compare/v1.3.0...v1.4.0  
