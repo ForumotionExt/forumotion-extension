@@ -9,6 +9,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/)  
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.4.4.RC1] — 2026-04-19
+[Release](https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.4.4-RC1)
+
+### Changed
+  - Rescris complet în Vanilla JS — fără dependențe externe
+  - Panou FME nou în ACP cu navigare internă și router
+  - Sistem de plugin-uri cu Marketplace, Registry, Executor
+  - FME Bridge pentru comunicare plugin → extensie
+  - Theme Builder, Template Editor, SEO Analyzer
+  - Backup & Restore, Notițe Admin, ACP Audit
+  - Internaționalizare RO/EN/FR
+  - Compatibilitate Manifest V3
+
+
 ## [1.4.2] - 2026-04-06
 [Release](https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.4.2)
 
