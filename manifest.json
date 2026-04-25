@@ -1,27 +1,31 @@
 {
   "manifest_version": 3,
-  "name": "Forumotion Extension",
-  "short_name": "FME",
-  "version": "1.4.2",
-  "description": "Enhanced admin panel for Forumotion/ForumGratuit: themes, templates, CSS editor, widgets, notes, backup, and update management.",
+  "name"        : "Forumotion Extension (FME)",
+  "version"     : "1.4.0",
+  "short_name"  : "FME",
+  "description" : "Enhanced admin panel for Forumotion/ForumGratuit: themes, widgets, SEO tools, plugins, marketplace and more.",
+
   "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16"  : "icons/icon16.png",
+    "48"  : "icons/icon48.png",
+    "128" : "icons/icon128.png"
   },
+
   "action": {
-    "default_popup": "src/popup/popup.html",
-    "default_title": "Forumotion Extension",
-    "default_icon": {
-      "16": "icons/icon16.png",
-      "48": "icons/icon48.png",
-      "128": "icons/icon128.png"
+    "default_popup" : "src/popup/popup.html",
+    "default_title" : "Forumotion Extension (FME)",
+    "default_icon"  : {
+      "16"  : "icons/icon16.png",
+      "48"  : "icons/icon48.png",
+      "128" : "icons/icon128.png"
     }
   },
+
   "background": {
-    "service_worker": "src/background/service-worker.js",
-    "type": "module"
+    "service_worker" : "src/background/service-worker.js",
+    "type"           : "module"
   },
+
   "content_scripts": [
     {
       "matches": [
@@ -32,32 +36,15 @@
         "*://*.forumotion.eu/admin*",
         "*://*.forumotion.eu/adminhd*"
       ],
-      "js": [
-        "src/content/forum-api.js",
-        "src/content/github.js",
-        "src/content/tabs/settings.js",
-        "src/content/tabs/themes.js",
-        "src/content/tabs/templates.js",
-        "src/content/tabs/updates.js",
-        "src/content/tabs/acp-css.js",
-        "src/content/tabs/forum-css.js",
-        "src/content/tabs/widgets.js",
-        "src/content/tabs/stats.js",
-        "src/content/tabs/notes.js",
-        "src/content/tabs/backup.js",
-        "src/content/tabs/chatbox.js",
-        "src/content/tabs/activity-log.js",
-        "src/content/tabs/seo-tools.js",
-        "src/content/tabs/plugins.js",
-        "src/content/panel.js",
-        "src/content/content.js"
-      ],
-      "css": [
+      "js"     : ["dist/chrome/content/bundle.js"],
+      "css"    : [
         "src/styles/panel.css",
-        "src/styles/themes-tab.css"
+        "src/styles/sections.css",
+        "src/styles/dark-mode.css"
       ],
-      "run_at": "document_idle"
+      "run_at" : "document_idle"
     },
+
     {
       "matches": [
         "*://*.forumgratuit.ro/*",
@@ -73,13 +60,12 @@
         "*://*.forumotion.eu/admin*",
         "*://*.forumotion.eu/adminhd*"
       ],
-      "js": [
-        "src/content/forum-injector.js",
-        "src/content/forum-chatbox.js"
-      ],
-      "run_at": "document_idle"
+      "js"     : ["dist/chrome/forum/bundle.js"],
+      "run_at" : "document_idle"
     }
+
   ],
+
   "permissions": [
     "storage",
     "alarms",
@@ -87,6 +73,7 @@
     "tabs",
     "notifications"
   ],
+
   "host_permissions": [
     "*://*.forumgratuit.ro/*",
     "*://*.forumotion.com/*",
@@ -95,18 +82,31 @@
     "https://api.github.com/*",
     "https://raw.githubusercontent.com/*"
   ],
+
   "content_security_policy": {
-    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://raw.githubusercontent.com"
+    "extension_pages": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https:; connect-src 'self' https://api.github.com https://raw.githubusercontent.com; font-src 'self' data:"
   },
+
   "web_accessible_resources": [
     {
-      "resources": ["src/styles/*.css", "icons/*", "version.json"],
+      "resources" : [
+        "icons/icon16.png",
+        "icons/icon48.png",
+        "icons/icon128.png",
+        "version.json",
+        "announcements.json",
+        "content/bridge.main.js",
+        "dist/chrome/content/bridge.main.js",
+        "config.js"
+      ],
       "matches": [
         "*://*.forumgratuit.ro/*",
         "*://*.forumotion.com/*",
         "*://*.forumotion.net/*",
-        "*://*.forumotion.eu/*"
-      ]
+        "*://*.forumotion.eu/*",
+        "<all_urls>"
+      ],
+      "use_dynamic_url": false
     }
   ]
 }

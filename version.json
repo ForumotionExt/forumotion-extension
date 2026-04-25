@@ -1,160 +1,29 @@
 {
-  "version": "1.4.2",
-  "releaseDate": "2026-04-06",
-  "releaseUrl": "https://github.com/ForumotionExt/forumotion-extension/releases/tag/v1.4.2",
-  "changelog": [
-    {
-      "version": "1.4.2",
-      "date": "2026-04-06",
+  "version"     : "1.45.3 RC1",
+  "released"    : "2026-04-13",
+  "channel"     : "stable",
+
+  "compatibility": {
+    "chrome"  : ">=88",
+    "firefox" : ">=109",
+    "safari"  : ">=16"
+  },
+
+  "changelog": {
+    "1.45.3 RC1": {
+      "date" : "2026-04-13",
+      "type" : "major",
       "notes": [
-        { "type": "feature", "text": "ACP Styles: JavaScript personalizat ACP cu editor dedicat, upload .js, rulare automată și persistență între sesiuni" },
-        { "type": "feature", "text": "SEO Tools extins: scanare pe URL custom, preview social, insight-uri keywords și export/copy pentru raport" },
-        { "type": "feature", "text": "Template-uri: Bulk Search & Replace cu scanare în toate categoriile, preview contextual și replace în masă pe selecție" },
-        { "type": "feature", "text": "Backup & Statistici: suport pentru JS ACP custom în export/import și în sumarul extensiei" },
-        { "type": "bugfix",  "text": "Fix: codul custom ACP CSS/JS se autosalvează corect și este păstrat între sesiuni" },
-        { "type": "bugfix",  "text": "Fix/UI: integrare vizuală ACP îmbunătățită pentru tabs, modale, blocuri SEO, quote/explain și cardurile support" }
-      ]
-    },
-    {
-      "version": "1.4.1",
-      "date": "2026-04-06",
-      "notes": [
-        { "type": "feature", "text": "Dashboard Home redesign: Quick Stats, link-uri pentru download/update și secțiune Roadmap în pagina principală" },
-        { "type": "feature", "text": "Widgets JS publish/unpublish: publicare directă pe forum cu entry dedicat per widget și toggle enable/disable" },
-        { "type": "feature", "text": "Quick Stats: contor pentru widgets instalate/publicate, teme disponibile și versiunea curentă FME" },
-        { "type": "other",   "text": "Roadmap actualizat cu Plugins, auto-hashtags pentru teme, auto-validare template-uri și ACP dark mode fixes" },
-        { "type": "bugfix",  "text": "Fix: contorul «Teme disponibile» citește acum catalogul real GitHub, cu fallback la temele instalate" },
-        { "type": "bugfix",  "text": "Fix: layout Roadmap/Changelog ajustat pentru badge-uri mai late și afișare mai clară" },
-        { "type": "bugfix",  "text": "Fix: Activity Log protejat împotriva erorii «Extension context invalidated»" }
-      ]
-    },
-    {
-      "version": "1.4.0",
-      "date": "2026-04-06",
-      "notes": [
-        { "type": "feature", "text": "Tab SEO Tools: analiză SEO completă cu 28 verificări, inventar meta tags, analiză link-uri, și recomandări" },
-        { "type": "feature", "text": "Tab Plugins: manager de plugin-uri JS din catalog GitHub cu instalare/dezinstalare automată" },
-        { "type": "feature", "text": "Tab Activity Log: jurnal de activitate cu filtrare, export CSV și ștergere selectivă" },
-        { "type": "feature", "text": "Tab Chatbox: panou de administrare chatbox cu configurare directă din FME" },
-        { "type": "feature", "text": "Forum Chatbox (forum-chatbox.js): chatbox complet cu auto-rejoin, buton login, comandă /clear, contor caractere, notificări sonore și panou comenzi" },
-        { "type": "feature", "text": "Instalare teme: modal progres pas-cu-pas pentru CSS, template-uri și plugin-uri JS" },
-        { "type": "feature", "text": "Dezinstalare teme: resetare automată template-uri la implicit înainte de ștergere" },
-        { "type": "feature", "text": "Plugin JS install: descărcare și salvare automată JS din GitHub via saveJsPlugin()" },
-        { "type": "feature", "text": "Quick Stats: dashboard cu statistici rapide — widgets instalate, publicate pe forum, teme disponibile, versiune FME" },
-        { "type": "feature", "text": "Publicare widget-uri: publicare directă pe forum cu toggle enable/disable per widget via saveJsPlugin()" },
-        { "type": "feature", "text": "CSS Snippet Catalog: colecție de snippet-uri CSS predefinite aplicabile cu un click" },
-        { "type": "feature", "text": "Template Marker System: sistem de marcaje pentru template-uri modificate" },
-        { "type": "feature", "text": "Panel Home page: pagină principală redesigned cu Quick Stats, Roadmap, link-uri download/update" },
-        { "type": "bugfix",  "text": "Fix: findTemplateEditUrl rescris complet — URL-uri corecte Forumotion (mode=edit_{category}&t={id}&l={category})" },
-        { "type": "bugfix",  "text": "Fix: instalare template-uri folosea manifest.path (undefined) în loc de theme.path" },
-        { "type": "bugfix",  "text": "Fix: butonul de instalare afișa 'Instalează CSS' în loc de 'Instalează tema'" }
-      ]
-    },
-    {
-      "version": "1.3.0",
-      "date": "2026-04-05",
-      "notes": [
-        { "type": "feature", "text": "Tab Forum CSS: editor CSS pentru paginile de forum (non-admin), cu preset Forum Dark 2026 si file upload" },
-        { "type": "feature", "text": "Tab Widgets JS: manager de snippet-uri JS cu executie CSP-safe pe ACP si/sau forum via chrome.scripting" },
-        { "type": "feature", "text": "Tab Notite: notepad multi-tab cu auto-salvare dupa 1.5s si pana la 5 note" },
-        { "type": "feature", "text": "Tab Backup & Restore: export/import complet al datelor FME (teme, CSS, widgets, note) in format JSON" },
-        { "type": "feature", "text": "Tab Statistici: sumar date locale + statistici forum extrase la cerere" },
-        { "type": "feature", "text": "Forum Injector: script separat pentru paginile non-admin (aplica Forum CSS si Widgets JS)" },
-        { "type": "feature", "text": "Panel redesigned: 10 sectiuni grupate in 4 categorii (Continut, CSS & JS, Utile, Meta)" },
-        { "type": "feature", "text": "Verificare compatibilitate versiune inainte de install si preview (phpBB3 ↔ prosilver, phpBB2 ↔ subsilver/subsilver2)" },
-        { "type": "feature", "text": "Modal progres preview: preview cu template-uri afiseaza pasii in timp real cu progress bar" },
-        { "type": "feature", "text": "Parametru ?tt=1 in URL-ul tab-ului de preview cu template-uri (template-uri modificate, nepublicate)" },
-        { "type": "feature", "text": "Exemple widgets: folder widgets-examples/ cu 11 snippeturi gata de utilizat (ACP, Forum, Both)" },
-        { "type": "bugfix",  "text": "Fix: chrome.storage.session inlocuit cu chrome.storage.local (indisponibil in content scripts)" },
-        { "type": "bugfix",  "text": "Fix: chrome.tabs.create inlocuit cu window.open in toate tab-urile (indisponibil in content scripts)" },
-        { "type": "bugfix",  "text": "Fix: executia widget-urilor prin chrome.scripting.executeScript bypasses atat CSP-ul extensiei cat si CSP-ul paginii" }
-      ]
-    },
-    {
-      "version": "1.2.0",
-      "date": "2026-04-05",
-      "notes": [
-        { "type": "feature", "text": "Modal instalare teme: proces ghidat in 3 pasi cu suport variabile CSS" },
-        { "type": "feature", "text": "API installTemplates: aplica automat template-urile implicite ale temei" },
-        { "type": "feature", "text": "API previewWithTemplates: previzualizeaza tema impreuna cu template-urile asociate" },
-        { "type": "feature", "text": "API restoreFromPreview: restaureaza starea initiala dupa o previzualizare" },
-        { "type": "feature", "text": "Banner preview: indicator vizual activ in timpul previzualizarii pe forum" },
-        { "type": "feature", "text": "Dashboard: sectiune Changelog completa cu toate versiunile" },
-        { "type": "other",   "text": "Dashboard: sectiune Functionalitati viitoare (roadmap)" }
-      ]
-    },
-    {
-      "version": "1.1.0",
-      "date": "2026-04-05",
-      "notes": [
-        { "type": "feature", "text": "Forum preview: tema se aplica pe forumul tau intr-un tab nou (15 secunde)" },
-        { "type": "bugfix",  "text": "Fix: instalarea si preview-ul temelor din catalog functioneaza corect" },
-        { "type": "bugfix",  "text": "Fix: butonul Reseteaza la implicit din editorul de templates functioneaza acum" },
-        { "type": "other",   "text": "Teme: catalog mutat la ForumotionExt/forumotion-themes cu structura noua" },
-        { "type": "feature", "text": "Redesign pagina teme: tabel nativ in stilul panoului de administrare Forumotion" },
-        { "type": "feature", "text": "Pagina dedicata pentru instalarea temelor cu suport variables" },
-        { "type": "feature", "text": "Dashboard standalone: extensia are acum pagina proprie, accesibila din popup" }
-      ]
-    },
-    {
-      "version": "1.0.0",
-      "date": "2026-03-01",
-      "notes": [
-        { "type": "feature", "text": "Panou nativ integrat in ACP Forumotion" },
-        { "type": "feature", "text": "Tab Teme: browse si instalare teme CSS din catalog GitHub" },
-        { "type": "feature", "text": "Tab Template-uri: editare directa a template-urilor Forumotion" },
-        { "type": "feature", "text": "Tab Administrare teme: export, import si restaurare teme (.bbtheme)" },
-        { "type": "feature", "text": "Tab Actualizari: verificare automata versiune noua" },
-        { "type": "feature", "text": "Tab Setari: configurare repository-uri GitHub si token PAT" },
-        { "type": "other",   "text": "Suport domenii: forumgratuit.ro, forumotion.com, forumotion.net, forumotion.eu" }
+        "Rescris complet în Vanilla JS — fără dependențe externe",
+        "Panou FME nou în ACP cu navigare internă",
+        "Marketplace, Admin Theme, Admin Widgets",
+        "Plugins și Teme instalate",
+        "SEO Analyzer, Jurnal, Notițe Admin",
+        "Backup Date, Setări, ACP Audit"
       ]
     }
-  ],
-  "roadmap": [
-    {
-      "title": "Plugins",
-      "description": "Manager de plugin-uri cu aceeași bază ca la widgets — instalare, activare/dezactivare, publicare pe forum.",
-      "status": "planned"
-    },
-    {
-      "title": "Auto-hashtags teme",
-      "description": "Adăugare automată a hashtag-urilor (tags) pentru temele instalate pe forum.",
-      "status": "planned"
-    },
-    {
-      "title": "Auto-validare template-uri",
-      "description": "Validare automată a template-urilor după instalarea temelor — verificare și publicare fără pași manuali.",
-      "status": "planned"
-    },
-    {
-      "title": "Teme noi ACP & fix Dark Mode",
-      "description": "Noi teme pentru panoul de administrare. Bug fix la dark mode — unele elemente rămân albe.",
-      "status": "planned"
-    },
-    {
-      "title": "Suport Firefox & Edge",
-      "description": "Portarea extensiei pentru Mozilla Firefox și Microsoft Edge (Manifest V3).",
-      "status": "planned"
-    },
-    {
-      "title": "Marketplace widget-uri",
-      "description": "Catalog online de widget-uri JS contribuite de comunitate, instalabile direct din tab-ul Widgets.",
-      "status": "planned"
-    },
-    {
-      "title": "Export temă completă (.fmetheme)",
-      "description": "Pachetare completă temă + template-uri într-un singur fișier .fmetheme pentru distribuire.",
-      "status": "planned"
-    },
-    {
-      "title": "Syntax highlighting",
-      "description": "Editor de cod cu colorare sintactică pentru tab-urile CSS și Widgets JS.",
-      "status": "planned"
-    },
-    {
-      "title": "ACP Custom JavaScript",
-      "description": "Posibilitatea de a adăuga JavaScript custom pentru ACP, util la manipularea anumitor DOM-uri și mici automatizări. Codul utilizatorului va fi împachetat automat într-un wrapper sigur de tip `(function(){ /* cod user */ })();`.",
-      "status": "done"
-    }
-  ]
+  },
+
+  "update_url"  : "https://raw.githubusercontent.com/ForumotionExt/forumotion-extension/main/version.json",
+  "download_url": "https://github.com/ForumotionExt/forumotion-extension/releases/latest"
 }

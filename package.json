@@ -1,0 +1,23 @@
+{
+  "name"       : "forumotion-extension",
+  "version"    : "2.0.0",
+  "description": "Enhanced admin panel for Forumotion/ForumGratuit",
+  "author"     : "Staark",
+  "license"    : "MIT",
+  "private"    : true,
+  "type"       : "module",
+
+  "scripts": {
+    "build:prod"    : "node esbuild.config.js --prod",
+    "build:dev"     : "node esbuild.config.js",
+    "build:watch"   : "node esbuild.config.js --watch",
+    "build:opera"   : "node esbuild.config.js --prod --browser=opera",
+    "build:firefox"  : "node scripts/build-firefox.js",
+    "build:safari"   : "node scripts/build-safari.js",
+    "release:all"    : "node scripts/release.js"
+  },
+
+  "devDependencies": {
+    "esbuild": "^0.25.0"
+  }
+}

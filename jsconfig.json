@@ -1,0 +1,12 @@
+{
+  "compilerOptions": {
+    "paths": {
+      "sw/*": ["./src/background/*"],
+      "core/*": ["./src/content/core/*"],
+      "forumotion/*": ["./src/environments/*"],
+      "pages/*": ["./src/content/pages/*"],
+      "shared/*": ["./src/content/shared/*"],
+      "i18n/*": ["./src/i18n/*"]
+    }
+  }
+}
